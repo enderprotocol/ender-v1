@@ -1,0 +1,78 @@
+{
+  "name": "enderprotocol-contracts",
+  "version": "1.0.0",
+  "description": "Smart Contracts for Ender Protocol",
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.1",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@openzeppelin/contracts": "^4.4.2",
+    "@openzeppelin/contracts-upgradeable": "^4.9.2",
+    "@openzeppelin/hardhat-upgrades": "^2.1.1",
+    "@typechain/ethers-v5": "^11.1.1",
+    "@typechain/hardhat": "^8.0.3",
+    "@types/chai": "^4.2.22",
+    "@types/node": "^20.4.9",
+    "@typescript-eslint/eslint-plugin": "^6.3.0",
+    "@typescript-eslint/parser": "^6.3.0",
+    "chai": "^4.3.7",
+    "dotenv": "^16.3.1",
+    "eslint": "^8.46.0",
+    "eslint-config-prettier": "^9.0.0",
+    "ethers": "^6.7.0",
+    "hardhat": "^2.17.1",
+    "hardhat-gas-reporter": "^1.0.9",
+    "husky": "^8.0.3",
+    "prettier": "^3.0.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.18",
+    "solhint": "^3.3.6",
+    "solhint-plugin-prettier": "^0.0.5",
+    "solidity-coverage": "^0.8.4",
+    "ts-generator": "^0.1.1",
+    "ts-node": "^10.2.1",
+    "typechain": "^8.3.1",
+    "typescript": "^5.1.6"
+  },
+  "scripts": {
+    "lint": "eslint \"**/*.{js,ts}\" && solhint src/**/*.sol",
+    "lint:fix": "eslint --fix \"**/*.{js,ts}\" && solhint --fix src/**/*.sol",
+    "lint:sol": "solhint -f table contracts/**/*.sol",
+    "format": "prettier --check \"**/*.{ts,js,sol}\"",
+    "format:fix": "prettier --write \"**/*.{ts,js,sol}\"",
+    "compile": "hardhat compile",
+    "clean": "hardhat clean",
+    "test": "hardhat test test/unit/EnderBond.test.js",
+    "gas": "REPORT_GAS=true hardhat test",
+    "coverage": "hardhat coverage",
+    "coverage:unit": "hardhat coverage --testfiles test/unit/*.test.js",
+    "typechain": "TS_NODE_TRANSPILE_ONLY=true hardhat typechain",
+    "fork": "hardhat node",
+    "deploy:mainnet": "npx hardhat run --network mainnet scripts/deploy/deployAll.js",
+    "deploy:goerli": "npx hardhat run --network goerli scripts/goerli/deploy.js",
+    "deploy:hardhat": "npx hardhat run --network hardhat scripts/deploy/deployAll.js",
+    "verify:goerli": "npx hardhat run --network goerli scripts/verify/verifyAll.js",
+    "sourcify:mainnet": "hardhat --network mainnet sourcify",
+    "sourcify:goerli": "hardhat --network goerli sourcify",
+    "etherscan:mainnet": "hardhat --network mainnet etherscan-verify",
+    "etherscan:goerli": "hardhat --network goerli etherscan-verify",
+    "prestart": "yarn run typechain",
+    "start": "hardhat node --network hardhat"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enderprotocol/enderprotocol-contracts.git"
+  },
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/enderprotocol/enderprotocol-contracts/issues"
+  },
+  "homepage": "https://github.com/enderprotocol/enderprotocol-contracts#readme",
+  "dependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-verify": "^1.0.0",
+    "@openzeppelin/test-helpers": "^0.5.16"
+  }
+}
