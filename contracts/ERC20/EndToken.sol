@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 
 // Interfaces
 import "../interfaces/IEndToken.sol";
-import "../interfaces/IEnderTreasury.sol";
 
 error ZeroAddress();
 error InvalidParam();
@@ -125,8 +124,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
                 super._transfer(from, treasury, fee);
 
                 refractionFeeTotal += fee;
-
-                IEnderTreasury(treasury).addRefractionBalance(fee);
             }
 
             super._transfer(from, to, amount - fee);

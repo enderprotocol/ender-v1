@@ -11,21 +11,16 @@ error ZeroAddress();
 error InvalidAmount();
 
 contract EnderStaking is Initializable, OwnableUpgradeable {
-    
+    mapping(address => UserInfo) public userInfo;
     struct UserInfo {
         uint256 amount;
         uint256 pending;
         uint256 lastBlock;
     }
 
-    mapping(address => UserInfo) public userInfo;
     uint256 public percentPerBlock;
 
     uint256 public stakingApy;
-
-    uint256 private totalSEndBalance;
-    uint256 private stakingReward;
-    uint256 private rebseIndex = 1;
 
     address public endToken;
 
@@ -86,10 +81,10 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      * @notice View function to get pending reward
      * @param account  user wallet address
      */
-    function distribute(address account) public view returns (uint256 pending) {
+    function pendingReward(address account) public view returns (uint256 pending) {
         UserInfo storage userItem = userInfo[account];
 
-        pending = userItem.amount * rebaseIndex;
+        pending = userItem.pending + ((block.number - userItem.lastBlock) * percentPerBlock * userItem.amount) / 1e9;
     }
 
     /**
@@ -98,17 +93,15 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      */
     function stake(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
-        
-        totalSEndBalance += amount;  
-        rebase();
 
         // transfer tokens
         IERC20(endToken).transferFrom(msg.sender, address(this), amount);
+
         // update user info
         UserInfo storage userItem = userInfo[msg.sender];
         if (userItem.amount != 0) {
             // update pending
-            userItem.pending = distribute(msg.sender);
+            userItem.pending = pendingReward(msg.sender);
         }
 
         userItem.amount += amount;
@@ -121,16 +114,14 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      * @notice Users can withdraw
      * @param amount  withdraw amount
      */
-    function unstake(uint256 amount) external {
+    function withdraw(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
-        totalSEndBalance -= amount;
-        rebase();
 
         UserInfo storage userItem = userInfo[msg.sender];
         if (amount > userItem.amount) amount = userItem.amount;
 
         // add reward
-        uint256 pending = distribute(msg.sender);
+        uint256 pending = pendingReward(msg.sender);
 
         // update userinfo
         unchecked {
@@ -141,19 +132,33 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
             }
         }
 
-        stakingReward -= pending;
-        
         // mint reward token
         if (pending != 0) IEndToken(endToken).mint(address(this), pending);
+
         // transfer token
         IERC20(endToken).transfer(msg.sender, amount + pending);
-        
 
         emit Withdraw(msg.sender, amount);
     }
 
-    function rebase(uint256 _profit) public {
-        stakingReward += _profit;
-        rebaseIndex = (stakingReward + totalSEndBalance) / totalSEndBalance; 
+    /**
+     * @notice Harvest only the rewards
+     */
+    function harvest() external {
+        uint256 pending = pendingReward(msg.sender);
+
+        if (pending != 0) {
+            // update userinfo
+            unchecked {
+                UserInfo storage userItem = userInfo[msg.sender];
+                userItem.pending = 0;
+                userItem.lastBlock = block.number;
+            }
+
+            // mint reward token to user
+            IEndToken(endToken).mint(msg.sender, pending);
+
+            emit Harvest(msg.sender, pending);
+        }
     }
 }

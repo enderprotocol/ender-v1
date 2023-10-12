@@ -5,16 +5,12 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
-
 
 // Interfaces
 import "./interfaces/IEndToken.sol";
 import "./interfaces/IEnderOracle.sol";
 import "./interfaces/IEnderStrategy.sol";
 import "./interfaces/IEnderTreasury.sol";
-import "./interfaces/IEnderStaking.sol";
 
 error NotAllowed();
 error ZeroAddress();
@@ -37,26 +33,18 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
     address private endToken;
     address private enderBond;
     address private enderDepositor;
-    address private enderStaking;
-
     IEnderOracle private enderOracle;
-    IUniswapV2Router02 private uniswapRouter;
 
     uint256 public bondYieldBaseRate;
-    uint256 public depositYieldBaseRate;
-    uint256 private refractionFeeBalance;
-
 
     event AddressUpdated(address indexed newAddr, AddressType addrType);
     event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
-    event DepositYieldBaseRateUpdated(uint256 depositYieldBaseRate);
 
     enum AddressType {
         ENDBOND,
         ENDTOKEN,
         ENDORACLE,
-        DEPOSITOR,
-        POOL
+        DEPOSITOR
     }
 
     /**
@@ -69,8 +57,7 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
 
         setAddress(_bond, AddressType.ENDBOND);
         setAddress(_endToken, AddressType.ENDTOKEN);
-        setBondYieldBaseRate(300);  
-        setDepositYieldBaseRate(500);  
+        setBondYieldBaseRate(300);
     }
 
     modifier validStrategy(address str) {
@@ -80,11 +67,6 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
 
     modifier onlyBond() {
         if (msg.sender != enderBond) revert NotAllowed();
-        _;
-    }
-
-    modifier onlyEnder() {
-        if (msg.sender != endToken) revert NotAllowed();
         _;
     }
 
@@ -99,9 +81,8 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
         if (_type == AddressType.ENDTOKEN) endToken = _addr;
         else if (_type == AddressType.ENDBOND) enderBond = _addr;
         else if (_type == AddressType.DEPOSITOR) enderDepositor = _addr;
-        else if (_type == AddressType.ENDORACLE) enderOracle = IEnderOracle(_addr);                                  
-        else if (_type == AddressType.POOL) uniswapRouter = IUniswapV2Router02(_addr);          
-        else if (_type == AddressType.STAKING) enderStaking = _addr;                        
+        else if (_type == AddressType.ENDORACLE) enderOracle = IEnderOracle(_addr);
+
         emit AddressUpdated(_addr, _type);
     }
 
@@ -117,24 +98,11 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
         emit BondYieldBaseRateUpdated(_newBaseRate);
     }
 
-    /**
-     * @notice Update deposit yield base rate (by default, 5%)
-     * @param _newBaseRate new rate to be set
-     */
-    function setDepositYieldBaseRate(uint256 _newBaseRate) public onlyOwner {
-        if (_newBaseRate == 0) revert InvalidBaseRate();
-
-        depositYieldBaseRate = _newBaseRate;
-
-        emit DepositYieldBaseRateUpdated(_newBaseRate);
-    }
-
     function getAddress(AddressType _type) external view returns (address addr) {
         if (_type == AddressType.ENDTOKEN) addr = endToken;
         else if (_type == AddressType.ENDBOND) addr = enderBond;
         else if (_type == AddressType.DEPOSITOR) addr = enderDepositor;
         else if (_type == AddressType.ENDORACLE) addr = address(enderOracle);
-        else if (_type == AddressType.POOL) addr = address(uniswapRouter);
     }
 
     /**
@@ -187,17 +155,11 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
 
             (uint256 price, uint8 decimal) = enderOracle.getPrice(param.stakingToken);
             uint8 tokenDecimal = param.stakingToken == address(0) ? 18 : IPriceFeed(param.stakingToken).decimals();
-            
+
             uint256 rate = getInterest(maturity) * getYieldMultiplier(bondFee);
-            uint256 ENDPrice = getPoolBalance();
-            mintAmt = price * param.tokenAmt * rate * ENDPrice;
-            // set decimal as 
-            
-            mintAmt = (mintAmt) / (10 ** (6 + tokenDecimal + decimal));
-            uint256 stakingReward = price * param.tokenAmt * (depositYieldBaseRate - rate);
-            
-            stakingReward = (stakingReward) / (ENDPrice * (10 ** (6 + tokenDecimal + decimal)));
-            IEnderStaking(enderStaking).rebase(stakingReward);
+            mintAmt = price * param.tokenAmt * rate;
+            // set decimal as 9
+            mintAmt = (mintAmt * 1e9) / (10 ** (6 + tokenDecimal + decimal));
 
             // mint END token
             if (mintAmt != 0) IEndToken(endToken).mint(address(this), mintAmt);
@@ -258,21 +220,5 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
         IERC20(endToken).transfer(account, amount);
     }
 
-    /**
-     * @notice get END pool balance addresses
-     */
-    function getPoolBalance() external view returns (uint256) {
-    
-        // Get the token balances
-        (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();
-
-        // reserve0: WETH address , reserve1: END token address
-        return reserve0 / reserve1;
-    }
-
-    function addRefractionBalance(uint256 _amount) external onlyEnder {
-        require(_amount > 0, "Insufficient fund!");
-        refractionFeeBalance += _amount;
-    }
     receive() external payable {}
 }

@@ -9,6 +9,4 @@ interface IEnderTreasury is IEnderBase {
     function withdraw(EndRequest memory) external returns (uint256);
 
     function collect(address, uint256) external;
-
-    function addRefractionBalance(uint256) external;
 }

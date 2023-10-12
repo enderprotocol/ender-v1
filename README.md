@@ -108,8 +108,18 @@ The Ender Protocol team is dedicated to the continuous improvement and developme
 
 ## 📜 Contract Addresses
 
- - For [Goerli Testnet](./docs/deployments/rinkeby.md).
- - For [Ethereum Mainnet] - Coming soon
+Goerli Testnet - https://goerli.etherscan.io/
+
+```
+EndToken - 0xeB1778AFea3FF241A75E7e03505Fdd16D49e708b
+BondNFT - 0x6940727B6e9283c268879A8CDBEE74739eFf0a16
+EnderBond - 0x08Bb429105cb249BaA56bBb1350f8081904d287a
+EnderTreasury - 0x9377702ECF032b913024865bf33E6FE2094B0CCc
+EnderStaking - 0x7cC0A13ec0Ea5c250Bb4D087120fc216FCA09273
+EnderElStrategy - 0x42F96F409D349Cc2C3E471eB318E1ab1c63A4816
+EnderOracle - 0xe8463Ad78dadFfC4BBA51E732BFE155fe483b517
+EnderLidoStrategy - 0x504e10D0184288b3625AfE7Cfd4471DA72BAe1F6
+```
 
 ## 🔗 Links
 
