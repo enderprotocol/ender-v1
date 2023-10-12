@@ -31,12 +31,12 @@ const config: HardhatUserConfig = {
     goerli: {
       chainId: 5,
       url: "https://rpc.ankr.com/eth_goerli",
-      accounts: [GOERLI_KEY]
+      // accounts: [GOERLI_KEY]
     },
     sepolia: {
       chainId: 11155111,
       url: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
-      accounts: [PRIVATE_KEY],
+      // accounts: [PRIVATE_KEY],
     }
   },
   paths: {
