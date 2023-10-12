@@ -12,7 +12,7 @@ contract MyToken is ERC20, Ownable {
 
     event WhiteListChanged(address indexed _whitelistingAddress, bool indexed _action);
 
-    constructor() ERC20("Ender", "END") Ownable(msg.sender) {
+    constructor() ERC20("Ender", "END") Ownable() {
         _mint(msg.sender, 100000000000 * decimals());
     }
 
