@@ -37,6 +37,15 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     mapping(address => uint256) public userNonces;
 
+    mapping(address => uint256) public pendingRefractionReward;
+    mapping(address => uint256) public rewardSharePerUser;
+    mapping(address => uint256) public userDeposit;
+
+    uint256 rewardShare;
+    uint256 totalRewardPriciple;
+    uint256 rateOfChange;
+    uint256 totalDeposit;
+
     /// @notice An array containing all maturities.
     uint256[] public maturities;
 
@@ -80,7 +89,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     function initialize(address endToken_, address signature_) public initializer {
         __Ownable_init();
         __EIP712_init("EnderBond", "1");
-
+        rateOfChange = 100;
         setAddress(endToken_, AddressType.ENDTOKEN);
         setAddress(signature_, AddressType.SIGNATURE);
         setBondFeeEnabled(true);
@@ -165,6 +174,13 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
 
+        userDeposit[msg.sender] += principal;
+        (uint256 pendingReward, uint256 avgRefractionIndex, ) = getPendingReward(principal, maturity);
+        pendingRefractionReward[msg.sender] += pendingReward;
+        rewardSharePerUser[msg.sender] = rewardShare;
+        totalDeposit += principal;
+        totalRewardPriciple += principal * avgRefractionIndex;
+
         tokenId = _deposit(principal, maturity, token, bondFee, false);
 
         emit Deposit(msg.sender, tokenId);
@@ -177,7 +193,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _bondFee,
         bool _rebond
     ) private returns (uint256 _tokenId) {
-        if (_rebond && _bondFee > 0) _principal = _principal * (100 - _bondFee) / 100;
+        if (_rebond && _bondFee > 0) _principal = (_principal * (100 - _bondFee)) / 100;
 
         // deposit
         uint256 endAmt = endTreasury.deposit(
@@ -213,18 +229,16 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // update current bond
         bond.withdrawn = true;
 
-        if (_maturity == 0) // not a rebond
+        if (_maturity == 0)
+            // not a rebond
             endTreasury.withdraw(
                 IEnderBase.EndRequest(
                     msg.sender,
                     bond.token,
-                    bond.bondFee > 0 && bondFeeEnabled 
-                        ? bond.principal * (100 - bond.bondFee) / 100
-                        : bond.principal
+                    bond.bondFee > 0 && bondFeeEnabled ? (bond.principal * (100 - bond.bondFee)) / 100 : bond.principal
                 )
-            );
-        else // is a rebond
-            tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee, true);
+            ); // is a rebond
+        else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee, true);
     }
 
     /**
@@ -267,7 +281,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (block.timestamp > _deadline) revert SignatureExpired();
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(keccak256("Rebond(uint256 amount, uint256 deadline, uint256 nonce)"), _amount, _deadline, _nonce))
+            keccak256(
+                abi.encode(
+                    keccak256("Rebond(uint256 amount, uint256 deadline, uint256 nonce)"),
+                    _amount,
+                    _deadline,
+                    _nonce
+                )
+            )
         );
 
         return ECDSAUpgradeable.recover(digest, _signature) == endSignature;
@@ -322,6 +343,31 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         bondId = _withdraw(tokenId, maturity, bondFee);
 
         emit Rebond(msg.sender, tokenId, bondId);
+    }
+
+    function setRewardShare(uint256 _reward) external {
+        rewardShare = rewardShare + (_reward / totalRewardPriciple);
+    }
+
+    function getPendingReward(
+        uint _principle,
+        uint256 _maturity
+    ) public view returns (uint256 pendingReward, uint256 avgRefractionIndex, uint256 rewardPrinciple) {
+        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
+        rewardPrinciple = _principle * avgRefractionIndex;
+        pendingReward = rewardPrinciple * (rewardShare - rewardSharePerUser[msg.sender]);
+    }
+
+    function claimRewards(uint256 _tokenId) public {
+        if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
+        Bond memory temp = bonds[_tokenId];
+
+        (uint256 pendingReward, , uint rewardPrinciple) = getPendingReward(temp.principal, temp.maturity);
+
+        IERC20(endToken).transfer(
+            msg.sender,
+            pendingReward + (rewardPrinciple * (rewardShare - rewardSharePerUser[msg.sender]))
+        );
     }
 
     receive() external payable {}
