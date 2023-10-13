@@ -37,9 +37,9 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     mapping(address => uint256) public userNonces;
 
-    mapping(address => uint256) public pendingRefractionReward;
-    mapping(address => uint256) public rewardSharePerUser;
-    mapping(address => uint256) public userDeposit;
+    mapping(uint256 => uint256) public pendingRefractionReward;
+    mapping(uint256 => uint256) public rewardSharePerUser;
+    mapping(uint256 => uint256) public userDeposit;
 
     uint256 rewardShare;
     uint256 totalRewardPriciple;
@@ -174,14 +174,13 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
 
-        userDeposit[msg.sender] += principal;
-        (uint256 pendingReward, uint256 avgRefractionIndex, ) = getPendingReward(principal, maturity);
-        pendingRefractionReward[msg.sender] += pendingReward;
-        rewardSharePerUser[msg.sender] = rewardShare;
+        tokenId = _deposit(principal, maturity, token, bondFee, false);
+        userDeposit[tokenId] += principal;
+        (uint256 pendingReward, uint256 avgRefractionIndex, ) = getPendingReward(principal, maturity, tokenId);
+        pendingRefractionReward[tokenId] += pendingReward;
+        rewardSharePerUser[tokenId] = rewardShare;
         totalDeposit += principal;
         totalRewardPriciple += principal * avgRefractionIndex;
-
-        tokenId = _deposit(principal, maturity, token, bondFee, false);
 
         emit Deposit(msg.sender, tokenId);
     }
@@ -351,22 +350,24 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     function getPendingReward(
         uint _principle,
-        uint256 _maturity
+        uint256 _maturity,
+        uint256 _tokenId
     ) public view returns (uint256 pendingReward, uint256 avgRefractionIndex, uint256 rewardPrinciple) {
+        if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
         rewardPrinciple = _principle * avgRefractionIndex;
-        pendingReward = rewardPrinciple * (rewardShare - rewardSharePerUser[msg.sender]);
+        pendingReward = rewardPrinciple * (rewardShare - rewardSharePerUser[_tokenId]);
     }
 
     function claimRewards(uint256 _tokenId) public {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         Bond memory temp = bonds[_tokenId];
 
-        (uint256 pendingReward, , uint rewardPrinciple) = getPendingReward(temp.principal, temp.maturity);
+        (uint256 pendingReward, , uint rewardPrinciple) = getPendingReward(temp.principal, temp.maturity, _tokenId);
 
         IERC20(endToken).transfer(
             msg.sender,
-            pendingReward + (rewardPrinciple * (rewardShare - rewardSharePerUser[msg.sender]))
+            pendingReward + (rewardPrinciple * (rewardShare - rewardSharePerUser[_tokenId]))
         );
     }
 
