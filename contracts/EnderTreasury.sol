@@ -220,5 +220,7 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
         IERC20(endToken).transfer(account, amount);
     }
 
+    function mintEndRewToUser(address _to, uint256 _amount)external{}
+
     receive() external payable {}
 }

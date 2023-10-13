@@ -38,18 +38,21 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     mapping(address => uint256) public userNonces;
 
-    mapping(address => uint256) public pendingRefractionReward;
-    mapping(address => uint256) public rewardSharePerUser;
-    mapping(address => uint256) public userDeposit;
+    mapping(uint256 => uint256) public pendingRefractionReward;
+    mapping(uint256 => uint256) public rewardSharePerUser;
+    mapping(uint256 => uint256) public userDeposit;
+
     mapping(uint256 => uint256) public userBondPrincipalAmount;
-    mapping (address => uint256) public userYieldShare;
+    mapping(uint256 => uint256) public userBondYieldShare; //s0
 
     uint256 rewardShare;
     uint256 totalRewardPriciple;
     uint256 rateOfChange;
     uint256 totalDeposit;
-    uint256 public yeildShare;
-    
+    uint256 public bondYeildShare;
+    uint256 public totalBondPrincipalAmount;
+    uint256 public endMint;
+    uint256 public bondYieldBaseRate;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
@@ -149,6 +152,18 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         emit BondableTokensUpdated(tokens, enabled);
     }
 
+    function getInterest(uint256 maturity) public view returns (uint256 rate) {
+        unchecked {
+            if (maturity > 180) rate = ((maturity - 180) * 15) / 180 + (bondYieldBaseRate + 30);
+            else if (maturity > 90) rate = ((maturity - 90) * 15) / 90 + (bondYieldBaseRate + 15);
+            else if (maturity > 60) rate = ((maturity - 60) * 15) / 30 + bondYieldBaseRate;
+            else if (maturity > 30) rate = ((maturity - 30) * 30) / 30 + (bondYieldBaseRate - 30);
+            else if (maturity > 15) rate = ((maturity - 15) * 15) / 15 + (bondYieldBaseRate - 45);
+            else if (maturity > 7) rate = ((maturity - 7) * 15) / 8 + (bondYieldBaseRate - 60);
+            else rate = ((maturity - 7) * 30) / 6 + (bondYieldBaseRate - 90);
+        }
+    }
+
     /**
      * @notice Allows a user to deposit a specified token into a bond
      * @param principal The principal amount of the bond
@@ -188,6 +203,9 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalDeposit += principal;
         totalRewardPriciple += principal * avgRefractionIndex;
 
+        uint256 depositPrincipal = (getInterest(maturity) * principal) / 365;
+        userBondPrincipalAmount[tokenId] = depositPrincipal;
+        totalBondPrincipalAmount += depositPrincipal;
         emit Deposit(msg.sender, tokenId);
     }
 
@@ -234,8 +252,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // update current bond
         bond.withdrawn = true;
 
-        if (_maturity == 0)
-            // not a rebond
+        if (_maturity == 0){
             endTreasury.withdraw(
                 IEnderBase.EndRequest(
                     msg.sender,
@@ -243,6 +260,11 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
                     bond.bondFee > 0 && bondFeeEnabled ? (bond.principal * (100 - bond.bondFee)) / 100 : bond.principal
                 )
             ); // is a rebond
+            uint256 reward = getRewardAmount(_tokenId);
+            endTreasury.mintEndRewToUser(msg.sender,reward);
+        }
+            // not a rebond
+            
         else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee, true);
     }
 
@@ -377,8 +399,15 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         );
     }
 
-    function getAndSetETHPrice() external{
+    function getAndSetETHPrice() external {
         (uint256 price, uint8 decimal) = enderOracle.getPrice(address(0));
+        uint256 _endMint = price * totalBondPrincipalAmount * (1);
+        endMint += _endMint;
+        bondYeildShare = bondYeildShare + (endMint / totalBondPrincipalAmount);
+    }
+
+    function getRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
+        _reward = userBondPrincipalAmount[_tokenId] * (bondYeildShare - userBondYieldShare[_tokenId]);
     }
 
     receive() external payable {}
