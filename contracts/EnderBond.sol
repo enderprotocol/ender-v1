@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 // Interfaces
 import "./interfaces/IBondNFT.sol";
 import "./interfaces/IEnderTreasury.sol";
+import "./interfaces/IEnderOracle.sol";
 
 error BondAlreadyWithdrawn();
 error BondNotMatured();
@@ -40,11 +41,13 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     mapping(address => uint256) public pendingRefractionReward;
     mapping(address => uint256) public rewardSharePerUser;
     mapping(address => uint256) public userDeposit;
+    mapping(uint256 => )
 
     uint256 rewardShare;
     uint256 totalRewardPriciple;
     uint256 rateOfChange;
     uint256 totalDeposit;
+    
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
@@ -53,6 +56,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     address private endToken;
     IBondNFT private bondNFT;
     IEnderTreasury private endTreasury;
+    IEnderOracle private enderOracle;
 
     bool public bondFeeEnabled; // status of bond-fee feature (enabled/disabled)
 
@@ -368,6 +372,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             msg.sender,
             pendingReward + (rewardPrinciple * (rewardShare - rewardSharePerUser[msg.sender]))
         );
+    }
+
+    function getAndSetETHPrice() external{
+        (uint256 price, uint8 decimal) = enderOracle.getPrice(address(0));
     }
 
     receive() external payable {}
