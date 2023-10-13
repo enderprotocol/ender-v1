@@ -41,12 +41,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     mapping(address => uint256) public pendingRefractionReward;
     mapping(address => uint256) public rewardSharePerUser;
     mapping(address => uint256) public userDeposit;
-    mapping(uint256 => )
+    mapping(uint256 => uint256) public userBondPrincipalAmount;
+    mapping (address => uint256) public userYieldShare;
 
     uint256 rewardShare;
     uint256 totalRewardPriciple;
     uint256 rateOfChange;
     uint256 totalDeposit;
+    uint256 public yeildShare;
     
 
     /// @notice An array containing all maturities.
