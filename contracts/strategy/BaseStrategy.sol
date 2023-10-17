@@ -60,5 +60,5 @@ abstract contract BaseStrategy is IEnderStrategy, Initializable, OwnableUpgradea
         return false;
     }
 
-    receive() external virtual payable {}
+    receive() external payable virtual {}
 }

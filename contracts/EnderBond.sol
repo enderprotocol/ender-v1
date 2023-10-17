@@ -377,75 +377,118 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         emit Rebond(msg.sender, tokenId, bondId);
     }
 
-    function setRewardShare(uint256 _reward) external {
-        rewardShare = rewardShare + (_reward / totalRewardPriciple);
+/**
+ * @dev Sets the reward share for a given `_reward`.
+ * @param _reward The reward to be added to the reward share.
+ */
+function setRewardShare(uint256 _reward) external {
+    rewardShare = rewardShare + (_reward / totalRewardPriciple);
+}
+
+/**
+ * @dev Sets the reward share for sending, based on `_reward` and `_totalPrinciple`.
+ * @param _reward The reward to be added to the reward share.
+ * @param _totalPrinciple The total principle used for calculating the reward share.
+ */
+function setRewardShareForSend(uint256 _reward, uint256 _totalPrinciple) public {
+    rewardShareStaking = rewardShareStaking + (_reward / _totalPrinciple);
+}
+
+/**
+ * @dev Calculates pending rewards and related information for a bond.
+ * @param _principle The principle amount of the bond.
+ * @param _maturity The maturity of the bond.
+ * @param _tokenId The unique identifier of the bond.
+ * @return pendingReward The pending reward for the bond.
+ * @return avgRefractionIndex The average refraction index for the bond.
+ * @return rewardPrinciple The principle amount used in reward calculations.
+ */
+function getPendingReward(
+    uint _principle,
+    uint256 _maturity,
+    uint256 _tokenId
+) public view returns (uint256 pendingReward, uint256 avgRefractionIndex, uint256 rewardPrinciple) {
+    if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
+    avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
+    rewardPrinciple = _principle * avgRefractionIndex;
+    pendingReward = rewardPrinciple * (rewardShare - rewardSharePerUser[_tokenId]);
+}
+
+/**
+ * @dev Calculates pending rewards for staking and related information for a bond.
+ * @param _principle The principle amount of the bond.
+ * @param _maturity The maturity of the bond.
+ * @param _tokenId The unique identifier of the bond.
+ * @return pendingRewardSend The pending reward for staking.
+ * @return avgRefractionIndex The average refraction index for the bond.
+ * @return rewardPrincipleSend The principle amount used in reward calculations for staking.
+ */
+function getPendingRewardSend(
+    uint _principle,
+    uint256 _maturity,
+    uint256 _tokenId
+) public view returns (uint256 pendingRewardSend, uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
+    if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
+    avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
+    rewardPrincipleSend = _principle * avgRefractionIndex;
+    pendingRewardSend = rewardPrincipleSend * (rewardPrincipleSend - rewardSharePerUserStaking[_tokenId]);
+}
+
+/**
+ * @dev Claims rewards for staking based on a given `_tokenId`.
+ * @param _tokenId The unique identifier of the bond.
+ */
+function claimRewardSend(uint256 _tokenId) public {
+    if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
+    Bond memory temp = bonds[_tokenId];
+
+    (uint256 pendingReward, , uint rewardPrinciple) = getPendingRewardSend(temp.principal, temp.maturity, _tokenId);
+
+    uint sEndTokenReward = pendingReward +
+        (rewardPrinciple * (rewardShareStaking - rewardSharePerUserStaking[_tokenId]));
+
+    if (sEndTokenReward > 0) {
+        IERC20(endToken).transfer(msg.sender, sEndTokenReward);
+
+        ISEndToken(sEndToken).burn(msg.sender, sEndTokenReward);
     }
+}
 
-    function setRewardShareForSend(uint256 _reward, uint256 _totalPrinciple) public {
-        rewardShareStaking = rewardShareStaking + (_reward / _totalPrinciple);
-    }
+/**
+ * @dev Claims rewards for a bond based on a given `_tokenId`.
+ * @param _tokenId The unique identifier of the bond.
+ */
+function claimRewards(uint256 _tokenId) public {
+    if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
+    Bond memory temp = bonds[_tokenId];
 
-    function getPendingReward(
-        uint _principle,
-        uint256 _maturity,
-        uint256 _tokenId
-    ) public view returns (uint256 pendingReward, uint256 avgRefractionIndex, uint256 rewardPrinciple) {
-        if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
-        rewardPrinciple = _principle * avgRefractionIndex;
-        pendingReward = rewardPrinciple * (rewardShare - rewardSharePerUser[_tokenId]);
-    }
+    (uint256 pendingReward, , uint rewardPrinciple) = getPendingReward(temp.principal, temp.maturity, _tokenId);
 
-    function getPendingRewardSend(
-        uint _principle,
-        uint256 _maturity,
-        uint256 _tokenId
-    ) public view returns (uint256 pendingRewardSend, uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
-        if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
+    IERC20(endToken).transfer(
+        msg.sender,
+        pendingReward + (rewardPrinciple * (rewardShare - rewardSharePerUser[_tokenId]))
+    );
+}
 
-        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
-        rewardPrincipleSend = _principle * avgRefractionIndex;
-        pendingRewardSend = rewardPrincipleSend * (rewardPrincipleSend - rewardSharePerUserStaking[_tokenId]);
-    }
+/**
+ * @dev Gets and sets the ETH price and updates the bond yield share.
+ */
+function getAndSetETHPrice() external {
+    (uint256 price, uint8 decimal) = enderOracle.getPrice(address(0));
+    uint256 _endMint = price * totalBondPrincipalAmount * (1);
+    endMint += _endMint;
+    bondYeildShare = bondYeildShare + (endMint / totalBondPrincipalAmount);
+}
 
-    function claimRewardSend(uint256 _tokenId) public {
-        if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        Bond memory temp = bonds[_tokenId];
+/**
+ * @dev Calculates the reward amount for a given `_tokenId`.
+ * @param _tokenId The unique identifier of the bond.
+ * @return _reward The reward amount for the bond.
+ */
+function getRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
+    _reward = userBondPrincipalAmount[_tokenId] * (bondYeildShare - userBondYieldShare[_tokenId]);
+}
 
-        (uint256 pendingReward, , uint rewardPrinciple) = getPendingRewardSend(temp.principal, temp.maturity, _tokenId);
-
-        uint sEndTokenReward = pendingReward +
-            (rewardPrinciple * (rewardShareStaking - rewardSharePerUserStaking[_tokenId]));
-
-        if (sEndTokenReward > 0) {
-            IERC20(endToken).transfer(msg.sender, sEndTokenReward);
-
-            ISEndToken(sEndToken).burn(msg.sender, sEndTokenReward);
-        }
-    }
-
-    function claimRewards(uint256 _tokenId) public {
-        if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        Bond memory temp = bonds[_tokenId];
-
-        (uint256 pendingReward, , uint rewardPrinciple) = getPendingReward(temp.principal, temp.maturity, _tokenId);
-
-        IERC20(endToken).transfer(
-            msg.sender,
-            pendingReward + (rewardPrinciple * (rewardShare - rewardSharePerUser[_tokenId]))
-        );
-    }
-
-    function getAndSetETHPrice() external {
-        (uint256 price, uint8 decimal) = enderOracle.getPrice(address(0));
-        uint256 _endMint = price * totalBondPrincipalAmount * (1);
-        endMint += _endMint;
-        bondYeildShare = bondYeildShare + (endMint / totalBondPrincipalAmount);
-    }
-
-    function getRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
-        _reward = userBondPrincipalAmount[_tokenId] * (bondYeildShare - userBondYieldShare[_tokenId]);
-    }
 
     receive() external payable {}
 }
