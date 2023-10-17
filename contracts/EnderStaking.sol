@@ -7,11 +7,14 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./interfaces/IEndToken.sol";
 
+import "./interfaces/ISEndToken.sol";
+
 error ZeroAddress();
 error InvalidAmount();
 
 contract EnderStaking is Initializable, OwnableUpgradeable {
     mapping(address => UserInfo) public userInfo;
+    mapping(address => uint256) public userSEndToken;
     struct UserInfo {
         uint256 amount;
         uint256 pending;
@@ -23,6 +26,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     uint256 public stakingApy;
 
     address public endToken;
+    address public sEndToken;
 
     event PercentUpdated(uint256 percent);
     event AddressUpdated(address indexed addr);
@@ -35,22 +39,22 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      * @notice Initialize function
      * @param _end  address of END token contract
      */
-    function initialize(address _end) external initializer {
+    function initialize(address _end, address _sEnd) external initializer {
         __Ownable_init();
 
-        setAddress(_end);
+        setAddress(_end, _sEnd);
     }
 
     /**
      * @notice Update the END token address
-     * @param _addr The new address
      */
-    function setAddress(address _addr) public onlyOwner {
-        if (_addr == address(0)) revert ZeroAddress();
+    function setAddress(address _endToken, address _sEndToken) public onlyOwner {
+        if (_endToken == address(0) && _sEndToken == address(0)) revert ZeroAddress();
 
-        endToken = _addr;
+        endToken = _endToken;
+        sEndToken = _sEndToken;
 
-        emit AddressUpdated(_addr);
+        emit AddressUpdated(_endToken);
     }
 
     /**
@@ -96,12 +100,17 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
         // transfer tokens
         IERC20(endToken).transferFrom(msg.sender, address(this), amount);
+        uint256 sEndAmount = calculateSEndTOkens(amount);
+        userSEndToken[msg.sender] += sEndAmount;
+
+        ISEndToken(sEndToken).mint(address(this), sEndAmount);
 
         // update user info
         UserInfo storage userItem = userInfo[msg.sender];
+
         if (userItem.amount != 0) {
             // update pending
-            userItem.pending = pendingReward(msg.sender);
+            userItem.pending += claimRebaseRewards();
         }
 
         userItem.amount += amount;
@@ -116,12 +125,13 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      */
     function withdraw(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
+        if (IERC20(sEndToken).balanceOf(msg.sender) > 0) revert InvalidAmount();
 
         UserInfo storage userItem = userInfo[msg.sender];
         if (amount > userItem.amount) amount = userItem.amount;
 
         // add reward
-        uint256 pending = pendingReward(msg.sender);
+        uint256 pending = claimRebaseRewards();
 
         // update userinfo
         unchecked {
@@ -132,9 +142,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
             }
         }
 
-        // mint reward token
-        if (pending != 0) IEndToken(endToken).mint(address(this), pending);
-
         // transfer token
         IERC20(endToken).transfer(msg.sender, amount + pending);
 
@@ -144,21 +151,36 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     /**
      * @notice Harvest only the rewards
      */
-    function harvest() external {
-        uint256 pending = pendingReward(msg.sender);
+    // function harvest() external {
+    //     uint256 pending = pendingReward(msg.sender);
 
-        if (pending != 0) {
-            // update userinfo
-            unchecked {
-                UserInfo storage userItem = userInfo[msg.sender];
-                userItem.pending = 0;
-                userItem.lastBlock = block.number;
-            }
+    //     if (pending != 0) {
+    //         // update userinfo
+    //         unchecked {
+    //             UserInfo storage userItem = userInfo[msg.sender];
+    //             userItem.pending = 0;
+    //             userItem.lastBlock = block.number;
+    //         }
 
-            // mint reward token to user
-            IEndToken(endToken).mint(msg.sender, pending);
+    //         // mint reward token to user
+    //         IEndToken(endToken).mint(msg.sender, pending);
 
-            emit Harvest(msg.sender, pending);
-        }
+    //         emit Harvest(msg.sender, pending);
+    //     }
+    // }
+
+    function calculateSEndTOkens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
+        uint256 rebasingIndex = calculateRebaseIndex();
+        sEndTokens = _endAmount / rebasingIndex;
     }
+
+    function calculateRebaseIndex() public view returns (uint256 rebasingIndex) {
+        rebasingIndex = IERC20(endToken).balanceOf(address(this)) / IERC20(sEndToken).totalSupply();
+    }
+
+    function claimRebaseRewards() internal view returns (uint256 reward) {
+        reward = IERC20(sEndToken).balanceOf(msg.sender) * calculateRebaseIndex();
+    }
+
+    //the epoc function
 }
