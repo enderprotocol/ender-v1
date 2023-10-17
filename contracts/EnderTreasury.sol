@@ -21,6 +21,7 @@ error TransferFailed();
 error InvalidStrategy();
 error InvalidRequest();
 error InvalidBaseRate();
+error ZeroAmount();
 
 contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
@@ -213,11 +214,20 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
     //     IEnderStrategy(strategy).deposit(EndRequest(address(0), stakingToken, depositAmt));
     // }
 
+    /**
+     * @notice function to deposit available funds to strategies.
+     * @param _asset address of underlying staked asset e.g: stETH
+     * @param _strategy address of the strategy in which admin wish to deposit,
+     * @param _depositAmt amount of stETH admin wants to deposit to the strategy.
+     */
+
     function depositInStrategy(
         address _asset,
         address _strategy,
         uint256 _depositAmt
     ) external validStrategy(strategy) {
+        if (_depositAmt == 0) revert ZeroAmount();
+        if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
             IERC20(_asset).approve(instadapp, _depositAmt);
             IInstadappLite(instadapp).deposit(_depositAmt, msg.sender);
@@ -225,23 +235,32 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
             IERC20(_asset).approve(lybraFinance, _depositAmt);
             ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);
         } else if (_strategy == eigenLayer) {
-            deposit(EndRequest(address(this),_asset,_depositAmt));
+            deposit(EndRequest(address(this), _asset, _depositAmt));
         }
     }
 
+    /**
+     * @notice function to deposit available funds to strategies.
+     * @param _asset address of underlying staked asset e.g: stETH
+     * @param _strategy address of the strategy from which admin wish to withdraw,
+     * @param _withdrawAmt amount of stETH admin wants to withdraw from the strategy.
+     */
     function withdrawFromStrategy(
         address _asset,
         address _strategy,
         uint256 _withdrawAmt
     ) external validStrategy(strategy) {
+        if (_withdrawAmt == 0) revert ZeroAmount();
+        if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
             IERC20(_asset).approve(instadapp, _withdrawAmt);
             IInstadappLite(instadapp).withdraw(_asset, address(this), address(this));
         } else if (_strategy == lybraFinance) {
             IERC20(_asset).approve(lybraFinance, _withdrawAmt);
-            ILybraFinance(lybraFinance).withdraw(address(this),_withdrawAmt);
-        } 
+            ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
+        }
     }
+
     /**
      * @notice Withdraw function
      * @param param Withdraw parameter
