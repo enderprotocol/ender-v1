@@ -6,11 +6,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+import "./strategy/eigenlayer/EnderELStrategy.sol";
+
 // Interfaces
 import "./interfaces/IEndToken.sol";
 import "./interfaces/IEnderOracle.sol";
 import "./interfaces/IEnderStrategy.sol";
 import "./interfaces/IEnderTreasury.sol";
+import "./interfaces/IInstadappLite.sol";
 
 error NotAllowed();
 error ZeroAddress();
@@ -19,9 +22,8 @@ error InvalidStrategy();
 error InvalidRequest();
 error InvalidBaseRate();
 
-contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
+contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
-
     mapping(address => FundInfo) internal fundsInfo;
     struct FundInfo {
         uint256 availableFunds;
@@ -33,6 +35,10 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
     address private endToken;
     address private enderBond;
     address private enderDepositor;
+    address public instadapp;
+    address public lybraFinance;
+    address public eigenLayer;
+    address public stEthELS;
     IEnderOracle private enderOracle;
 
     uint256 public bondYieldBaseRate;
@@ -52,9 +58,19 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
      * @param _endToken  Address of END token contract
      * @param _bond  Address of Ender bond contract
      */
-    function initialize(address _endToken, address _bond) external initializer {
+    function initialize(
+        address _endToken,
+        address _bond,
+        address _instadapp,
+        address _lybraFinance,
+        address _eigenLayer,
+        address _stEthELS
+    ) external initializer {
         __Ownable_init();
-
+        stEthELS = _stEthELS;
+        instadapp = _instadapp;
+        lybraFinance = _lybraFinance;
+        eigenLayer = _eigenLayer;
         setAddress(_bond, AddressType.ENDBOND);
         setAddress(_endToken, AddressType.ENDTOKEN);
         setBondYieldBaseRate(300);
@@ -173,30 +189,59 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
         } else IERC20(_token).transfer(_account, _amount);
     }
 
+    // function depositInStrategy(
+    //     address stakingToken,
+    //     address strategy,
+    //     uint256 reserve,
+    //     uint256 depositAmt
+    // ) external validStrategy(strategy) {
+    //     if (msg.sender != enderDepositor) revert NotAllowed();
+
+    //     FundInfo storage fundItem = fundsInfo[stakingToken];
+    //     if (reserve + depositAmt > fundItem.availableFunds) revert InvalidRequest();
+
+    //     unchecked {
+    //         fundItem.availableFunds -= reserve + depositAmt;
+    //         fundItem.reserveFunds += reserve;
+    //         fundItem.depositFunds += depositAmt;
+    //     }
+
+    //     // transfer tokens first
+    //     _transferFunds(strategy, stakingToken, depositAmt);
+
+    //     // do deposit
+    //     IEnderStrategy(strategy).deposit(EndRequest(address(0), stakingToken, depositAmt));
+    // }
+
     function depositInStrategy(
-        address stakingToken,
-        address strategy,
-        uint256 reserve,
-        uint256 depositAmt
+        address _asset,
+        address _strategy,
+        uint256 _depositAmt
     ) external validStrategy(strategy) {
-        if (msg.sender != enderDepositor) revert NotAllowed();
-
-        FundInfo storage fundItem = fundsInfo[stakingToken];
-        if (reserve + depositAmt > fundItem.availableFunds) revert InvalidRequest();
-
-        unchecked {
-            fundItem.availableFunds -= reserve + depositAmt;
-            fundItem.reserveFunds += reserve;
-            fundItem.depositFunds += depositAmt;
+        if (_strategy == instadapp) {
+            IERC20(_asset).approve(instadapp, _depositAmt);
+            IInstadappLite(instadapp).deposit(_depositAmt, msg.sender);
+        } else if (_strategy == lybraFinance) {
+            IERC20(_asset).approve(lybraFinance, _depositAmt);
+            ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);
+        } else if (_strategy == eigenLayer) {
+            deposit(EndRequest(address(this),_asset,_depositAmt));
         }
-
-        // transfer tokens first
-        _transferFunds(strategy, stakingToken, depositAmt);
-
-        // do deposit
-        IEnderStrategy(strategy).deposit(EndRequest(address(0), stakingToken, depositAmt));
     }
 
+    function withdrawFromStrategy(
+        address _asset,
+        address _strategy,
+        uint256 _withdrawAmt
+    ) external validStrategy(strategy) {
+        if (_strategy == instadapp) {
+            IERC20(_asset).approve(instadapp, _withdrawAmt);
+            IInstadappLite(instadapp).withdraw(_asset, address(this), address(this));
+        } else if (_strategy == lybraFinance) {
+            IERC20(_asset).approve(lybraFinance, _withdrawAmt);
+            ILybraFinance(lybraFinance).withdraw(address(this),_withdrawAmt);
+        } 
+    }
     /**
      * @notice Withdraw function
      * @param param Withdraw parameter
@@ -220,7 +265,7 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable {
         IERC20(endToken).transfer(account, amount);
     }
 
-    function mintEndRewToUser(address _to, uint256 _amount)external{}
+    function mintEndRewToUser(address _to, uint256 _amount) external {}
 
     receive() external payable {}
 }
