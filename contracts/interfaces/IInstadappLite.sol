@@ -5,7 +5,7 @@ interface IInstadappLite{
     function deposit(
         uint256 assets_,
         address receiver_
-    ) external returns (uint256 shares_) {}
+    ) external returns (uint256 shares_);
     function withdraw(uint256 assets_,address receiver_,address owner_) external;
 }
 

@@ -16,14 +16,14 @@ abstract contract BaseStrategy is IEnderStrategy, Initializable, OwnableUpgradea
     address public treasury;
     address public strategy;
 
-    event AddressUpdated(address indexed newAddr, AddressType addrType);
+    event AddressUpdated(address indexed newAddr, AddressTypeBase addrType);
 
     modifier onlyTreasury() {
         if (msg.sender != treasury) revert NotTreasury();
         _;
     }
 
-    enum AddressType {
+    enum AddressTypeBase {
         ENDTREASURY,
         STRATEGY
     }
@@ -34,8 +34,8 @@ abstract contract BaseStrategy is IEnderStrategy, Initializable, OwnableUpgradea
     function initialize(address _treasury, address _strategy) external initializer {
         __Ownable_init();
 
-        setAddress(_strategy, AddressType.STRATEGY);
-        setAddress(_treasury, AddressType.ENDTREASURY);
+        setAddressBase(_strategy, AddressTypeBase.STRATEGY);
+        setAddressBase(_treasury, AddressTypeBase.ENDTREASURY);
     }
 
     /**
@@ -43,10 +43,10 @@ abstract contract BaseStrategy is IEnderStrategy, Initializable, OwnableUpgradea
      * @param _addr The new address
      * @param _type  Address type
      */
-    function setAddress(address _addr, AddressType _type) public onlyOwner {
+    function setAddressBase(address _addr, AddressTypeBase _type) public onlyOwner {
         if (_addr == address(0)) revert ZeroAddress();
 
-        if (_type == AddressType.ENDTREASURY) treasury = _addr;
+        if (_type == AddressTypeBase.ENDTREASURY) treasury = _addr;
         else strategy = _addr;
 
         emit AddressUpdated(_addr, _type);
@@ -60,5 +60,5 @@ abstract contract BaseStrategy is IEnderStrategy, Initializable, OwnableUpgradea
         return false;
     }
 
-    receive() external payable {}
+    receive() external virtual payable {}
 }

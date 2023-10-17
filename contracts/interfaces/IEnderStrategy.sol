@@ -6,7 +6,7 @@ import "./IEnderBase.sol";
 interface IEnderStrategy is IEnderBase {
     function deposit(EndRequest memory) external returns (uint256);
 
-    function withdraw(EndRequest memory) external returns (uint256);
+    function withdrawStEth(EndRequest memory) external returns (uint256);
 
     function withdrawRequest(EndRequest memory) external;
 

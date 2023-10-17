@@ -14,9 +14,10 @@ import "./interfaces/IEnderOracle.sol";
 import "./interfaces/IEnderStrategy.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/IInstadappLite.sol";
+import "./interfaces/ILybraFinance.sol";
 
 error NotAllowed();
-error ZeroAddress();
+// error ZeroAddress();
 error TransferFailed();
 error InvalidStrategy();
 error InvalidRequest();
@@ -254,7 +255,7 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
             IERC20(_asset).approve(instadapp, _withdrawAmt);
-            IInstadappLite(instadapp).withdraw(_asset, address(this), address(this));
+            IInstadappLite(instadapp).withdraw(_withdrawAmt, address(this), address(this));
         } else if (_strategy == lybraFinance) {
             IERC20(_asset).approve(lybraFinance, _withdrawAmt);
             ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
@@ -286,5 +287,5 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
 
     function mintEndRewToUser(address _to, uint256 _amount) external {}
 
-    receive() external payable {}
+    receive() external payable virtual override {}
 }
