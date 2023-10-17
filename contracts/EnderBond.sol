@@ -12,6 +12,7 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import "./interfaces/IBondNFT.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/IEnderOracle.sol";
+import "./interfaces/ISEndToken.sol";
 
 error BondAlreadyWithdrawn();
 error BondNotMatured();
@@ -40,12 +41,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     mapping(uint256 => uint256) public pendingRefractionReward;
     mapping(uint256 => uint256) public rewardSharePerUser;
+    mapping(uint256 => uint256) public rewardSharePerUserStaking;
     mapping(uint256 => uint256) public userDeposit;
 
     mapping(uint256 => uint256) public userBondPrincipalAmount;
     mapping(uint256 => uint256) public userBondYieldShare; //s0
 
     uint256 rewardShare;
+    uint256 rewardShareStaking;
     uint256 totalRewardPriciple;
     uint256 rateOfChange;
     uint256 totalDeposit;
@@ -59,6 +62,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     address private endSignature;
     address private endToken;
+    address private sEndToken;
     IBondNFT private bondNFT;
     IEnderTreasury private endTreasury;
     IEnderOracle private enderOracle;
@@ -252,7 +256,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // update current bond
         bond.withdrawn = true;
 
-        if (_maturity == 0){
+        if (_maturity == 0) {
             endTreasury.withdraw(
                 IEnderBase.EndRequest(
                     msg.sender,
@@ -261,10 +265,9 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
                 )
             ); // is a rebond
             uint256 reward = getRewardAmount(_tokenId);
-            endTreasury.mintEndRewToUser(msg.sender,reward);
+            endTreasury.mintEndRewToUser(msg.sender, reward);
         }
-            // not a rebond
-            
+        // not a rebond
         else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee, true);
     }
 
@@ -281,6 +284,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         emit Withdraw(msg.sender, tokenId);
     }
+
+    // function withdrawStakingRewards()
 
     /**
      * @notice Function to return the collectable amount
@@ -376,6 +381,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         rewardShare = rewardShare + (_reward / totalRewardPriciple);
     }
 
+    function setRewardShareForSend(uint256 _reward, uint256 _totalPrinciple) public {
+        rewardShareStaking = rewardShareStaking + (_reward / _totalPrinciple);
+    }
+
     function getPendingReward(
         uint _principle,
         uint256 _maturity,
@@ -385,6 +394,34 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
         rewardPrinciple = _principle * avgRefractionIndex;
         pendingReward = rewardPrinciple * (rewardShare - rewardSharePerUser[_tokenId]);
+    }
+
+    function getPendingRewardSend(
+        uint _principle,
+        uint256 _maturity,
+        uint256 _tokenId
+    ) public view returns (uint256 pendingRewardSend, uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
+        if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
+
+        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
+        rewardPrincipleSend = _principle * avgRefractionIndex;
+        pendingRewardSend = rewardPrincipleSend * (rewardPrincipleSend - rewardSharePerUserStaking[_tokenId]);
+    }
+
+    function claimRewardSend(uint256 _tokenId) public {
+        if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
+        Bond memory temp = bonds[_tokenId];
+
+        (uint256 pendingReward, , uint rewardPrinciple) = getPendingRewardSend(temp.principal, temp.maturity, _tokenId);
+
+        uint sEndTokenReward = pendingReward +
+            (rewardPrinciple * (rewardShareStaking - rewardSharePerUserStaking[_tokenId]));
+
+        if (sEndTokenReward > 0) {
+            IERC20(endToken).transfer(msg.sender, sEndTokenReward);
+
+            ISEndToken(sEndToken).burn(msg.sender, sEndTokenReward);
+        }
     }
 
     function claimRewards(uint256 _tokenId) public {
