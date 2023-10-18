@@ -6,14 +6,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MyToken is ERC20, Ownable {
     bool enableOrDisableTX;
-    StatusType status;
+    uint256 status;
     mapping(address => bool) public isWhitelisted;
-
-    enum StatusType {
-        FIRST,
-        SECOND,
-        THIRD
-    }
 
     error NotOwner();
     error NotWhitelisted();
@@ -22,29 +16,29 @@ contract MyToken is ERC20, Ownable {
     event WhiteListChanged(address indexed _whitelistingAddress, bool indexed _action);
 
     constructor() ERC20("Ender", "END") Ownable() {
-        status = StatusType.FIRST;
+        status = 1;
         enableOrDisableTX = false;
         _mint(msg.sender, 100000000000 * decimals());
     }
 
     function verifyStatus() internal {
-        if (status == StatusType.FIRST) {
+        if (status == 1) {
             revert TransactionDisabled();
-        } else if (status == StatusType.SECOND) {
+        } else if (status == 2) {
             if (!isWhitelisted[msg.sender]) revert TransactionDisabled();
-        } else if (status == StatusType.THIRD) {
-            if (!enableOrDisableTX) revert TransactionDisabled();
+        } else if (status == 3) {
+            //-----
         }
     }
 
-    function setStatus(StatusType _status) public {
+    function setStatus(uint256 _status) public {
         if (msg.sender != owner()) {
             revert NotOwner();
         }
         status = _status;
     }
 
-    function getStatus() external view returns (StatusType) {
+    function getStatus() external view returns (uint256) {
         return status;
     }
 
