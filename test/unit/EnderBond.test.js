@@ -95,4 +95,7 @@ describe("EnderBond", function () {
       expect(await enderBond.bondableTokens(endTokenAddress)).to.equal(false);
     });
   });
+
+
+  
 });
