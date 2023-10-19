@@ -25,7 +25,7 @@ error InvalidRequest();
 error InvalidBaseRate();
 error ZeroAmount();
 
-contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, EnderELStrategy {
+contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
     mapping(address => FundInfo) internal fundsInfo;
     struct FundInfo {
@@ -46,6 +46,7 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
 
     uint256 public bondYieldBaseRate;
     uint256 public balanceLastEpoch;
+    uint256 public nominalYield;
     // uint256 public totalDeposit
 
     event AddressUpdated(address indexed newAddr, AddressType addrType);
@@ -143,6 +144,10 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
         }
     }
 
+    function setNominalYield(uint256 _nominalYield) public onlyOwner {
+        nominalYield = _nominalYield;
+    }
+
     function getInterest(uint256 maturity) public view returns (uint256 rate) {
         unchecked {
             if (maturity > 180) rate = ((maturity - 180) * 15) / 180 + (bondYieldBaseRate + 30);
@@ -169,24 +174,21 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
      */
     function deposit(
         bool rebond,
-        uint256 maturity,
-        uint256 bondFee,
+        uint256 _tokenId,
+        // uint256 maturity,
+        // uint256 bondFee,
         EndRequest memory param
-    ) external onlyBond returns (uint256 mintAmt) {
+    ) external onlyBond returns (uint256 rebaseReward) {
         unchecked {
             // update available info
             if (!rebond) fundsInfo[param.stakingToken].availableFunds += param.tokenAmt;
-            // IEnderBond(enderBond).calculateBondRewardAmount();
-            // (uint256 price, uint8 decimal) = enderOracle.getPrice(param.stakingToken);
-            // uint8 tokenDecimal = param.stakingToken == address(0) ? 18 : IPriceFeed(param.stakingToken).decimals();
+            uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
+            uint256 depositReturn = calculateDepositReturn(param.stakingToken);
 
-            // uint256 rate = getInterest(maturity) * getYieldMultiplier(bondFee);
-            // mintAmt = price * param.tokenAmt * rate;
-            // // set decimal as 9
-            // mintAmt = (mintAmt * 1e9) / (10 ** (6 + tokenDecimal + decimal));
+            rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
 
             // mint END token
-            if (mintAmt != 0) IEndToken(endToken).mint(address(this), mintAmt);
+            if (rebaseReward != 0) IEndToken(endToken).mint(address(this), rebaseReward);
         }
     }
 
@@ -287,7 +289,10 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
         IERC20(endToken).transfer(account, amount);
     }
 
-    function mintEndRewToUser(address _to, uint256 _amount) external {}
+    function mintEndRewToUser(address _to, uint256 _amount) external {
+        ///just return for temp  should changethe
+        IERC20(endToken).transfer(_to, _amount);
+    }
 
     /**
      * @dev Calculates the total return for a given asset.

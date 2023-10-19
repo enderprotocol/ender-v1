@@ -201,7 +201,11 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         tokenId = _deposit(principal, maturity, token, bondFee, false);
         userDeposit[tokenId] += principal;
-        (uint256 pendingReward, uint256 avgRefractionIndex, ) = calculateBondPendingReward(principal, maturity, tokenId);
+        (uint256 pendingReward, uint256 avgRefractionIndex, ) = calculateBondPendingReward(
+            principal,
+            maturity,
+            tokenId
+        );
         pendingRefractionReward[tokenId] += pendingReward;
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
         totalDeposit += principal;
@@ -222,17 +226,11 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     ) private returns (uint256 _tokenId) {
         if (_rebond && _bondFee > 0) _principal = (_principal * (100 - _bondFee)) / 100;
 
-        // deposit
-        uint256 endAmt = endTreasury.deposit(
-            _rebond,
-            _maturity,
-            _bondFee,
-            IEnderBase.EndRequest(msg.sender, _token, _principal)
-        );
-
         // mint bond nft
         _tokenId = bondNFT.mint(msg.sender);
 
+        // deposit
+        uint256 endAmt = endTreasury.deposit(_rebond, _tokenId, IEnderBase.EndRequest(msg.sender, _token, _principal));
         unchecked {
             _maturity = _maturity * 1 days;
         }
