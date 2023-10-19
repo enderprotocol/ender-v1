@@ -15,6 +15,7 @@ import "./interfaces/IEnderStrategy.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/IInstadappLite.sol";
 import "./interfaces/ILybraFinance.sol";
+import "./interfaces/IEnderBond.sol";
 
 error NotAllowed();
 // error ZeroAddress();
@@ -175,7 +176,7 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
         unchecked {
             // update available info
             if (!rebond) fundsInfo[param.stakingToken].availableFunds += param.tokenAmt;
-
+            // IEnderBond(enderBond).calculateBondRewardAmount();
             // (uint256 price, uint8 decimal) = enderOracle.getPrice(param.stakingToken);
             // uint8 tokenDecimal = param.stakingToken == address(0) ? 18 : IPriceFeed(param.stakingToken).decimals();
 
