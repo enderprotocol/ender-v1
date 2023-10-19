@@ -67,6 +67,11 @@ contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         _mint(to, newTokenId);
     }
 
+    //  function burn(uint256 _tokenId) external onlyBond  {
+
+    //     _burn(_tokenId);
+    // }
+
     /**
      * @notice Sets the base URI.
      * @dev Only the contract owner can set the base URI.

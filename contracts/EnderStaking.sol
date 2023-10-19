@@ -100,7 +100,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
         // transfer tokens
         IERC20(endToken).transferFrom(msg.sender, address(this), amount);
-        uint256 sEndAmount = calculateSEndTOkens(amount);
+        uint256 sEndAmount = calculateSEndTokens(amount);
         userSEndToken[msg.sender] += sEndAmount;
 
         ISEndToken(sEndToken).mint(address(this), sEndAmount);
@@ -169,7 +169,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     //     }
     // }
 
-    function calculateSEndTOkens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
+    function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
         uint256 rebasingIndex = calculateRebaseIndex();
         sEndTokens = _endAmount / rebasingIndex;
     }

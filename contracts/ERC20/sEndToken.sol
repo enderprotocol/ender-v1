@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MyToken is ERC20, Ownable {
     bool enableOrDisableTX;
-    uint256 status;
+    uint256 public status;
     mapping(address => bool) public isWhitelisted;
 
     error NotOwner();
@@ -17,11 +17,11 @@ contract MyToken is ERC20, Ownable {
 
     constructor() ERC20("Ender", "END") Ownable() {
         status = 1;
-        enableOrDisableTX = false;
+        // enableOrDisableTX = false;
         _mint(msg.sender, 100000000000 * decimals());
     }
 
-    function verifyStatus() internal {
+    function verifyStatus() internal view {
         if (status == 1) {
             revert TransactionDisabled();
         } else if (status == 2) {
@@ -36,10 +36,6 @@ contract MyToken is ERC20, Ownable {
             revert NotOwner();
         }
         status = _status;
-    }
-
-    function getStatus() external view returns (uint256) {
-        return status;
     }
 
     function _transfer(address from, address to, uint256 value) internal override {
