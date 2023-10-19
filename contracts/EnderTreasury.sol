@@ -40,10 +40,12 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
     address public instadapp;
     address public lybraFinance;
     address public eigenLayer;
-    address public stEthELS;
+    // address public stEthELS;
     IEnderOracle private enderOracle;
 
     uint256 public bondYieldBaseRate;
+    uint256 public balanceLastEpoch;
+    // uint256 public totalDeposit
 
     event AddressUpdated(address indexed newAddr, AddressType addrType);
     event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
@@ -65,11 +67,14 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
         address _bond,
         address _instadapp,
         address _lybraFinance,
-        address _eigenLayer,
-        address _stEthELS
-    ) external initializer {
+        address _eigenLayer
+    )
+        external
+        // address _stEthELS
+        initializer
+    {
         __Ownable_init();
-        stEthELS = _stEthELS;
+        // stEthELS = _stEthELS;
         instadapp = _instadapp;
         lybraFinance = _lybraFinance;
         eigenLayer = _eigenLayer;
@@ -171,13 +176,13 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
             // update available info
             if (!rebond) fundsInfo[param.stakingToken].availableFunds += param.tokenAmt;
 
-            (uint256 price, uint8 decimal) = enderOracle.getPrice(param.stakingToken);
-            uint8 tokenDecimal = param.stakingToken == address(0) ? 18 : IPriceFeed(param.stakingToken).decimals();
+            // (uint256 price, uint8 decimal) = enderOracle.getPrice(param.stakingToken);
+            // uint8 tokenDecimal = param.stakingToken == address(0) ? 18 : IPriceFeed(param.stakingToken).decimals();
 
-            uint256 rate = getInterest(maturity) * getYieldMultiplier(bondFee);
-            mintAmt = price * param.tokenAmt * rate;
-            // set decimal as 9
-            mintAmt = (mintAmt * 1e9) / (10 ** (6 + tokenDecimal + decimal));
+            // uint256 rate = getInterest(maturity) * getYieldMultiplier(bondFee);
+            // mintAmt = price * param.tokenAmt * rate;
+            // // set decimal as 9
+            // mintAmt = (mintAmt * 1e9) / (10 ** (6 + tokenDecimal + decimal));
 
             // mint END token
             if (mintAmt != 0) IEndToken(endToken).mint(address(this), mintAmt);
@@ -222,11 +227,7 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
      * @param _depositAmt amount of stETH admin wants to deposit to the strategy.
      */
 
-    function depositInStrategy(
-        address _asset,
-        address _strategy,
-        uint256 _depositAmt
-    ) external validStrategy(strategy) {
+    function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
         if (_depositAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
@@ -286,6 +287,38 @@ contract EnderTreasury is IEnderTreasury, Initializable, OwnableUpgradeable, End
     }
 
     function mintEndRewToUser(address _to, uint256 _amount) external {}
+
+    /**
+     * @dev Calculates the total return for a given asset.
+     * @param _stEthAddress The address of the asset (e.g., stETH token).
+     * @return totalReturn The total return, which is the change in asset balance.
+     */
+    function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
+        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) - balanceLastEpoch;
+    }
+
+    /**
+     * @dev Records the results of an epoch, including the deposit into a strategy.
+     * @param _stEthAddress The address of the asset (e.g., stETH token).
+     * @param _strategy The address of the strategy to deposit the total return.
+     */
+    function recordEpochResults(address _stEthAddress, address _strategy) public {
+        uint256 totalReturn = calculateTotalReturn(_stEthAddress);
+        depositInStrategy(_stEthAddress, _strategy, totalReturn);
+
+        balanceLastEpoch = IERC20(_stEthAddress).balanceOf(address(this));
+    }
+
+    /**
+     * @dev Calculates the deposit return based on the total return and available funds.
+     * @param _stEthAddress The address of the asset (e.g., stETH token).
+     * @return depositReturn The deposit return as a fraction of available funds.
+     */
+
+    function calculateDepositReturn(address _stEthAddress) public view returns (uint256 depositReturn) {
+        uint256 totalReturn = calculateTotalReturn(_stEthAddress);
+        depositReturn = totalReturn * (fundsInfo[_stEthAddress].availableFunds / balanceLastEpoch);
+    }
 
     receive() external payable virtual override {}
 }
