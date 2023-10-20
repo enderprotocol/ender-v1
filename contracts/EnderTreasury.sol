@@ -30,6 +30,8 @@ error NotEnoughAvailableFunds();
 contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
     mapping(address => FundInfo) internal fundsInfo;
+    mapping(address => uint256) public totalAssetStakedInStrategy;
+    mapping(address => uint256) public totalRewardsFromStrategy;
     struct FundInfo {
         uint256 availableFunds;
         uint256 reserveFunds;
@@ -40,6 +42,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     address private endToken;
     address private enderBond;
     address private enderDepositor;
+    address public enderStaking;
     address public instadapp;
     address public lybraFinance;
     address public eigenLayer;
@@ -51,6 +54,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public nominalYield;
     uint256 public availableFundsPercentage;
     uint256 public reserveFundsPercentage;
+    // uint256 public totalEthStakedInStrategy;
     // uint256 public totalDeposit
 
     event AddressUpdated(address indexed newAddr, AddressType addrType);
@@ -70,6 +74,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      */
     function initialize(
         address _endToken,
+        address _enderStaking,
         address _bond,
         address _instadapp,
         address _lybraFinance,
@@ -83,6 +88,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     {
         __Ownable_init();
         // stEthELS = _stEthELS;
+        enderStaking = _enderStaking;
         instadapp = _instadapp;
         lybraFinance = _lybraFinance;
         eigenLayer = _eigenLayer;
@@ -215,6 +221,14 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
     }
 
+    function getStakingReward(address _asset) public {
+        uint256 reward = totalAssetStakedInStrategy[_asset] +
+            totalRewardsFromStrategy[_asset] +
+            IERC20(_asset).balanceOf(address(this)) -
+            (fundsInfo[_asset].availableFunds + fundsInfo[_asset].reserveFunds);
+        IEndToken(_asset).mint(enderStaking,reward); 
+    }   
+
     /**
      * @notice function to deposit available funds to strategies.
      * @param _asset address of underlying staked asset e.g: stETH
@@ -234,6 +248,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         } else if (_strategy == eigenLayer) {
             deposit(EndRequest(address(this), _asset, _depositAmt));
         }
+        totalAssetStakedInStrategy[_asset] += _depositAmt;
     }
 
     /**
@@ -249,12 +264,17 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     ) public validStrategy(strategy) returns (uint256 _returnAmount) {
         if (_withdrawAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
+        uint256 balBef = totalRewardsFromStrategy[_asset];
         if (_strategy == instadapp) {
             IERC20(_asset).approve(instadapp, _withdrawAmt);
             _returnAmount = IInstadappLite(instadapp).withdraw(_withdrawAmt, address(this), address(this));
         } else if (_strategy == lybraFinance) {
             IERC20(_asset).approve(lybraFinance, _withdrawAmt);
             _returnAmount = ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
+        }
+        uint256 balAfter = IERC20(_asset).balanceOf(address(this));
+        if (balAfter > balBef) {
+            totalRewardsFromStrategy[_asset] += balAfter - balBef;
         }
     }
 

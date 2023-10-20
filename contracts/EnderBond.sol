@@ -47,6 +47,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     mapping(uint256 => uint256) public userBondPrincipalAmount;
     mapping(uint256 => uint256) public userBondYieldShareIndex; //s0
+    mapping(uint256 => uint256) public availableFundsAtMaturity;
 
     uint256 rewardShareIndex;
     uint256 rewardShareIndexSend;
@@ -189,6 +190,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee < 0 || bondFee > 100) revert InvalidBondFee();
         if (!bondFeeEnabled && bondFee > 0 && bondFee <= 100) revert BondFeeDisabled();
+        availableFundsAtMaturity[(block.timestamp%10000)+maturity] += principal;
 
         // token transfer
         if (token == address(0)) {

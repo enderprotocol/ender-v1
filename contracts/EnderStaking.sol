@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./interfaces/IEndToken.sol";
-
+import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/ISEndToken.sol";
 
 error ZeroAddress();
@@ -170,8 +170,8 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     //     }
     // }
 
-    function getRebaseRewards() external {
-        IEnderTreasury(enderTreasury).stakeRebasingReward()
+    function getStakingReward(address _asset) external {
+        IEnderTreasury(enderTreasury).getStakingReward(_asset);
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
