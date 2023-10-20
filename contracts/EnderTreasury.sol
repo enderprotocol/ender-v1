@@ -57,15 +57,15 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     // uint256 public totalEthStakedInStrategy;
     // uint256 public totalDeposit
 
-    event AddressUpdated(address indexed newAddr, AddressType addrType);
+    event AddressUpdated(address indexed newAddr, uint256 addrType);
     event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
 
-    enum AddressType {
-        ENDBOND,
-        ENDTOKEN,
-        ENDORACLE,
-        DEPOSITOR
-    }
+    // enum AddressType {
+    //     ENDBOND,
+    //     ENDTOKEN,
+    //     ENDORACLE,
+    //     DEPOSITOR
+    // }
 
     /**
      * @notice Initialize the contract and set the END token address
@@ -95,8 +95,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         availableFundsPercentage = _availableFundsPercentage;
         reserveFundsPercentage = _reserveFundsPercentage;
         if (availableFundsPercentage + _reserveFundsPercentage != 100) revert InvalidRatio();
-        setAddress(_bond, AddressType.ENDBOND);
-        setAddress(_endToken, AddressType.ENDTOKEN);
+        setAddress(_endToken, 1);
+        setAddress(_bond, 2);
         setBondYieldBaseRate(300);
     }
 
@@ -115,13 +115,13 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param _addr The new address
      * @param _type  Address type
      */
-    function setAddress(address _addr, AddressType _type) public onlyOwner {
+    function setAddress(address _addr, uint256 _type) public onlyOwner {
         if (_addr == address(0)) revert ZeroAddress();
 
-        if (_type == AddressType.ENDTOKEN) endToken = _addr;
-        else if (_type == AddressType.ENDBOND) enderBond = _addr;
-        else if (_type == AddressType.DEPOSITOR) enderDepositor = _addr;
-        else if (_type == AddressType.ENDORACLE) enderOracle = IEnderOracle(_addr);
+        if (_type == 1) endToken = _addr;
+        else if (_type == 2) enderBond = _addr;
+        else if (_type == 3) enderDepositor = _addr;
+        else if (_type == 4) enderOracle = IEnderOracle(_addr);
 
         emit AddressUpdated(_addr, _type);
     }
@@ -138,11 +138,11 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         emit BondYieldBaseRateUpdated(_newBaseRate);
     }
 
-    function getAddress(AddressType _type) external view returns (address addr) {
-        if (_type == AddressType.ENDTOKEN) addr = endToken;
-        else if (_type == AddressType.ENDBOND) addr = enderBond;
-        else if (_type == AddressType.DEPOSITOR) addr = enderDepositor;
-        else if (_type == AddressType.ENDORACLE) addr = address(enderOracle);
+    function getAddress(uint256 _type) external view returns (address addr) {
+        if (_type == 1) addr = endToken;
+        else if (_type == 2) addr = enderBond;
+        else if (_type == 3) addr = enderDepositor;
+        else if (_type == 4) addr = address(enderOracle);
     }
 
     /**
@@ -218,10 +218,17 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     function stakeRebasingReward(uint256 _tokenId, address _tokenAddress) public returns (uint256 rebaseReward) {
         uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
+        (uint256 ethPrice, ) = enderOracle.getPrice(address(0));
+        (uint256 priceEnd, ) = enderOracle.getPrice(address(endToken));
+        depositReturn = ethPrice * depositReturn;
+        bondReturn = priceEnd * bondReturn;
+
         rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
+
+        rebaseReward = rebaseReward / priceEnd;
     }
 
-    function getStakingReward(address _asset) public returns(uint256 mintAmount){
+    function getStakingReward(address _asset) public returns (uint256 mintAmount) {
         uint256 depositReturn = totalAssetStakedInStrategy[_asset] +
             totalRewardsFromStrategy[_asset] +
             IERC20(_asset).balanceOf(address(this)) -

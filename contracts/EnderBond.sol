@@ -73,12 +73,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     bool public bondFeeEnabled; // status of bond-fee feature (enabled/disabled)
 
-    enum AddressType {
-        TREASURY,
-        ENDTOKEN,
-        BONDNFT,
-        SIGNATURE
-    }
+    // enum AddressType {
+    //     TREASURY,
+    //     ENDTOKEN,
+    //     BONDNFT,
+    //     SIGNATURE
+    // }
 
     struct Bond {
         bool withdrawn; // The withdrawn status of the bond
@@ -90,7 +90,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 bondFee; // bond fee self-set
     }
 
-    event AddressUpdated(address indexed addr, AddressType addrType);
+    event AddressUpdated(address indexed addr, uint256 addrType);
     event Deposit(address indexed user, uint256 tokenId);
     event Withdraw(address indexed user, uint256 tokenId);
     event Collect(address indexed user, uint256 tokenId, uint256 refraction, uint256 nonce);
@@ -108,8 +108,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         __EIP712_init("EnderBond", "1");
         rateOfChange = 100;
         lido = _lido;
-        setAddress(endToken_, AddressType.ENDTOKEN);
-        setAddress(signature_, AddressType.SIGNATURE);
+        setAddress(endToken_, 2);
+        setAddress(signature_, 4);
         setBondFeeEnabled(true);
     }
 
@@ -118,22 +118,22 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _addr  The address
      * @param _type  Type of updating address
      */
-    function setAddress(address _addr, AddressType _type) public onlyOwner {
+    function setAddress(address _addr, uint256 _type) public onlyOwner {
         if (_addr == address(0)) revert ZeroAddress();
 
-        if (_type == AddressType.TREASURY) endTreasury = IEnderTreasury(_addr);
-        else if (_type == AddressType.ENDTOKEN) endToken = _addr;
-        else if (_type == AddressType.BONDNFT) bondNFT = IBondNFT(_addr);
-        else if (_type == AddressType.SIGNATURE) endSignature = _addr;
+        if (_type == 1) endTreasury = IEnderTreasury(_addr);
+        else if (_type == 2) endToken = _addr;
+        else if (_type == 3) bondNFT = IBondNFT(_addr);
+        else if (_type == 4) endSignature = _addr;
 
         emit AddressUpdated(_addr, _type);
     }
 
-    function getAddress(AddressType _type) external view returns (address addr) {
-        if (_type == AddressType.TREASURY) addr = address(endTreasury);
-        else if (_type == AddressType.ENDTOKEN) addr = endToken;
-        else if (_type == AddressType.BONDNFT) addr = address(bondNFT);
-        else if (_type == AddressType.SIGNATURE) addr = endSignature;
+    function getAddress(uint256 _type) external view returns (address addr) {
+        if (_type == 1) addr = address(endTreasury);
+        else if (_type == 2) addr = endToken;
+        else if (_type == 3) addr = address(bondNFT);
+        else if (_type == 4) addr = endSignature;
     }
 
     /**
