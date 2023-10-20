@@ -286,21 +286,21 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     // function withdrawStakingRewards()
 
-    /**
-     * @notice Function to return the collectable amount
-     * @param tokenId  Token id of BondNFT
-     */
-    function collectable(uint256 tokenId) public view returns (uint256 amount) {
-        Bond storage bond = bonds[tokenId];
+    // /**
+    //  * @notice Function to return the collectable amount
+    //  * @param tokenId  Token id of BondNFT
+    //  */
+    // function collectable(uint256 tokenId) public view returns (uint256 amount) {
+    //     Bond storage bond = bonds[tokenId];
 
-        unchecked {
-            if (bond.startTime == 0) amount = 0;
-            else if (bond.startTime + bond.maturity <= block.timestamp) amount = bond.endAmt;
-            else {
-                amount = (bond.endAmt * (block.timestamp - bond.startTime)) / bond.maturity;
-            }
-        }
-    }
+    //     unchecked {
+    //         if (bond.startTime == 0) amount = 0;
+    //         else if (bond.startTime + bond.maturity <= block.timestamp) amount = bond.endAmt;
+    //         else {
+    //             amount = (bond.endAmt * (block.timestamp - bond.startTime)) / bond.maturity;
+    //         }
+    //     }
+    // }
 
     function _validateRefraction(
         uint256 _amount,
@@ -325,43 +325,43 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         return ECDSAUpgradeable.recover(digest, _signature) == endSignature;
     }
 
-    /**
-     * @notice Function to collect the bond reward in END token
-     * @param tokenId  Token id of BondNFT
-     * @param refraction Collectable refraction fee amount
-     * @param refraction User nonce
-     * @param signature Signature hash
-     */
-    function collect(
-        uint256 tokenId,
-        uint256 refraction,
-        uint256 deadline,
-        uint256 nonce,
-        bytes calldata signature
-    ) external nonReentrant returns (uint256 collectAmt) {
-        if (bondNFT.ownerOf(tokenId) != msg.sender) revert NotBondUser();
+    // /**
+    //  * @notice Function to collect the bond reward in END token
+    //  * @param tokenId  Token id of BondNFT
+    //  * @param refraction Collectable refraction fee amount
+    //  * @param refraction User nonce
+    //  * @param signature Signature hash
+    //  */
+    // function collect(
+    //     uint256 tokenId,
+    //     uint256 refraction,
+    //     uint256 deadline,
+    //     uint256 nonce,
+    //     bytes calldata signature
+    // ) external nonReentrant returns (uint256 collectAmt) {
+    //     if (bondNFT.ownerOf(tokenId) != msg.sender) revert NotBondUser();
 
-        // check refraction info
-        _validateRefraction(refraction, nonce, deadline, signature);
+    //     // check refraction info
+    //     _validateRefraction(refraction, nonce, deadline, signature);
 
-        collectAmt = collectable(tokenId);
-        if (collectAmt != 0) {
-            // update user bond info
-            unchecked {
-                bonds[tokenId].endAmt -= collectAmt;
+    //     collectAmt = collectable(tokenId);
+    //     if (collectAmt != 0) {
+    //         // update user bond info
+    //         unchecked {
+    //             bonds[tokenId].endAmt -= collectAmt;
 
-                // add refraction amount
-                if (refraction != 0) collectAmt += refraction;
+    //             // add refraction amount
+    //             if (refraction != 0) collectAmt += refraction;
 
-                userNonces[msg.sender] = nonce;
-            }
+    //             userNonces[msg.sender] = nonce;
+    //         }
 
-            // token transfer
-            endTreasury.collect(msg.sender, collectAmt);
-        }
+    //         // token transfer
+    //         endTreasury.collect(msg.sender, collectAmt);
+    //     }
 
-        emit Collect(msg.sender, tokenId, refraction, nonce);
-    }
+    //     emit Collect(msg.sender, tokenId, refraction, nonce);
+    // }
 
     /**
      * @notice Function to rebond
@@ -478,7 +478,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function updateBondYieldShareIndex() external {
         (uint256 price, uint8 decimal) = enderOracle.getPrice(address(0));
-        uint256 _endMint = price * totalBondPrincipalAmount * enderOracle.getPrice(address(endToken));
+        (uint256 priceEnd, ) = enderOracle.getPrice(address(endToken));
+        uint256 _endMint = price * totalBondPrincipalAmount * priceEnd;
         endMint += _endMint;
         bondYeildShareIndex = bondYeildShareIndex + (endMint / totalBondPrincipalAmount);
     }
