@@ -27,6 +27,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
     address public endToken;
     address public sEndToken;
+    address public enderTreasury;
 
     event PercentUpdated(uint256 percent);
     event AddressUpdated(address indexed addr);
@@ -39,9 +40,9 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      * @notice Initialize function
      * @param _end  address of END token contract
      */
-    function initialize(address _end, address _sEnd) external initializer {
+    function initialize(address _end, address _sEnd,address _enderTreasury) external initializer {
         __Ownable_init();
-
+        enderTreasury = _enderTreasury;
         setAddress(_end, _sEnd);
     }
 
@@ -168,6 +169,10 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     //         emit Harvest(msg.sender, pending);
     //     }
     // }
+
+    function getRebaseRewards() external {
+        IEnderTreasury(enderTreasury).stakeRebasingReward()
+    }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
         uint256 rebasingIndex = calculateRebaseIndex();

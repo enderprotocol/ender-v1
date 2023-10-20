@@ -178,17 +178,17 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         // uint256 maturity,
         // uint256 bondFee,
         EndRequest memory param
-    ) external onlyBond returns (uint256 rebaseReward) {
+    ) external onlyBond {
         unchecked {
             // update available info
             if (!rebond) fundsInfo[param.stakingToken].availableFunds += param.tokenAmt;
-            uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
-            uint256 depositReturn = calculateDepositReturn(param.stakingToken);
+            // uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
+            // uint256 depositReturn = calculateDepositReturn(param.stakingToken);
 
-            rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
+            // rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
 
             // mint END token
-            if (rebaseReward != 0) IEndToken(endToken).mint(address(this), rebaseReward);
+            // if (rebaseReward != 0) IEndToken(endToken).mint(address(this), rebaseReward);
         }
     }
 
@@ -197,6 +197,12 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             (bool success, ) = payable(_account).call{value: _amount}("");
             if (!success) revert TransferFailed();
         } else IERC20(_token).transfer(_account, _amount);
+    }
+
+    function stakeRebasingReward(uint256 _tokenId, address _tokenAddress) public returns (uint256 rebaseReward) {
+        uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
+        uint256 depositReturn = calculateDepositReturn(_tokenAddress);
+        rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
     }
 
     // function depositInStrategy(

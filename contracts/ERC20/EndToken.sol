@@ -9,6 +9,7 @@ import "../interfaces/IEndToken.sol";
 
 error ZeroAddress();
 error InvalidParam();
+error InvalidEarlyEpoch();
 
 /**
  * @title EndToken contract
@@ -26,6 +27,10 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     uint256 private lastTransfer;
 
+    uint256 public lastEpoch;
+
+    address public enderBond;
+
     // minter role hash
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -34,12 +39,13 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     event TreasuryContractChanged(address indexed newTreasury);
     event FeeUpdated(uint256 fee);
     event DayfeeUpdated(uint256 amount, uint256 updateTime);
+    event RefractionFeesDistributed(address indexed to, uint256 indexed amount);
 
     /**
      * @notice Initializes the EndToken contract
      * @param fee  Refraction fee
      */
-    function initialize(uint256 fee) external initializer {
+    function initialize(uint256 fee, address _bond) external initializer {
         __ERC20_init("End Token", "END");
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -50,6 +56,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         // add exclude wallets
         excludeWallets[address(this)] = true;
         excludeWallets[msg.sender] = true;
+        enderBond = _bond;
 
         unchecked {
             lastTransfer = block.timestamp - (block.timestamp % 1 days);
@@ -121,12 +128,21 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
                     } else todayAmount += fee;
                 }
 
-                super._transfer(from, treasury, fee);
+                super._transfer(from, address(this), fee);
 
                 refractionFeeTotal += fee;
             }
 
             super._transfer(from, to, amount - fee);
         }
+    }
+
+    function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
+        uint256 feesToTransfer = refractionFeeTotal;
+        refractionFeeTotal = 0;
+        lastEpoch = block.timestamp;
+        _transfer(address(this), enderBond, feesToTransfer);
+        emit RefractionFeesDistributed(enderBond, feesToTransfer);
     }
 }

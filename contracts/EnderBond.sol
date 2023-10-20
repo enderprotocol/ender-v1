@@ -13,6 +13,7 @@ import "./interfaces/IBondNFT.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/IEnderOracle.sol";
 import "./interfaces/ISEndToken.sol";
+import "./interfaces/ILido.sol";
 
 error BondAlreadyWithdrawn();
 error BondNotMatured();
@@ -63,6 +64,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     address private endSignature;
     address private endToken;
     address private sEndToken;
+    address public lido;
     IBondNFT private bondNFT;
     IEnderTreasury private endTreasury;
     IEnderOracle private enderOracle;
@@ -79,7 +81,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     struct Bond {
         bool withdrawn; // The withdrawn status of the bond
         uint256 principal; // The principal amount of the bond
-        uint256 endAmt; // The END token amount of deposit
+        // uint256 endAmt; // The END token amount of deposit
         uint256 startTime; // Timestamp of the bond
         uint256 maturity; // The maturity date of the bond
         address token; // The token used for the bond
@@ -99,10 +101,11 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param endToken_ The address of the END token
      * @param signature_ The valid signer address
      */
-    function initialize(address endToken_, address signature_) public initializer {
+    function initialize(address endToken_, address signature_, address _lido) public initializer {
         __Ownable_init();
         __EIP712_init("EnderBond", "1");
         rateOfChange = 100;
+        lido = _lido;
         setAddress(endToken_, AddressType.ENDTOKEN);
         setAddress(signature_, AddressType.SIGNATURE);
         setBondFeeEnabled(true);
@@ -190,10 +193,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount();
-
-            // send directly to the ender treasury
-            (bool success, ) = payable(address(endTreasury)).call{value: principal}("");
-            if (!success) revert InvalidAmount();
+            uint256 stEthAmount = ILido(lido).submit(address(0));
+            IERC20(token).transfer(address(endTreasury), stEthAmount);
         } else {
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
@@ -201,12 +202,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         tokenId = _deposit(principal, maturity, token, bondFee, false);
         userDeposit[tokenId] += principal;
-        (uint256 pendingReward, uint256 avgRefractionIndex, ) = calculateBondPendingReward(
-            principal,
-            maturity,
-            tokenId
-        );
-        pendingRefractionReward[tokenId] += pendingReward;
+        (uint256 avgRefractionIndex, ) = calculateRefractionReward(principal, maturity, tokenId);
+        // pendingRefractionReward[tokenId] += pendingReward;
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
         totalDeposit += principal;
         totalRewardPriciple += principal * avgRefractionIndex;
@@ -230,13 +227,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         _tokenId = bondNFT.mint(msg.sender);
 
         // deposit
-        uint256 endAmt = endTreasury.deposit(_rebond, _tokenId, IEnderBase.EndRequest(msg.sender, _token, _principal));
+        // uint256 endAmt = endTreasury.deposit(_rebond, _tokenId, IEnderBase.EndRequest(msg.sender, _token, _principal));
         unchecked {
             _maturity = _maturity * 1 days;
         }
-
         // save bond info
-        bonds[_tokenId] = Bond(false, _principal, endAmt, block.timestamp, _maturity, _token, _bondFee);
+        bonds[_tokenId] = Bond(false, _principal, block.timestamp, _maturity, _token, _bondFee);
     }
 
     /**
@@ -399,19 +395,18 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _principle The principle amount of the bond.
      * @param _maturity The maturity of the bond.
      * @param _tokenId The unique identifier of the bond.
-     * @return pendingReward The pending reward for the bond.
-     * @return avgRefractionIndex The average refraction index for the bond.
+=     * @return avgRefractionIndex The average refraction index for the bond.
      * @return rewardPrinciple The principle amount used in reward calculations.
      */
-    function calculateBondPendingReward(
+    function calculateRefractionData(
         uint _principle,
         uint256 _maturity,
         uint256 _tokenId
-    ) public view returns (uint256 pendingReward, uint256 avgRefractionIndex, uint256 rewardPrinciple) {
+    ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
+        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2 * 10000;
         rewardPrinciple = _principle * avgRefractionIndex;
-        pendingReward = rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]);
+        // pendingReward = rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]);
     }
 
     /**
@@ -429,7 +424,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _tokenId
     ) public view returns (uint256 pendingRewardSend, uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2;
+        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2 * 10000;
         rewardPrincipleSend = _principle * avgRefractionIndex;
         pendingRewardSend = rewardPrincipleSend * (rewardPrincipleSend - rewardSharePerUserIndexSend[_tokenId]);
     }
@@ -453,7 +448,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         if (sEndTokenReward > 0) {
             IERC20(endToken).transfer(msg.sender, sEndTokenReward);
-
             ISEndToken(sEndToken).burn(msg.sender, sEndTokenReward);
         }
     }
@@ -462,12 +456,13 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @dev Claims rewards for a bond based on a given `_tokenId`.
      * @param _tokenId The unique identifier of the bond.
      */
-    function claimBondRewards(uint256 _tokenId) public {
+    function claimRefractionRewards(uint256 _tokenId) public {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         if (userBondPrincipalAmount[_tokenId] > 0) revert NotBondUser();
+        
         Bond memory temp = bonds[_tokenId];
 
-        (uint256 pendingReward, , uint rewardPrinciple) = calculateBondPendingReward(
+        (,uint rewardPrinciple) = calculateRefractionData(
             temp.principal,
             temp.maturity,
             _tokenId
@@ -475,14 +470,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         IERC20(endToken).transfer(
             msg.sender,
-            pendingReward + (rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]))
+            (rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]))
         );
     }
 
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */
-    function updateETHPriceAndBondYieldShareIndex() external {
+    function updateBondYieldShareIndex() external {
         (uint256 price, uint8 decimal) = enderOracle.getPrice(address(0));
         uint256 _endMint = price * totalBondPrincipalAmount * (1);
         endMint += _endMint;
