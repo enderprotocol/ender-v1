@@ -202,7 +202,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         tokenId = _deposit(principal, maturity, token, bondFee, false);
         userDeposit[tokenId] += principal;
-        (uint256 avgRefractionIndex, ) = calculateRefractionReward(principal, maturity, tokenId);
+        (uint256 avgRefractionIndex, ) = calculateRefractionData(principal, maturity, tokenId);
         // pendingRefractionReward[tokenId] += pendingReward;
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
         totalDeposit += principal;
@@ -236,6 +236,20 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     }
 
     /**
+     * @notice Allows a bond holder to withdraw their funds once the bond has matured.
+     * @dev Checks if a bond exists for the sender,
+     *     If it has not already been withdrawn, and if it has matured.
+     *     If all checks pass, the bond is marked as withdrawn and the principal
+     *       plus interest is transferred to the sender.
+     * @param tokenId The ID of the token to be withdrawn.
+     */
+    function withdraw(uint256 tokenId) external nonReentrant {
+        _withdraw(tokenId, 0, 0);
+
+        emit Withdraw(msg.sender, tokenId);
+    }
+
+    /**
      * @notice Private function for withdraw and withdraw request
      * @param _tokenId Bond nft tokenid
      * @param _maturity Value of new maturity
@@ -260,25 +274,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             ); // is a rebond
             uint256 reward = calculateBondRewardAmount(_tokenId);
             endTreasury.mintEndRewToUser(msg.sender, reward);
+            claimRefractionRewards(tokenId);
             totalBondPrincipalAmount -= userBondPrincipalAmount[tokenId];
             userBondPrincipalAmount[tokenId] = 0;
         }
         // not a rebond
         else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee, true);
-    }
-
-    /**
-     * @notice Allows a bond holder to withdraw their funds once the bond has matured.
-     * @dev Checks if a bond exists for the sender,
-     *     If it has not already been withdrawn, and if it has matured.
-     *     If all checks pass, the bond is marked as withdrawn and the principal
-     *       plus interest is transferred to the sender.
-     * @param tokenId The ID of the token to be withdrawn.
-     */
-    function withdraw(uint256 tokenId) external nonReentrant {
-        _withdraw(tokenId, 0, 0);
-
-        emit Withdraw(msg.sender, tokenId);
     }
 
     // function withdrawStakingRewards()
@@ -404,7 +405,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _tokenId
     ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2 * 10000;
+        avgRefractionIndex = 1 + ((rateOfChange * (_maturity - 1)) / 2) * 10000;
         rewardPrinciple = _principle * avgRefractionIndex;
         // pendingReward = rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]);
     }
@@ -424,7 +425,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _tokenId
     ) public view returns (uint256 pendingRewardSend, uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)) / 2 * 10000;
+        avgRefractionIndex = 1 + ((rateOfChange * (_maturity - 1)) / 2) * 10000;
         rewardPrincipleSend = _principle * avgRefractionIndex;
         pendingRewardSend = rewardPrincipleSend * (rewardPrincipleSend - rewardSharePerUserIndexSend[_tokenId]);
     }
@@ -459,14 +460,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     function claimRefractionRewards(uint256 _tokenId) public {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         if (userBondPrincipalAmount[_tokenId] > 0) revert NotBondUser();
-        
+
         Bond memory temp = bonds[_tokenId];
 
-        (,uint rewardPrinciple) = calculateRefractionData(
-            temp.principal,
-            temp.maturity,
-            _tokenId
-        );
+        (, uint rewardPrinciple) = calculateRefractionData(temp.principal, temp.maturity, _tokenId);
 
         IERC20(endToken).transfer(
             msg.sender,
@@ -479,7 +476,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function updateBondYieldShareIndex() external {
         (uint256 price, uint8 decimal) = enderOracle.getPrice(address(0));
-        uint256 _endMint = price * totalBondPrincipalAmount * (1);
+        uint256 _endMint = price * totalBondPrincipalAmount * enderOracle.getPrice(address(endToken));
         endMint += _endMint;
         bondYeildShareIndex = bondYeildShareIndex + (endMint / totalBondPrincipalAmount);
     }

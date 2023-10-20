@@ -24,6 +24,8 @@ error InvalidStrategy();
 error InvalidRequest();
 error InvalidBaseRate();
 error ZeroAmount();
+error InvalidRatio();
+error NotEnoughAvailableFunds();
 
 contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
@@ -47,6 +49,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public bondYieldBaseRate;
     uint256 public balanceLastEpoch;
     uint256 public nominalYield;
+    uint256 public availableFundsPercentage;
+    uint256 public reserveFundsPercentage;
     // uint256 public totalDeposit
 
     event AddressUpdated(address indexed newAddr, AddressType addrType);
@@ -69,7 +73,9 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         address _bond,
         address _instadapp,
         address _lybraFinance,
-        address _eigenLayer
+        address _eigenLayer,
+        uint256 _availableFundsPercentage,
+        uint256 _reserveFundsPercentage
     )
         external
         // address _stEthELS
@@ -80,6 +86,9 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         instadapp = _instadapp;
         lybraFinance = _lybraFinance;
         eigenLayer = _eigenLayer;
+        availableFundsPercentage = _availableFundsPercentage;
+        reserveFundsPercentage = _reserveFundsPercentage;
+        if (availableFundsPercentage + _reserveFundsPercentage != 100) revert InvalidRatio();
         setAddress(_bond, AddressType.ENDBOND);
         setAddress(_endToken, AddressType.ENDTOKEN);
         setBondYieldBaseRate(300);
@@ -181,7 +190,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     ) external onlyBond {
         unchecked {
             // update available info
-            if (!rebond) fundsInfo[param.stakingToken].availableFunds += param.tokenAmt;
+            fundsInfo[param.stakingToken].availableFunds += ((param.tokenAmt) * availableFundsPercentage) / 100;
+            fundsInfo[param.stakingToken].reserveFunds += ((param.tokenAmt) * reserveFundsPercentage) / 100;
             // uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
             // uint256 depositReturn = calculateDepositReturn(param.stakingToken);
 
@@ -204,30 +214,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
         rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
     }
-
-    // function depositInStrategy(
-    //     address stakingToken,
-    //     address strategy,
-    //     uint256 reserve,
-    //     uint256 depositAmt
-    // ) external validStrategy(strategy) {
-    //     if (msg.sender != enderDepositor) revert NotAllowed();
-
-    //     FundInfo storage fundItem = fundsInfo[stakingToken];
-    //     if (reserve + depositAmt > fundItem.availableFunds) revert InvalidRequest();
-
-    //     unchecked {
-    //         fundItem.availableFunds -= reserve + depositAmt;
-    //         fundItem.reserveFunds += reserve;
-    //         fundItem.depositFunds += depositAmt;
-    //     }
-
-    //     // transfer tokens first
-    //     _transferFunds(strategy, stakingToken, depositAmt);
-
-    //     // do deposit
-    //     IEnderStrategy(strategy).deposit(EndRequest(address(0), stakingToken, depositAmt));
-    // }
 
     /**
      * @notice function to deposit available funds to strategies.
@@ -260,15 +246,15 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         address _asset,
         address _strategy,
         uint256 _withdrawAmt
-    ) external validStrategy(strategy) {
+    ) public validStrategy(strategy) returns (uint256 _returnAmount) {
         if (_withdrawAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
             IERC20(_asset).approve(instadapp, _withdrawAmt);
-            IInstadappLite(instadapp).withdraw(_withdrawAmt, address(this), address(this));
+            _returnAmount = IInstadappLite(instadapp).withdraw(_withdrawAmt, address(this), address(this));
         } else if (_strategy == lybraFinance) {
             IERC20(_asset).approve(lybraFinance, _withdrawAmt);
-            ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
+            _returnAmount = ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
         }
     }
 
@@ -276,14 +262,20 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @notice Withdraw function
      * @param param Withdraw parameter
      */
-    function withdraw(EndRequest memory param) external onlyBond returns (uint256 withdrawAmt) {
+    function withdraw(EndRequest memory param) external onlyBond {
         // if invalid reserve funds then withdraw from protocol
+        uint256 currentFundsAmount = param.tokenAmt;
         if (fundsInfo[param.stakingToken].reserveFunds < param.tokenAmt) {
-            // if has withdraw request
+            currentFundsAmount -= fundsInfo[param.stakingToken].reserveFunds;
+            fundsInfo[param.stakingToken].reserveFunds = 0;
+            if (fundsInfo[param.stakingToken].availableFunds < currentFundsAmount) {
+                uint256 withdrawAmount = withdrawFromStrategy(param.stakingToken, instadapp, currentFundsAmount);
+                fundsInfo[param.stakingToken].reserveFunds += withdrawAmount;
+            }
+            fundsInfo[param.stakingToken].availableFunds -= currentFundsAmount;
         }
-
         // bond token transfer
-        _transferFunds(param.account, param.stakingToken, withdrawAmt);
+        _transferFunds(param.account, param.stakingToken, param.tokenAmt);
     }
 
     /**
@@ -297,7 +289,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
     function mintEndRewToUser(address _to, uint256 _amount) external {
         ///just return for temp  should changethe
-        IERC20(endToken).transfer(_to, _amount);
+        IEndToken(endToken).mint(_to, _amount);
     }
 
     /**
