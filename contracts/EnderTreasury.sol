@@ -221,13 +221,17 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
     }
 
-    function getStakingReward(address _asset) public {
-        uint256 reward = totalAssetStakedInStrategy[_asset] +
+    function getStakingReward(address _asset) public returns(uint256 mintAmount){
+        uint256 depositReturn = totalAssetStakedInStrategy[_asset] +
             totalRewardsFromStrategy[_asset] +
             IERC20(_asset).balanceOf(address(this)) -
             (fundsInfo[_asset].availableFunds + fundsInfo[_asset].reserveFunds);
-        IEndToken(_asset).mint(enderStaking,reward); 
-    }   
+
+        uint256 bondReturn = IEnderBond(enderBond).endMint();
+        uint256 nominalReturn = depositReturn * nominalYield;
+        mintAmount = depositReturn - bondReturn + nominalReturn;
+        IEndToken(_asset).mint(enderStaking, mintAmount);
+    }
 
     /**
      * @notice function to deposit available funds to strategies.
@@ -264,7 +268,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     ) public validStrategy(strategy) returns (uint256 _returnAmount) {
         if (_withdrawAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
-        uint256 balBef = totalRewardsFromStrategy[_asset];
+        uint256 balBef = totalAssetStakedInStrategy[_asset];
         if (_strategy == instadapp) {
             IERC20(_asset).approve(instadapp, _withdrawAmt);
             _returnAmount = IInstadappLite(instadapp).withdraw(_withdrawAmt, address(this), address(this));

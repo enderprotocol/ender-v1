@@ -58,6 +58,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public totalBondPrincipalAmount;
     uint256 public endMint;
     uint256 public bondYieldBaseRate;
+    uint256 constant DAY_IN_SECONDS = 86400;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
@@ -190,7 +191,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee < 0 || bondFee > 100) revert InvalidBondFee();
         if (!bondFeeEnabled && bondFee > 0 && bondFee <= 100) revert BondFeeDisabled();
-        availableFundsAtMaturity[(block.timestamp%10000)+maturity] += principal;
+        availableFundsAtMaturity[(block.timestamp % 10000) + maturity] += principal;
 
         // token transfer
         if (token == address(0)) {
@@ -201,8 +202,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
-
         tokenId = _deposit(principal, maturity, token, bondFee, false);
+        availableFundsAtMaturity[(block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS] += principal;
         userDeposit[tokenId] += principal;
         (uint256 avgRefractionIndex, ) = calculateRefractionData(principal, maturity, tokenId);
         // pendingRefractionReward[tokenId] += pendingReward;
@@ -477,7 +478,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */
     function updateBondYieldShareIndex() external {
-        (uint256 price, uint8 decimal) = enderOracle.getPrice(address(0));
+        (uint256 price, ) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, ) = enderOracle.getPrice(address(endToken));
         uint256 _endMint = price * totalBondPrincipalAmount * priceEnd;
         endMint += _endMint;
