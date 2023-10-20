@@ -208,6 +208,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         (uint256 avgRefractionIndex, ) = calculateRefractionData(principal, maturity, tokenId);
         // pendingRefractionReward[tokenId] += pendingReward;
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
+        rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         totalDeposit += principal;
         totalRewardPriciple += principal * avgRefractionIndex;
 

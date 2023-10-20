@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IEndToken.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/ISEndToken.sol";
+import "./interfaces/IEnderBond.sol";
 
 error ZeroAddress();
 error InvalidAmount();
@@ -15,6 +16,7 @@ error InvalidAmount();
 contract EnderStaking is Initializable, OwnableUpgradeable {
     mapping(address => UserInfo) public userInfo;
     mapping(address => uint256) public userSEndToken;
+    
     struct UserInfo {
         uint256 amount;
         uint256 pending;
@@ -24,10 +26,10 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     uint256 public percentPerBlock;
 
     uint256 public stakingApy;
-
     address public endToken;
     address public sEndToken;
     address public enderTreasury;
+    address public enderBond;
 
     event PercentUpdated(uint256 percent);
     event AddressUpdated(address indexed addr);
@@ -40,10 +42,11 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      * @notice Initialize function
      * @param _end  address of END token contract
      */
-    function initialize(address _end, address _sEnd,address _enderTreasury) external initializer {
+    function initialize(address _end, address _sEnd,address _enderTreasury,address _enderBond) external initializer {
         __Ownable_init();
         enderTreasury = _enderTreasury;
         setAddress(_end, _sEnd);
+        enderBond = _enderBond;
     }
 
     /**
@@ -172,9 +175,12 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
     function getStakingReward(address _asset) external {
         uint256 totalReward = IEnderTreasury(enderTreasury).getStakingReward(_asset);
-        uint256 rw1 = totalReward * 90/100;
         uint256 rw2 = totalReward * 10/100;
         
+        uint256 sendTokens = calculateSEndTokens(rw2);
+        IERC20(sEndToken).transfer(enderBond,sendTokens);
+        IEnderBond(enderBond).updateRewardShareIndexForSend(sendTokens,IERC20(sEndToken).totalSupply());
+
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
@@ -186,7 +192,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         rebasingIndex = IERC20(endToken).balanceOf(address(this)) / IERC20(sEndToken).totalSupply();
     }
 
-    function claimRebaseRewards() internal view returns (uint256 reward) {
+    function claimRebaseRewards() internal view returns (uint256 reward) { //TODO
         reward = IERC20(sEndToken).balanceOf(msg.sender) * calculateRebaseIndex();
     }
 
