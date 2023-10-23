@@ -203,10 +203,34 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
         tokenId = _deposit(principal, maturity, token, bondFee, false);
+        // availableFundsAtMaturity[(block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS] += principal;
+        // userDeposit[tokenId] += principal;
+        // (uint256 avgRefractionIndex, ) = calculateRefractionData(principal, maturity, tokenId);
+        // rewardSharePerUserIndex[tokenId] = rewardShareIndex;
+        // rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
+        // totalDeposit += principal;
+        // totalRewardPriciple += principal * avgRefractionIndex;
+
+        // uint256 depositPrincipal = (getInterest(maturity) * principal) / 365;
+        // userBondPrincipalAmount[tokenId] = depositPrincipal;
+        // totalBondPrincipalAmount += depositPrincipal;
+        emit Deposit(msg.sender, tokenId);
+    }
+
+    function _deposit(
+        uint256 principal,
+        uint256 maturity,
+        address token,
+        uint256 bondFee,
+        bool _rebond
+    ) private returns (uint256 tokenId) {
+        if (_rebond && bondFee > 0) principal = (principal * (100 - bondFee)) / 100;
+
+        // mint bond nft
+        tokenId = bondNFT.mint(msg.sender);
         availableFundsAtMaturity[(block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS] += principal;
         userDeposit[tokenId] += principal;
         (uint256 avgRefractionIndex, ) = calculateRefractionData(principal, maturity, tokenId);
-        // pendingRefractionReward[tokenId] += pendingReward;
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         totalDeposit += principal;
@@ -215,28 +239,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 depositPrincipal = (getInterest(maturity) * principal) / 365;
         userBondPrincipalAmount[tokenId] = depositPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
-        emit Deposit(msg.sender, tokenId);
-    }
-
-    function _deposit(
-        uint256 _principal,
-        uint256 _maturity,
-        address _token,
-        uint256 _bondFee,
-        bool _rebond
-    ) private returns (uint256 _tokenId) {
-        if (_rebond && _bondFee > 0) _principal = (_principal * (100 - _bondFee)) / 100;
-
-        // mint bond nft
-        _tokenId = bondNFT.mint(msg.sender);
 
         // deposit
         // uint256 endAmt = endTreasury.deposit(_rebond, _tokenId, IEnderBase.EndRequest(msg.sender, _token, _principal));
         unchecked {
-            _maturity = _maturity * 1 days;
+            maturity = maturity * 1 days;
         }
         // save bond info
-        bonds[_tokenId] = Bond(false, _principal, block.timestamp, _maturity, _token, _bondFee);
+        bonds[tokenId] = Bond(false, principal, block.timestamp, maturity, token, bondFee);
     }
 
     /**
@@ -326,44 +336,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         return ECDSAUpgradeable.recover(digest, _signature) == endSignature;
     }
-
-    // /**
-    //  * @notice Function to collect the bond reward in END token
-    //  * @param tokenId  Token id of BondNFT
-    //  * @param refraction Collectable refraction fee amount
-    //  * @param refraction User nonce
-    //  * @param signature Signature hash
-    //  */
-    // function collect(
-    //     uint256 tokenId,
-    //     uint256 refraction,
-    //     uint256 deadline,
-    //     uint256 nonce,
-    //     bytes calldata signature
-    // ) external nonReentrant returns (uint256 collectAmt) {
-    //     if (bondNFT.ownerOf(tokenId) != msg.sender) revert NotBondUser();
-
-    //     // check refraction info
-    //     _validateRefraction(refraction, nonce, deadline, signature);
-
-    //     collectAmt = collectable(tokenId);
-    //     if (collectAmt != 0) {
-    //         // update user bond info
-    //         unchecked {
-    //             bonds[tokenId].endAmt -= collectAmt;
-
-    //             // add refraction amount
-    //             if (refraction != 0) collectAmt += refraction;
-
-    //             userNonces[msg.sender] = nonce;
-    //         }
-
-    //         // token transfer
-    //         endTreasury.collect(msg.sender, collectAmt);
-    //     }
-
-    //     emit Collect(msg.sender, tokenId, refraction, nonce);
-    // }
 
     /**
      * @notice Function to rebond
