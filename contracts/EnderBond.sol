@@ -286,7 +286,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee, true);
     }
 
-    // function withdrawStakingRewards()
+   
 
     // /**
     //  * @notice Function to return the collectable amount
