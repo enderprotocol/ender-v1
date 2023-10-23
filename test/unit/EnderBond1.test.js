@@ -18,7 +18,7 @@ describe("EnderBond", function () {
     enderELStrategy,
     enderStaking,
     sEnd,
-    sEndAddress,
+    sEndTokenAddress,
     lidoStaking,
     stEth;
 
@@ -35,10 +35,11 @@ describe("EnderBond", function () {
     stEthAddress = await stEth.getAddress();
 
     sEnd = await SEnd.deploy();
-    sEndAddress = await sEnd.getAddress();
+    sEndTokenAddress = await sEnd.getAddress();
 
     lidoStaking = await LidoStaking.deploy(stEthAddress);
     lidoStakingAddress = await lidoStaking.getAddress();
+    console.log("first");
 
     endToken = await upgrades.deployProxy(EndToken, [], {
       initializer: "initialize",
@@ -59,11 +60,22 @@ describe("EnderBond", function () {
     await endToken.setBond(enderBondAddress);
     await endToken.setFee(1);
 
-    enderStaking = await upgrades.deployProxy(EnderStaking, [], {
-      initializer: "initialize",
-    });
+    enderStaking = await upgrades.deployProxy(
+      EnderStaking,
+      [endTokenAddress, sEndTokenAddress],
+      {
+        initializer: "initialize",
+      }
+    );
     enderStakingAddress = await enderStaking.getAddress();
-
+    console.log(
+      endTokenAddress,
+      enderStakingAddress,
+      enderBondAddress,
+      lidoStakingAddress,
+      ethers.ZeroAddress,
+      ethers.ZeroAddress
+    );
     enderTreasury = await upgrades.deployProxy(
       EnderTreasury,
       [
@@ -71,15 +83,16 @@ describe("EnderBond", function () {
         enderStakingAddress,
         enderBondAddress,
         lidoStakingAddress,
-        address(0),
-        address(0),
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         30,
-        70,
+        70
       ],
       {
         initializer: "initialize",
       }
     );
+
     enderTreasuryAddress = await enderTreasury.getAddress();
 
     await enderStaking.setAddress(enderBondAddress, 1);
@@ -97,11 +110,11 @@ describe("EnderBond", function () {
   });
   describe("EnderBond StEth", function () {
     it.only("Should allow a user to deposit with valid parameters", async function () {
-      const depositPrincipal = 1000;
-      const maturity = 90;
-      const bondFee = 5;
+      // const depositPrincipal = 1000;
+      // const maturity = 90;
+      // const bondFee = 5;
 
-      const tokenId = 1;
+      // const tokenId = 1;
 
       await stEth.mint(signer1.getAddress);
       await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);

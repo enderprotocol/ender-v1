@@ -108,6 +108,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param _addr The new address
      * @param _type  Address type
      */
+    //need to make the numbers uniform accross the contracts
+
     function setAddress(address _addr, uint256 _type) public onlyOwner {
         if (_addr == address(0)) revert ZeroAddress();
 

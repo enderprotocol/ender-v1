@@ -3,6 +3,7 @@ pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 contract SEndToken is ERC20, Ownable {
     bool enableOrDisableTX;
@@ -18,7 +19,8 @@ contract SEndToken is ERC20, Ownable {
     constructor() ERC20("Ender", "END") Ownable() {
         status = 1;
         // enableOrDisableTX = false;
-        _mint(msg.sender, 100000000000 * decimals());
+        console.log("im here");
+        _mint(msg.sender, 1000000 * 10 ** decimals());
     }
 
     function verifyStatus() internal view {
