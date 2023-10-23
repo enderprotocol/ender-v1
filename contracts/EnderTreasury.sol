@@ -60,13 +60,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     event AddressUpdated(address indexed newAddr, uint256 addrType);
     event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
 
-    // enum AddressType {
-    //     ENDBOND,
-    //     ENDTOKEN,
-    //     ENDORACLE,
-    //     DEPOSITOR
-    // }
-
     /**
      * @notice Initialize the contract and set the END token address
      * @param _endToken  Address of END token contract

@@ -101,15 +101,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     /**
      * @dev Initializes the contract
      * @param endToken_ The address of the END token
-     * @param signature_ The valid signer address
      */
-    function initialize(address endToken_, address signature_, address _lido) public initializer {
+    function initialize(address endToken_, address _lido) public initializer {
         __Ownable_init();
         __EIP712_init("EnderBond", "1");
         rateOfChange = 100;
         lido = _lido;
         setAddress(endToken_, 2);
-        setAddress(signature_, 4);
+
         setBondFeeEnabled(true);
     }
 
@@ -125,6 +124,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         else if (_type == 2) endToken = _addr;
         else if (_type == 3) bondNFT = IBondNFT(_addr);
         else if (_type == 4) endSignature = _addr;
+        else if (_type == 5) lido = _addr;
 
         emit AddressUpdated(_addr, _type);
     }
@@ -134,6 +134,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         else if (_type == 2) addr = endToken;
         else if (_type == 3) addr = address(bondNFT);
         else if (_type == 4) addr = endSignature;
+        else if (_type == 5) addr = lido;
     }
 
     /**
@@ -191,7 +192,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee < 0 || bondFee > 100) revert InvalidBondFee();
         if (!bondFeeEnabled && bondFee > 0 && bondFee <= 100) revert BondFeeDisabled();
-        availableFundsAtMaturity[(block.timestamp % 10000) + maturity] += principal;
 
         // token transfer
         if (token == address(0)) {
@@ -203,17 +203,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
         tokenId = _deposit(principal, maturity, token, bondFee, false);
-        // availableFundsAtMaturity[(block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS] += principal;
-        // userDeposit[tokenId] += principal;
-        // (uint256 avgRefractionIndex, ) = calculateRefractionData(principal, maturity, tokenId);
-        // rewardSharePerUserIndex[tokenId] = rewardShareIndex;
-        // rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
-        // totalDeposit += principal;
-        // totalRewardPriciple += principal * avgRefractionIndex;
 
-        // uint256 depositPrincipal = (getInterest(maturity) * principal) / 365;
-        // userBondPrincipalAmount[tokenId] = depositPrincipal;
-        // totalBondPrincipalAmount += depositPrincipal;
         emit Deposit(msg.sender, tokenId);
     }
 
@@ -295,8 +285,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // not a rebond
         else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee, true);
     }
-
-   
 
     // /**
     //  * @notice Function to return the collectable amount

@@ -16,7 +16,7 @@ error InvalidAmount();
 contract EnderStaking is Initializable, OwnableUpgradeable {
     mapping(address => UserInfo) public userInfo;
     mapping(address => uint256) public userSEndToken;
-    
+
     struct UserInfo {
         uint256 amount;
         uint256 pending;
@@ -32,33 +32,27 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     address public enderBond;
 
     event PercentUpdated(uint256 percent);
-    event AddressUpdated(address indexed addr);
+    event AddressUpdated(address indexed addr, uint256 addrType);
     event StakingApyUpdated(uint256 stakingApy);
     event Stake(address indexed account, uint256 stakeAmt);
     event Harvest(address indexed account, uint256 harvestAmt);
     event Withdraw(address indexed account, uint256 withdrawAmt);
 
-    /**
-     * @notice Initialize function
-     * @param _end  address of END token contract
-     */
-    function initialize(address _end, address _sEnd,address _enderTreasury,address _enderBond) external initializer {
+    function initialize(address _end, address _sEnd) external initializer {
         __Ownable_init();
-        enderTreasury = _enderTreasury;
-        setAddress(_end, _sEnd);
-        enderBond = _enderBond;
+        setAddress(_end, 3);
+        setAddress(_sEnd, 4);
     }
 
-    /**
-     * @notice Update the END token address
-     */
-    function setAddress(address _endToken, address _sEndToken) public onlyOwner {
-        if (_endToken == address(0) && _sEndToken == address(0)) revert ZeroAddress();
+    function setAddress(address _addr, uint256 _type) public onlyOwner {
+        if (_addr == address(0)) revert ZeroAddress();
 
-        endToken = _endToken;
-        sEndToken = _sEndToken;
+        if (_type == 1) enderBond = _addr;
+        else if (_type == 2) enderTreasury = _addr;
+        else if (_type == 3) endToken = _addr;
+        else if (_type == 4) sEndToken = _addr;
 
-        emit AddressUpdated(_endToken);
+        emit AddressUpdated(_addr, _type);
     }
 
     /**
@@ -175,12 +169,11 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
     function getStakingReward(address _asset) external {
         uint256 totalReward = IEnderTreasury(enderTreasury).getStakingReward(_asset);
-        uint256 rw2 = totalReward * 10/100;
-        
-        uint256 sendTokens = calculateSEndTokens(rw2);
-        IERC20(sEndToken).transfer(enderBond,sendTokens);
-        IEnderBond(enderBond).updateRewardShareIndexForSend(sendTokens,IERC20(sEndToken).totalSupply());
+        uint256 rw2 = (totalReward * 10) / 100;
 
+        uint256 sendTokens = calculateSEndTokens(rw2);
+        IERC20(sEndToken).transfer(enderBond, sendTokens);
+        IEnderBond(enderBond).updateRewardShareIndexForSend(sendTokens, IERC20(sEndToken).totalSupply());
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
@@ -192,7 +185,8 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         rebasingIndex = IERC20(endToken).balanceOf(address(this)) / IERC20(sEndToken).totalSupply();
     }
 
-    function claimRebaseRewards() internal view returns (uint256 reward) { //TODO
+    function claimRebaseRewards() internal view returns (uint256 reward) {
+        //TODO
         reward = IERC20(sEndToken).balanceOf(msg.sender) * calculateRebaseIndex();
     }
 

@@ -44,20 +44,15 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     /**
      * @notice Initializes the EndToken contract
-     * @param fee  Refraction fee
      */
-    function initialize(uint256 fee, address _bond) external initializer {
+    function initialize() external initializer {
         __ERC20_init("End Token", "END");
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
-        // set fee
-        setFee(fee);
-
         // add exclude wallets
         excludeWallets[address(this)] = true;
         excludeWallets[msg.sender] = true;
-        enderBond = _bond;
 
         unchecked {
             lastTransfer = block.timestamp - (block.timestamp % 1 days);
@@ -73,6 +68,11 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
      */
     function decimals() public view virtual override returns (uint8) {
         return 9;
+    }
+
+    function setBond(address addrs) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (addrs == address(0)) revert ZeroAddress();
+        enderBond = addrs;
     }
 
     function setFee(uint256 fee) public onlyRole(DEFAULT_ADMIN_ROLE) {
