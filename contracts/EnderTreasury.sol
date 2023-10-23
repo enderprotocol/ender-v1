@@ -189,7 +189,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      */
     function deposit(
         bool rebond,
-        uint256 _tokenId,
+        // uint256 _tokenId,
         // uint256 maturity,
         // uint256 bondFee,
         EndRequest memory param
@@ -218,12 +218,13 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     function stakeRebasingReward(uint256 _tokenId, address _tokenAddress) public returns (uint256 rebaseReward) {
         uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
-        (uint256 ethPrice, ) = enderOracle.getPrice(address(0));
-        (uint256 priceEnd, ) = enderOracle.getPrice(address(endToken));
+        //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 9decimal
+        (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
+        (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
 
-        depositReturn = (ethPrice * depositReturn) / 1e18;
+        depositReturn = (ethPrice * depositReturn) / ethDecimal;
 
-        bondReturn = (priceEnd * bondReturn) / 1e9;
+        bondReturn = (priceEnd * bondReturn) / endDecimal;
 
         rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
 
