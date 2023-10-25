@@ -129,7 +129,7 @@ describe("EnderBond", function () {
         depositPrincipal,
         maturity,
         bondFee,
-        endTokenAddress
+        stEthAddress
       );
     });
   });
