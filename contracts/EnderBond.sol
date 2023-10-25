@@ -15,6 +15,8 @@ import "./interfaces/IEnderOracle.sol";
 import "./interfaces/ISEndToken.sol";
 import "./interfaces/ILido.sol";
 
+import "hardhat/console.sol";
+
 error BondAlreadyWithdrawn();
 error BondNotMatured();
 error BondFeeDisabled();
@@ -49,11 +51,11 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     mapping(uint256 => uint256) public userBondYieldShareIndex; //s0
     mapping(uint256 => uint256) public availableFundsAtMaturity;
 
-    uint256 rewardShareIndex;
-    uint256 rewardShareIndexSend;
-    uint256 totalRewardPriciple;
-    uint256 rateOfChange;
-    uint256 totalDeposit;
+    uint256 public rewardShareIndex;
+    uint256 public rewardShareIndexSend;
+    uint256 public totalRewardPriciple;
+    uint256 public rateOfChange;
+    uint256 public totalDeposit;
     uint256 public bondYeildShareIndex;
     uint256 public totalBondPrincipalAmount;
     uint256 public endMint;
@@ -226,7 +228,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalDeposit += principal;
         totalRewardPriciple += principal * avgRefractionIndex;
 
-        uint256 depositPrincipal = (getInterest(maturity) * principal) / 365;
+        uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 100);
+        // uint256 depositPrincipal = (principal * 4 * (11) * (8)) / (365 * 100 * 100);
+
+        console.log(depositPrincipal);
         userBondPrincipalAmount[tokenId] = depositPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
 

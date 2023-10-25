@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 
 // Interfaces
 import "../interfaces/IEndToken.sol";
+import "../interfaces/IEnderBond.sol";
 import "hardhat/console.sol";
 
 error ZeroAddress();
@@ -143,6 +144,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 feesToTransfer = refractionFeeTotal;
         refractionFeeTotal = 0;
         lastEpoch = block.timestamp;
+        IEnderBond(enderBond).updateRewardShareIndex(feesToTransfer);
         _transfer(address(this), enderBond, feesToTransfer);
         emit RefractionFeesDistributed(enderBond, feesToTransfer);
     }
