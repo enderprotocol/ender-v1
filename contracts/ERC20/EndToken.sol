@@ -12,6 +12,7 @@ import "hardhat/console.sol";
 error ZeroAddress();
 error InvalidParam();
 error InvalidEarlyEpoch();
+error ZeroFeeCollected();
 
 /**
  * @title EndToken contract
@@ -125,9 +126,13 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
                         lastTransfer -= block.timestamp % 1 days;
                         prevAmount = todayAmount;
                         todayAmount = fee;
+                        console.log(todayAmount, "todayAmount");
 
                         emit DayfeeUpdated(prevAmount, block.timestamp);
-                    } else todayAmount += fee;
+                    } else {
+                        todayAmount += fee;
+                        console.log(todayAmount, "todayAmount else");
+                    }
                 }
 
                 super._transfer(from, address(this), fee);
@@ -142,9 +147,10 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
         uint256 feesToTransfer = refractionFeeTotal;
+        if (feesToTransfer == 0) revert ZeroFeeCollected();
         refractionFeeTotal = 0;
         lastEpoch = block.timestamp;
-        approve(enderBond,feesToTransfer);
+        approve(enderBond, feesToTransfer);
         IEnderBond(enderBond).updateRewardShareIndex(feesToTransfer);
         // _transfer(address(this), enderBond, feesToTransfer);
         emit RefractionFeesDistributed(enderBond, feesToTransfer);

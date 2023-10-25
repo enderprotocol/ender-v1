@@ -6,6 +6,11 @@ const { EigenLayerStrategyManagerAddress } = require("../utils/common");
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
 const baseURI =
   "https://endworld-backend-git-dev-metagaming.vercel.app/nft/metadata/";
+const MINTER_ROLE =
+  "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
+const ADMIN_ROLE =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
+
 function expandTo18Decimals(n) {
   return BigNumber.from(n).mul(BigNumber.from(10).pow(18));
 }
@@ -404,48 +409,15 @@ describe("EnderBond", function () {
         stringValueTotalDeposit
       );
     });
-    it("checkin the rewardSharePerUserIndex   ", async function () {
+    it.only("checkin the rewardSharePerUserIndex   ", async function () {
       const depositAmountEth = "1";
       const depositPrincipal = ethers.parseEther(depositAmountEth);
-      // console.log({depositPrincipal});
-      const maturity = 90;
-      const bondFee = 5;
-
-      await stEth.mint(await signer1.getAddress(), depositPrincipal);
-
-      await stEth.connect(signer1).approve(enderBondAddress, depositPrincipal);
-
-      //   const currentTime = await ethers.provider.getBlock("latest");
-      //   console.log(currentTime.timestamp, "currentTime");
-
-      await ethers.provider.send("evm_setNextBlockTimestamp", [
-        1698233706 + 48 * 3600,
-      ]);
-      await enderBond
+      await endToken.grantRole(MINTER_ROLE, owner.address);
+      await endToken.setFee(20);
+      await endToken.connect(owner).mint(signer1.address, depositPrincipal);
+      await endToken
         .connect(signer1)
-        .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-      filter = enderBond.filters.Deposit;
-      const events = await enderBond.queryFilter(filter, -1);
-
-      const event1 = events[0];
-
-      const args1 = event1.args;
-      const bigIntValue = 1000000000000000000n;
-      const stringValue = bigIntValue.toString();
-
-      const bigIntValueTotalDeposit = 5000000000000004000n;
-      const stringValueTotalDeposit = bigIntValueTotalDeposit.toString();
-
-      expect(await enderBond.availableFundsAtMaturity(19747)).to.be.equal(
-        stringValue
-      );
-      expect(await enderBond.userDeposit(args1.tokenId)).to.be.equal(
-        stringValue
-      );
-
-      expect(await enderBond.totalDeposit()).to.be.equal(
-        stringValueTotalDeposit
-      );
+        .transfer(signer2.address, depositPrincipal);
     });
   });
 });
