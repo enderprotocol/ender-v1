@@ -54,7 +54,9 @@ describe("EnderBond", function () {
         initializer: "initialize",
       }
     );
-    await enderBond.waitForDeployment();
+    // await enderBond.waitForDeployment();
+    // enderBond = await upgrades.upgradeProxy(await enderBond.getAddress(), EnderBond);
+
     enderBondAddress = await enderBond.getAddress();
 
     await endToken.setBond(enderBondAddress);
@@ -100,8 +102,9 @@ describe("EnderBond", function () {
     await enderStaking.setAddress(enderBondAddress, 1);
     await enderStaking.setAddress(enderTreasuryAddress, 2);
 
+    // console.log({enderBond});
     await enderBond.setBondableTokens([stEthAddress], true);
-    await enderBond.setAddress(enderTreasuryAddress);
+    await enderBond.setAddress(enderTreasuryAddress,1);
     [owner, wallet1, signer1, signer2, signer3] = await ethers.getSigners();
   });
 
@@ -112,16 +115,17 @@ describe("EnderBond", function () {
   });
   describe("EnderBond StEth", function () {
     it.only("Should allow a user to deposit with valid parameters", async function () {
-      // const depositPrincipal = 1000;
-      // const maturity = 90;
-      // const bondFee = 5;
+      const depositPrincipal = 1000;
+      const maturity = 90;
+      const bondFee = 5;
 
-      // const tokenId = 1;
+      const tokenId = 1;
 
-      await stEth.mint(signer1.getAddress);
+      await stEth.mint(await signer1.getAddress(),"1000000000000000000000000000");
       await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
 
-      await enderBond.deposit(
+      await stEth.connect(signer1).approve(enderBondAddress,1000)
+      await enderBond.connect(signer1).deposit(
         depositPrincipal,
         maturity,
         bondFee,
