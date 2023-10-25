@@ -236,14 +236,16 @@ describe("EnderBond", function () {
 
     describe("Should properly set state variables", function () {
         it("Should allow a user to deposit with valid parameters", async function () {
-            const depositPrincipal = 1000;
+            const depositAmountEth = "1"
+            const depositPrincipal = ethers.parseEther(depositAmountEth);
+            // console.log({depositPrincipal});
             const maturity = 90;
             const bondFee = 5;
             const tokenId = 1;
 
-            await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
+            await stEth.mint(await signer1.getAddress(),depositPrincipal);
 
-            await stEth.connect(signer1).approve(enderBondAddress, 1000);
+            await stEth.connect(signer1).approve(enderBondAddress, depositPrincipal);
             await enderBond
                 .connect(signer1)
                 .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
@@ -254,10 +256,10 @@ describe("EnderBond", function () {
 
             const args1 = event1.args;
 
-            expect(await enderBond.availableFundsAtMaturity(19745)).to.be.equal(5000);
+            expect(await enderBond.availableFundsAtMaturity(19745)).to.be.equal(1000000000000004000n);
             expect(await enderBond.rewardSharePerUserIndex(args1.tokenId)).to.be.equal(0);
             expect(await enderBond.rewardSharePerUserIndexSend(args1.tokenId)).to.be.equal(0);
-            expect(await enderBond.totalDeposit()).to.be.equal(5000);
+            expect(await enderBond.totalDeposit()).to.be.equal(1000000000000004000n);
         });
     });
 });
