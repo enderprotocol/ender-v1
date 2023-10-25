@@ -65,7 +65,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param _endToken  Address of END token contract
      * @param _bond  Address of Ender bond contract
      */
-    function initialize(
+    function initializeTreasury(
         address _endToken,
         address _enderStaking,
         address _bond,
