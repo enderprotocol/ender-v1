@@ -144,8 +144,9 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 feesToTransfer = refractionFeeTotal;
         refractionFeeTotal = 0;
         lastEpoch = block.timestamp;
+        approve(enderBond,feesToTransfer);
         IEnderBond(enderBond).updateRewardShareIndex(feesToTransfer);
-        _transfer(address(this), enderBond, feesToTransfer);
+        // _transfer(address(this), enderBond, feesToTransfer);
         emit RefractionFeesDistributed(enderBond, feesToTransfer);
     }
 }
