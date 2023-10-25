@@ -119,22 +119,79 @@ describe("EnderBond", function () {
         });
     });
     describe("EnderBond StEth", function () {
-        it("Should allow a user to deposit with valid parameters", async function () {
-            const depositPrincipal = 1000;
-            const maturity = 90;
-            const bondFee = 5;
-            const tokenId = 1;
-
-            await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
-            await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
-
-            await stEth.connect(signer1).approve(enderBondAddress, 1000);
-            await enderBond
-                .connect(signer1)
-                .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-        });
+      it("Should allow a user to deposit with valid parameters", async function () {
+        const depositPrincipal = 1000;
+        const maturity = 90;
+        const bondFee = 5;
+  
+        await stEth.mint(
+          await signer1.getAddress(),
+          "1000000000000000000000000000"
+        );
+        await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+  
+        await stEth.connect(signer1).approve(enderBondAddress, 1000);
+        await enderBond
+          .connect(signer1)
+          .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+      });
+      it("TokenId should change every time when the same user comes", async function () {
+        const depositPrincipal = 1000;
+        const maturity = 90;
+        const bondFee = 5;
+  
+        await stEth.mint(
+          await signer1.getAddress(),
+          "1000000000000000000000000000"
+        );
+        await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+        await stEth.connect(signer1).approve(enderBondAddress, 2000);
+  
+        // Make the first deposit and capture tokenId1
+        await enderBond
+          .connect(signer1)
+          .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+  
+        await enderBond
+          .connect(signer1)
+          .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+        filter = enderBond.filters.Deposit;
+        const events = await enderBond.queryFilter(filter, -1);
+  
+        const event1 = events[0];
+        const event2 = events[1];
+        const args1 = event1.args;
+        const args2 = event2.args;
+        expect(args1.tokenId).to.not.equal(args2.tokenId);
+        expect(args1.user).to.be.equal(args2.user);
+      });
+  
+      it("checking the owner of the tokenId", async function () {
+        const depositPrincipal = 1000;
+        const maturity = 90;
+        const bondFee = 5;
+  
+        await stEth.mint(
+          await signer1.getAddress(),
+          "1000000000000000000000000000"
+        );
+        await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+  
+        await stEth.connect(signer1).approve(enderBondAddress, 2000);
+  
+        await enderBond
+          .connect(signer1)
+          .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+        filter = enderBond.filters.Deposit;
+        const events = await enderBond.queryFilter(filter, -1);
+  
+        const event1 = events[0];
+  
+        const args1 = event1.args;
+  
+        expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
+      });
     });
-
     describe("Deposit Reverts", function () {
         it("Should not allow principal to be zero", async function () {
             const depositPrincipal = 0;
@@ -149,50 +206,62 @@ describe("EnderBond", function () {
         });
 
         it("Should not allow maturity to be greater than 365 days and less than 7 days", async function () {
-          const depositPrincipal = 1000;
-          const maturity = 366;
-          const bondFee = 5;
-          await stEth.connect(signer1).approve(enderBondAddress, 1000);
-          await expect(
-              enderBond
-                  .connect(signer1)
-                  .deposit(depositPrincipal, maturity, bondFee, stEthAddress),
-          ).to.be.revertedWithCustomError(enderBond, "InvalidMaturity()");
-      });
+            const depositPrincipal = 1000;
+            const maturity = 366;
+            const bondFee = 5;
+            await stEth.connect(signer1).approve(enderBondAddress, 1000);
+            await expect(
+                enderBond
+                    .connect(signer1)
+                    .deposit(depositPrincipal, maturity, bondFee, stEthAddress),
+            ).to.be.revertedWithCustomError(enderBond, "InvalidMaturity()");
+
+            await expect(
+                enderBond.connect(signer1).deposit(1000, 6, 5, stEthAddress),
+            ).to.be.revertedWithCustomError(enderBond, "InvalidMaturity()");
+        });
+
+        it("Should not allow tokens other than bondable token", async function () {
+            const depositPrincipal = 1000;
+            const maturity = 365;
+            const bondFee = 5;
+            const usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+            await stEth.connect(signer1).approve(enderBondAddress, 1000);
+            await expect(
+                enderBond.connect(signer1).deposit(depositPrincipal, maturity, bondFee, usdc),
+            ).to.be.revertedWithCustomError(enderBond, "NotBondableToken()");
+        });
+        it("Should not allow bond fees above 100 and below or equal to zero", async function () {
+            const depositPrincipal = 1000;
+            const maturity = 365;
+            const bondFee = 101;
+            await expect(
+                enderBond
+                    .connect(signer1)
+                    .deposit(depositPrincipal, maturity, bondFee, stEthAddress),
+            ).to.be.revertedWithCustomError(enderBond, "InvalidBondFee()");
+        });
     });
 
-    //   describe("Check set END token", function () {
-    //     it("Should not allow non-owner to set end token", async function () {
-    //       await expect(
-    //         enderBond.connect(wallet1).setAddress(endTokenAddress, 1)
-    //       ).to.be.revertedWith("Ownable: caller is not the owner");
-    //     });
+    describe("Should properly set state variables", function () {
+      it("Should allow a user to deposit with valid parameters", async function () {
+          const depositPrincipal = 1000;
+          const maturity = 90;
+          const bondFee = 5;
+          const tokenId = 1;
 
-    //     it("Should not allow setting zero address as end token", async function () {
-    //       await expect(
-    //         enderBond.connect(owner).setAddress(ethers.ZeroAddress, 1)
-    //       ).to.be.revertedWithCustomError(enderBond, "ZeroAddress()");
-    //     });
-    //   });
+          await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
+          await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
 
-    //   describe("setBondableTokens", function () {
-    //     it("Should allow owner to set bondable tokens", async function () {
-    //       await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
-    //       expect(await enderBond.bondableTokens(endTokenAddress)).to.equal(true);
-    //     });
+          await stEth.connect(signer1).approve(enderBondAddress, 1000);
+          await enderBond
+              .connect(signer1)
+              .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+          await expect(await enderBond.availableFundsAtMaturity(19745)).to.be.equal(5000);
+          await expect(await enderBond.rewardSharePerUserIndex(1)).to.be.equal(0);
+          await expect(await enderBond.rewardSharePerUserIndexSend(1)).to.be.equal(0);
+          await expect(await enderBond.totalDeposit()).to.be.equal(5000);
 
-    //     it("Should not allow non-owner to set bondable tokens", async function () {
-    //       await expect(
-    //         enderBond.connect(wallet1).setBondableTokens([endTokenAddress], true)
-    //       ).to.be.revertedWith("Ownable: caller is not the owner");
-    //     });
-
-    //     it("Should allow owner to unset bondable tokens", async function () {
-    //       await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
-    //       await enderBond
-    //         .connect(owner)
-    //         .setBondableTokens([endTokenAddress], false);
-    //       expect(await enderBond.bondableTokens(endTokenAddress)).to.equal(false);
-    //     });
-    //   });
+      });
+  });
 });
