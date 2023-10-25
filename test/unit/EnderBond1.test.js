@@ -93,7 +93,7 @@ describe("EnderBond", function () {
         initializer: "initializeTreasury",
       }
     );
-    // console.log("-------------------------------------------------------------------------");
+    console.log("-------------------------------------------------------------------------");
 
     enderTreasuryAddress = await enderTreasury.getAddress();
 
