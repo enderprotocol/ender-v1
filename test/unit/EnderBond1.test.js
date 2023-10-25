@@ -5,192 +5,194 @@ const { EigenLayerStrategyManagerAddress } = require("../utils/common");
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
 const baseURI = "https://endworld-backend-git-dev-metagaming.vercel.app/nft/metadata/";
 
-
 describe("EnderBond", function () {
-  let owner, wallet1, signer1, signer2, signer3;
-  let endTokenAddress,
-    enderBondAddress,
-    enderTreasuryAddress,
-    enderStakingAddress,
-    lidoStakingAddress;
-
-  let endToken,
-    enderBond,
-    enderTreasury,
-    enderELStrategy,
-    enderStaking,
-    sEnd,
-    sEndTokenAddress,
-    lidoStaking,
-    stEth,
-    bondNFT
-
-  before(async function () {
-    const StEth = await ethers.getContractFactory("StEth");
-    const LidoStaking = await ethers.getContractFactory("lidoStaking");
-    const EndToken = await ethers.getContractFactory("EndToken");
-    const EnderBond = await ethers.getContractFactory("EnderBond");
-    const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
-    const EnderStaking = await ethers.getContractFactory("EnderStaking");
-    const SEnd = await ethers.getContractFactory("SEndToken");
-
-    stEth = await StEth.deploy();
-    stEthAddress = await stEth.getAddress();
-
-    sEnd = await SEnd.deploy();
-    sEndTokenAddress = await sEnd.getAddress();
-
-    lidoStaking = await LidoStaking.deploy(stEthAddress);
-    lidoStakingAddress = await lidoStaking.getAddress();
-    console.log("first");
-
-    endToken = await upgrades.deployProxy(EndToken, [], {
-      initializer: "initialize",
-    });
-    await endToken.waitForDeployment();
-    endTokenAddress = await endToken.getAddress();
-
-    enderBond = await upgrades.deployProxy(
-      EnderBond,
-      [endTokenAddress, lidoStakingAddress],
-      {
-        initializer: "initialize",
-      }
-    );
-    // await enderBond.waitForDeployment();
-    // enderBond = await upgrades.upgradeProxy(await enderBond.getAddress(), EnderBond);
-
-    enderBondAddress = await enderBond.getAddress();
-
-    await endToken.setBond(enderBondAddress);
-    await endToken.setFee(1);
-
-    enderStaking = await upgrades.deployProxy(
-      EnderStaking,
-      [endTokenAddress, sEndTokenAddress],
-      {
-        initializer: "initialize",
-      }
-    );
-    enderStakingAddress = await enderStaking.getAddress();
-    console.log(
-      endTokenAddress,
-      enderStakingAddress,
-      enderBondAddress,
-      lidoStakingAddress,
-      ethers.ZeroAddress,
-      ethers.ZeroAddress
-    );
-    // console.log({EnderTreasury});
-    enderTreasury = await upgrades.deployProxy(
-      EnderTreasury,
-      [
-        endTokenAddress,
-        enderStakingAddress,
+    let owner, wallet1, signer1, signer2, signer3;
+    let endTokenAddress,
         enderBondAddress,
-        lidoStakingAddress,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
-        30,
-        70
-      ],
-      {
-        initializer: "initializeTreasury",
-      }
-    );
-    console.log("-------------------------------------------------------------------------");
+        enderTreasuryAddress,
+        enderStakingAddress,
+        lidoStakingAddress;
 
-    enderTreasuryAddress = await enderTreasury.getAddress();
+    let endToken,
+        enderBond,
+        enderTreasury,
+        enderELStrategy,
+        enderStaking,
+        sEnd,
+        sEndTokenAddress,
+        lidoStaking,
+        stEth,
+        bondNFT;
 
-    const BondNFT = await ethers.getContractFactory("BondNFT");
-    bondNFT = await upgrades.deployProxy(BondNFT, [enderBondAddress, baseURI], {
-      initializer: "initialize",
+    before(async function () {
+        const StEth = await ethers.getContractFactory("StEth");
+        const LidoStaking = await ethers.getContractFactory("lidoStaking");
+        const EndToken = await ethers.getContractFactory("EndToken");
+        const EnderBond = await ethers.getContractFactory("EnderBond");
+        const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
+        const EnderStaking = await ethers.getContractFactory("EnderStaking");
+        const SEnd = await ethers.getContractFactory("SEndToken");
+
+        stEth = await StEth.deploy();
+        stEthAddress = await stEth.getAddress();
+
+        sEnd = await SEnd.deploy();
+        sEndTokenAddress = await sEnd.getAddress();
+
+        lidoStaking = await LidoStaking.deploy(stEthAddress);
+        lidoStakingAddress = await lidoStaking.getAddress();
+
+        endToken = await upgrades.deployProxy(EndToken, [], {
+            initializer: "initialize",
+        });
+        await endToken.waitForDeployment();
+        endTokenAddress = await endToken.getAddress();
+
+        enderBond = await upgrades.deployProxy(EnderBond, [endTokenAddress, lidoStakingAddress], {
+            initializer: "initialize",
+        });
+        // await enderBond.waitForDeployment();
+        // enderBond = await upgrades.upgradeProxy(await enderBond.getAddress(), EnderBond);
+
+        enderBondAddress = await enderBond.getAddress();
+
+        await endToken.setBond(enderBondAddress);
+        await endToken.setFee(1);
+
+        enderStaking = await upgrades.deployProxy(
+            EnderStaking,
+            [endTokenAddress, sEndTokenAddress],
+            {
+                initializer: "initialize",
+            },
+        );
+        enderStakingAddress = await enderStaking.getAddress();
+        // console.log(
+        //     endTokenAddress,
+        //     enderStakingAddress,
+        //     enderBondAddress,
+        //     lidoStakingAddress,
+        //     ethers.ZeroAddress,
+        //     ethers.ZeroAddress,
+        // );
+        // console.log({EnderTreasury});
+        enderTreasury = await upgrades.deployProxy(
+            EnderTreasury,
+            [
+                endTokenAddress,
+                enderStakingAddress,
+                enderBondAddress,
+                lidoStakingAddress,
+                ethers.ZeroAddress,
+                ethers.ZeroAddress,
+                30,
+                70,
+            ],
+            {
+                initializer: "initializeTreasury",
+            },
+        );
+        // console.log("-------------------------------------------------------------------------");
+
+        enderTreasuryAddress = await enderTreasury.getAddress();
+
+        const BondNFT = await ethers.getContractFactory("BondNFT");
+        bondNFT = await upgrades.deployProxy(BondNFT, [enderBondAddress, baseURI], {
+            initializer: "initialize",
+        });
+        await bondNFT.waitForDeployment();
+        bondNFTAddress = await bondNFT.getAddress();
+
+        await enderStaking.setAddress(enderBondAddress, 1);
+        await enderStaking.setAddress(enderTreasuryAddress, 2);
+
+        // console.log({enderBond});
+        await enderBond.setBondableTokens([stEthAddress], true);
+        await enderBond.setAddress(enderTreasuryAddress, 1);
+        await enderBond.setAddress(bondNFTAddress, 3);
+        [owner, wallet1, signer1, signer2, signer3] = await ethers.getSigners();
     });
-    await bondNFT.waitForDeployment();
-    bondNFTAddress = await bondNFT.getAddress();
 
-    await enderStaking.setAddress(enderBondAddress, 1);
-    await enderStaking.setAddress(enderTreasuryAddress, 2);
-
-    // console.log({enderBond});
-    await enderBond.setBondableTokens([stEthAddress], true);
-    await enderBond.setAddress(enderTreasuryAddress,1);
-    await enderBond.setAddress(bondNFTAddress,3);
-    [owner, wallet1, signer1, signer2, signer3] = await ethers.getSigners();
-  });
-
-  describe("initialize", function () {
-    it.only("Should set the right owner", async function () {
-      expect(await enderBond.owner()).to.equal(owner.address);
+    describe("initialize", function () {
+        it("Should set the right owner", async function () {
+            expect(await enderBond.owner()).to.equal(owner.address);
+        });
     });
-  });
-  describe("EnderBond StEth", function () {
-    it.only("Should allow a user to deposit with valid parameters", async function () {
-      const depositPrincipal = 1000;
-      const maturity = 90;
-      const bondFee = 5;
+    describe("EnderBond StEth", function () {
+        it("Should allow a user to deposit with valid parameters", async function () {
+            const depositPrincipal = 1000;
+            const maturity = 90;
+            const bondFee = 5;
+            const tokenId = 1;
 
-      const tokenId = 1;
+            await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
+            await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
 
-      await stEth.mint(await signer1.getAddress(),"1000000000000000000000000000");
-      await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
-
-      await stEth.connect(signer1).approve(enderBondAddress,1000)
-      await enderBond.connect(signer1).deposit(
-        depositPrincipal,
-        maturity,
-        bondFee,
-        stEthAddress
-      );
+            await stEth.connect(signer1).approve(enderBondAddress, 1000);
+            await enderBond
+                .connect(signer1)
+                .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+        });
     });
-  });
 
-  //   describe("setTreasury", function () {
-  //     it("Should not allow non-owner to set treasury", async function () {
-  //       await expect(
-  //         enderBond.connect(wallet1).setAddress(enderTreasuryAddress, 0)
-  //       ).to.be.revertedWith("Ownable: caller is not the owner");
-  //     });
+    describe("Deposit Reverts", function () {
+        it("Should not allow principal to be zero", async function () {
+            const depositPrincipal = 0;
+            const maturity = 90;
+            const bondFee = 5;
+            await stEth.connect(signer1).approve(enderBondAddress, 1000);
+            await expect(
+                enderBond
+                    .connect(signer1)
+                    .deposit(depositPrincipal, maturity, bondFee, stEthAddress),
+            ).to.be.revertedWithCustomError(enderBond, "InvalidAmount()");
+        });
 
-  //     it("Should not allow setting zero address as treasury", async function () {
-  //       await expect(
-  //         enderBond.connect(owner).setAddress(ethers.ZeroAddress, 0)
-  //       ).to.be.revertedWithCustomError(enderBond, "ZeroAddress()");
-  //     });
-  //   });
+        it("Should not allow maturity to be greater than 365 days and less than 7 days", async function () {
+          const depositPrincipal = 1000;
+          const maturity = 366;
+          const bondFee = 5;
+          await stEth.connect(signer1).approve(enderBondAddress, 1000);
+          await expect(
+              enderBond
+                  .connect(signer1)
+                  .deposit(depositPrincipal, maturity, bondFee, stEthAddress),
+          ).to.be.revertedWithCustomError(enderBond, "InvalidMaturity()");
+      });
+    });
 
-  //   describe("Check set END token", function () {
-  //     it("Should not allow non-owner to set end token", async function () {
-  //       await expect(
-  //         enderBond.connect(wallet1).setAddress(endTokenAddress, 1)
-  //       ).to.be.revertedWith("Ownable: caller is not the owner");
-  //     });
+    //   describe("Check set END token", function () {
+    //     it("Should not allow non-owner to set end token", async function () {
+    //       await expect(
+    //         enderBond.connect(wallet1).setAddress(endTokenAddress, 1)
+    //       ).to.be.revertedWith("Ownable: caller is not the owner");
+    //     });
 
-  //     it("Should not allow setting zero address as end token", async function () {
-  //       await expect(
-  //         enderBond.connect(owner).setAddress(ethers.ZeroAddress, 1)
-  //       ).to.be.revertedWithCustomError(enderBond, "ZeroAddress()");
-  //     });
-  //   });
+    //     it("Should not allow setting zero address as end token", async function () {
+    //       await expect(
+    //         enderBond.connect(owner).setAddress(ethers.ZeroAddress, 1)
+    //       ).to.be.revertedWithCustomError(enderBond, "ZeroAddress()");
+    //     });
+    //   });
 
-  //   describe("setBondableTokens", function () {
-  //     it("Should allow owner to set bondable tokens", async function () {
-  //       await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
-  //       expect(await enderBond.bondableTokens(endTokenAddress)).to.equal(true);
-  //     });
+    //   describe("setBondableTokens", function () {
+    //     it("Should allow owner to set bondable tokens", async function () {
+    //       await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+    //       expect(await enderBond.bondableTokens(endTokenAddress)).to.equal(true);
+    //     });
 
-  //     it("Should not allow non-owner to set bondable tokens", async function () {
-  //       await expect(
-  //         enderBond.connect(wallet1).setBondableTokens([endTokenAddress], true)
-  //       ).to.be.revertedWith("Ownable: caller is not the owner");
-  //     });
+    //     it("Should not allow non-owner to set bondable tokens", async function () {
+    //       await expect(
+    //         enderBond.connect(wallet1).setBondableTokens([endTokenAddress], true)
+    //       ).to.be.revertedWith("Ownable: caller is not the owner");
+    //     });
 
-  //     it("Should allow owner to unset bondable tokens", async function () {
-  //       await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
-  //       await enderBond
-  //         .connect(owner)
-  //         .setBondableTokens([endTokenAddress], false);
-  //       expect(await enderBond.bondableTokens(endTokenAddress)).to.equal(false);
-  //     });
-  //   });
+    //     it("Should allow owner to unset bondable tokens", async function () {
+    //       await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+    //       await enderBond
+    //         .connect(owner)
+    //         .setBondableTokens([endTokenAddress], false);
+    //       expect(await enderBond.bondableTokens(endTokenAddress)).to.equal(false);
+    //     });
+    //   });
 });
