@@ -119,78 +119,69 @@ describe("EnderBond", function () {
         });
     });
     describe("EnderBond StEth", function () {
-      it("Should allow a user to deposit with valid parameters", async function () {
-        const depositPrincipal = 1000;
-        const maturity = 90;
-        const bondFee = 5;
-  
-        await stEth.mint(
-          await signer1.getAddress(),
-          "1000000000000000000000000000"
-        );
-        await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
-  
-        await stEth.connect(signer1).approve(enderBondAddress, 1000);
-        await enderBond
-          .connect(signer1)
-          .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-      });
-      it("TokenId should change every time when the same user comes", async function () {
-        const depositPrincipal = 1000;
-        const maturity = 90;
-        const bondFee = 5;
-  
-        await stEth.mint(
-          await signer1.getAddress(),
-          "1000000000000000000000000000"
-        );
-        await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
-        await stEth.connect(signer1).approve(enderBondAddress, 2000);
-  
-        // Make the first deposit and capture tokenId1
-        await enderBond
-          .connect(signer1)
-          .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-  
-        await enderBond
-          .connect(signer1)
-          .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-        filter = enderBond.filters.Deposit;
-        const events = await enderBond.queryFilter(filter, -1);
-  
-        const event1 = events[0];
-        const event2 = events[1];
-        const args1 = event1.args;
-        const args2 = event2.args;
-        expect(args1.tokenId).to.not.equal(args2.tokenId);
-        expect(args1.user).to.be.equal(args2.user);
-      });
-  
-      it("checking the owner of the tokenId", async function () {
-        const depositPrincipal = 1000;
-        const maturity = 90;
-        const bondFee = 5;
-  
-        await stEth.mint(
-          await signer1.getAddress(),
-          "1000000000000000000000000000"
-        );
-        await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
-  
-        await stEth.connect(signer1).approve(enderBondAddress, 2000);
-  
-        await enderBond
-          .connect(signer1)
-          .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-        filter = enderBond.filters.Deposit;
-        const events = await enderBond.queryFilter(filter, -1);
-  
-        const event1 = events[0];
-  
-        const args1 = event1.args;
-  
-        expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
-      });
+        it("Should allow a user to deposit with valid parameters", async function () {
+            const depositPrincipal = 1000;
+            const maturity = 90;
+            const bondFee = 5;
+
+            await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
+            await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+
+            await stEth.connect(signer1).approve(enderBondAddress, 1000);
+            await enderBond
+                .connect(signer1)
+                .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+        });
+        it("TokenId should change every time when the same user comes", async function () {
+            const depositPrincipal = 1000;
+            const maturity = 90;
+            const bondFee = 5;
+
+            await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
+            await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+            await stEth.connect(signer1).approve(enderBondAddress, 2000);
+
+            // Make the first deposit and capture tokenId1
+            await enderBond
+                .connect(signer1)
+                .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+
+            await enderBond
+                .connect(signer1)
+                .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+            filter = enderBond.filters.Deposit;
+            const events = await enderBond.queryFilter(filter, -1);
+
+            const event1 = events[0];
+            const event2 = events[1];
+            const args1 = event1.args;
+            const args2 = event2.args;
+            expect(args1.tokenId).to.not.equal(args2.tokenId);
+            expect(args1.user).to.be.equal(args2.user);
+        });
+
+        it("checking the owner of the tokenId", async function () {
+            const depositPrincipal = 1000;
+            const maturity = 90;
+            const bondFee = 5;
+
+            await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
+            await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+
+            await stEth.connect(signer1).approve(enderBondAddress, 2000);
+
+            await enderBond
+                .connect(signer1)
+                .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+            filter = enderBond.filters.Deposit;
+            const events = await enderBond.queryFilter(filter, -1);
+
+            const event1 = events[0];
+
+            const args1 = event1.args;
+
+            expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
+        });
     });
     describe("Deposit Reverts", function () {
         it("Should not allow principal to be zero", async function () {
@@ -244,24 +235,29 @@ describe("EnderBond", function () {
     });
 
     describe("Should properly set state variables", function () {
-      it("Should allow a user to deposit with valid parameters", async function () {
-          const depositPrincipal = 1000;
-          const maturity = 90;
-          const bondFee = 5;
-          const tokenId = 1;
+        it("Should allow a user to deposit with valid parameters", async function () {
+            const depositPrincipal = 1000;
+            const maturity = 90;
+            const bondFee = 5;
+            const tokenId = 1;
 
-          await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
-          await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+            await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
 
-          await stEth.connect(signer1).approve(enderBondAddress, 1000);
-          await enderBond
-              .connect(signer1)
-              .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-          await expect(await enderBond.availableFundsAtMaturity(19745)).to.be.equal(5000);
-          await expect(await enderBond.rewardSharePerUserIndex(1)).to.be.equal(0);
-          await expect(await enderBond.rewardSharePerUserIndexSend(1)).to.be.equal(0);
-          await expect(await enderBond.totalDeposit()).to.be.equal(5000);
+            await stEth.connect(signer1).approve(enderBondAddress, 1000);
+            await enderBond
+                .connect(signer1)
+                .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+            filter = enderBond.filters.Deposit;
+            const events = await enderBond.queryFilter(filter, -1);
 
-      });
-  });
+            const event1 = events[0];
+
+            const args1 = event1.args;
+
+            expect(await enderBond.availableFundsAtMaturity(19745)).to.be.equal(5000);
+            expect(await enderBond.rewardSharePerUserIndex(args1.tokenId)).to.be.equal(0);
+            expect(await enderBond.rewardSharePerUserIndexSend(args1.tokenId)).to.be.equal(0);
+            expect(await enderBond.totalDeposit()).to.be.equal(5000);
+        });
+    });
 });
