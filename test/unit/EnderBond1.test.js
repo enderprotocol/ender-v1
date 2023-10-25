@@ -76,6 +76,7 @@ describe("EnderBond", function () {
       ethers.ZeroAddress,
       ethers.ZeroAddress
     );
+    // console.log({EnderTreasury});
     enderTreasury = await upgrades.deployProxy(
       EnderTreasury,
       [
@@ -89,9 +90,10 @@ describe("EnderBond", function () {
         70
       ],
       {
-        initializer: "initialize",
+        initializer: "initializeTreasury",
       }
     );
+    // console.log("-------------------------------------------------------------------------");
 
     enderTreasuryAddress = await enderTreasury.getAddress();
 
