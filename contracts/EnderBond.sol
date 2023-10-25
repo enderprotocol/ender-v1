@@ -220,6 +220,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
+        uint256 day = (block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS;
+        console.log(day, "day");
         availableFundsAtMaturity[(block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS] += principal;
         userDeposit[tokenId] += principal;
         (uint256 avgRefractionIndex, ) = calculateRefractionData(principal, maturity, tokenId);
@@ -348,7 +350,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _reward The reward to be added to the reward share.
      */
     function updateRewardShareIndex(uint256 _reward) external {
-        IERC20(endToken).transferFrom(endToken,address(this),_reward);
+        IERC20(endToken).transferFrom(endToken, address(this), _reward);
+        rateOfChange += 100;
         rewardShareIndex = rewardShareIndex + (_reward / totalRewardPriciple);
     }
 
