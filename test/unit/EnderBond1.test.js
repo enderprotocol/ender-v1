@@ -3,6 +3,8 @@ const { ethers, upgrades } = require("hardhat");
 
 const { EigenLayerStrategyManagerAddress } = require("../utils/common");
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
+const baseURI = "https://endworld-backend-git-dev-metagaming.vercel.app/nft/metadata/";
+
 
 describe("EnderBond", function () {
   let owner, wallet1, signer1, signer2, signer3;
@@ -20,7 +22,8 @@ describe("EnderBond", function () {
     sEnd,
     sEndTokenAddress,
     lidoStaking,
-    stEth;
+    stEth,
+    bondNFT
 
   before(async function () {
     const StEth = await ethers.getContractFactory("StEth");
@@ -99,12 +102,20 @@ describe("EnderBond", function () {
 
     enderTreasuryAddress = await enderTreasury.getAddress();
 
+    const BondNFT = await ethers.getContractFactory("BondNFT");
+    bondNFT = await upgrades.deployProxy(BondNFT, [enderBondAddress, baseURI], {
+      initializer: "initialize",
+    });
+    await bondNFT.waitForDeployment();
+    bondNFTAddress = await bondNFT.getAddress();
+
     await enderStaking.setAddress(enderBondAddress, 1);
     await enderStaking.setAddress(enderTreasuryAddress, 2);
 
     // console.log({enderBond});
     await enderBond.setBondableTokens([stEthAddress], true);
     await enderBond.setAddress(enderTreasuryAddress,1);
+    await enderBond.setAddress(bondNFTAddress,3);
     [owner, wallet1, signer1, signer2, signer3] = await ethers.getSigners();
   });
 
