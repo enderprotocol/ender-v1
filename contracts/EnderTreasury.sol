@@ -85,6 +85,9 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         instadapp = _instadapp;
         lybraFinance = _lybraFinance;
         eigenLayer = _eigenLayer;
+        strategies[instadapp] = true;
+        strategies[lybraFinance] = true;
+        strategies[eigenLayer] = true;
         availableFundsPercentage = _availableFundsPercentage;
         reserveFundsPercentage = _reserveFundsPercentage;
         if (availableFundsPercentage + _reserveFundsPercentage != 100) revert InvalidRatio();
@@ -245,8 +248,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param _depositAmt amount of stETH admin wants to deposit to the strategy.
      */
 
-    // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
-    function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
+    function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
+    // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
 
         if (_depositAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
