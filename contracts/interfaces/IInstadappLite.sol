@@ -2,10 +2,12 @@
 pragma solidity ^0.8.20;
 
 interface IInstadappLite{
-    function deposit(
-        uint256 assets_,
-        address receiver_
-    ) external returns (uint256 shares_);
+    // function deposit(
+    //     uint256 assets_,
+    //     address receiver_
+    // ) external returns (uint256 shares_);
+    function deposit(uint256 _amount,address _user) external;
+
     function withdraw(uint256 assets_,address receiver_,address owner_) external returns(uint256 _amount);
 }
 

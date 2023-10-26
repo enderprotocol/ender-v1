@@ -232,7 +232,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         availableFundsAtMaturity[(block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS] += principal;
         userDeposit[tokenId] += principal;
         (uint256 avgRefractionIndex, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
-        console.log(rewardPrinciple, "rewardPrinciple");
+        console.log(rewardPrinciple, "rewardPrinciple",avgRefractionIndex);
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
         console.log(rewardSharePerUserIndex[tokenId], "rewardSharePerUserIndex[tokenId] ");
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
@@ -378,7 +378,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _principle The principle amount of the bond.
      * @param _maturity The maturity of the bond.
      * @param _tokenId The unique identifier of the bond.
-=     * @return avgRefractionIndex The average refraction index for the bond.
+=    * @return avgRefractionIndex The average refraction index for the bond.
      * @return rewardPrinciple The principle amount used in reward calculations.
      */
     function calculateRefractionData(

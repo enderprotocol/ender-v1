@@ -245,12 +245,14 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param _depositAmt amount of stETH admin wants to deposit to the strategy.
      */
 
-    function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
+    // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
+    function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
+
         if (_depositAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
-            IERC20(_asset).approve(instadapp, _depositAmt);
-            IInstadappLite(instadapp).deposit(_depositAmt, msg.sender);
+            IERC20(_asset).approve(_strategy, _depositAmt);
+            IInstadappLite(instadapp).deposit(_depositAmt, address(this));
         } else if (_strategy == lybraFinance) {
             IERC20(_asset).approve(lybraFinance, _depositAmt);
             ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);
