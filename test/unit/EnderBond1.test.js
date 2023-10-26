@@ -446,6 +446,9 @@ describe("EnderBond", function () {
             );
             expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(0);
 
+            expect(await enderTreasury.totalRewardsFromStrategy(stEthAddress)).to.be.equal(1000*4/100);
+
+
             console.log("=====================",await enderTreasury.totalRewardsFromStrategy(stEthAddress));
         });
     });
