@@ -60,7 +60,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public totalBondPrincipalAmount;
     uint256 public endMint;
     uint256 public bondYieldBaseRate;
-    uint256 constant DAY_IN_SECONDS = 86400;
+    uint256 constant SECONDS_IN_DAY = 86400;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
@@ -227,9 +227,9 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
-        uint256 day = (block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS;
+        uint256 day = (block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY;
         console.log(day, "day");
-        availableFundsAtMaturity[(block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS] += principal;
+        availableFundsAtMaturity[(block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         userDeposit[tokenId] += principal;
         (uint256 avgRefractionIndex, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
         console.log(rewardPrinciple, "rewardPrinciple",avgRefractionIndex);
