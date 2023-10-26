@@ -360,7 +360,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function updateRewardShareIndex(uint256 _reward) external {
         IERC20(endToken).transferFrom(endToken, address(this), _reward);
-        rateOfChange += 100;
+        // rateOfChange += 100;
         rewardShareIndex = rewardShareIndex + (_reward / totalRewardPriciple);
     }
 
@@ -382,12 +382,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @return rewardPrinciple The principle amount used in reward calculations.
      */
     function calculateRefractionData(
-        uint _principle,
+        uint256 _principle,
         uint256 _maturity,
         uint256 _tokenId
     ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)/ (2 * 100));
+        avgRefractionIndex = 100 + (rateOfChange * (_maturity - 1)/ (2 * 100));
         rewardPrinciple = (_principle * avgRefractionIndex)/100;
         // pendingReward = rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]);
     }
