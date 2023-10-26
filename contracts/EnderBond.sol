@@ -386,7 +386,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _tokenId
     ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 1 + ((rateOfChange * (_maturity - 1)) / 2 * 10000);
+        avgRefractionIndex = 1 + ((rateOfChange * (_maturity - 1)) / (2 * 10000));
         rewardPrinciple = _principle * avgRefractionIndex;
         // pendingReward = rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]);
     }
