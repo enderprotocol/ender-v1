@@ -410,21 +410,31 @@ describe("EnderBond", function () {
       );
     });
     it.only("checkin the rewardSharePerUserIndex   ", async function () {
-      const depositAmountEth = "5";
-      const depositPrincipal = ethers.parseEther(depositAmountEth);
-      const amountEthTransfer = "1";
-      const ethTransfer = ethers.parseEther(amountEthTransfer);
+      const depositAmountEnd = "5";
+      const depositPrincipalEnd = ethers.parseEther(depositAmountEnd);
+      const amountEndTransfer = "1";
+      const endTransfer = ethers.parseEther(amountEndTransfer);
       await endToken.grantRole(MINTER_ROLE, owner.address);
       await endToken.setFee(20);
-      await endToken.connect(owner).mint(signer1.address, depositPrincipal);
-      await endToken.connect(signer1).transfer(signer2.address, ethTransfer);
+      await endToken.connect(owner).mint(signer1.address, depositPrincipalEnd);
+      await endToken.connect(signer1).transfer(signer2.address, endTransfer);
 
-      await ethers.provider.send("evm_setNextBlockTimestamp", [
-        1698233706 + 25 * 3600,
-      ]);
       await endToken.connect(signer1).transfer(signer2.address, ethTransfer);
-      console.log(await endToken.allowance(endTokenAddress,enderBondAddress));
+      console.log(await endToken.allowance(endTokenAddress, enderBondAddress));
       await endToken.distributeRefractionFees();
+
+      const depositAmountEth = "1";
+      const depositPrincipal = ethers.parseEther(depositAmountEth);
+      // console.log({depositPrincipal});
+      const maturity = 90;
+      const bondFee = 5;
+
+      await stEth.mint(await signer1.getAddress(), depositPrincipal);
+
+      await stEth.connect(signer1).approve(enderBondAddress, depositPrincipal);
+      await enderBond
+        .connect(signer1)
+        .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
     });
   });
 });
