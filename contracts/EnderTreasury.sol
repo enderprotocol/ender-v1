@@ -309,7 +309,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             fundsInfo[param.stakingToken].reserveFunds = 0;
             if (fundsInfo[param.stakingToken].availableFunds < currentFundsAmount) {
                 uint256 withdrawAmount = withdrawFromStrategy(param.stakingToken, instadapp, currentFundsAmount);
-                fundsInfo[param.stakingToken].reserveFunds += withdrawAmount;
+                fundsInfo[param.stakingToken].availableFunds += withdrawAmount;
             }
             fundsInfo[param.stakingToken].availableFunds -= currentFundsAmount;
         }
