@@ -223,6 +223,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         )
     {
         principal = (principal * (100 - bondFee)) / 100;
+        console.log("principal",principal);
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
@@ -231,12 +232,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         availableFundsAtMaturity[(block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS] += principal;
         userDeposit[tokenId] += principal;
         (uint256 avgRefractionIndex, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
-        console.log(avgRefractionIndex, "avgRefractionIndex");
+        console.log(rewardPrinciple, "rewardPrinciple");
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
         console.log(rewardSharePerUserIndex[tokenId], "rewardSharePerUserIndex[tokenId] ");
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         totalDeposit += principal;
-        totalRewardPriciple += rewardPrinciple;
+        totalRewardPriciple += rewardPrinciple; 
 
         uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 100);
         // uint256 depositPrincipal = (principal * 4 * (11) * (8)) / (365 * 100 * 100);
@@ -386,8 +387,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _tokenId
     ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 1 + ((rateOfChange * (_maturity - 1)) / (2 * 10000));
-        rewardPrinciple = _principle * avgRefractionIndex;
+        avgRefractionIndex = 1 + (rateOfChange * (_maturity - 1)/ (2 * 100));
+        rewardPrinciple = (_principle * avgRefractionIndex)/100;
         // pendingReward = rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]);
     }
 
