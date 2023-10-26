@@ -395,7 +395,7 @@ describe("EnderBond", function () {
                 .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
         });
 
-        it.only("Should deposit assets into the strategies", async function () {
+        it.only("Should deposit and withdraw assets into the strategies", async function () {
             const depositAmountEnd = "5";
             const depositPrincipalEnd = ethers.parseEther(depositAmountEnd);
             const amountEndTransfer = "1";
@@ -423,6 +423,8 @@ describe("EnderBond", function () {
                 .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
 
             let initialStEthBalTreasury = await stEth.balanceOf(enderTreasuryAddress);
+            console.log(await stEth.balanceOf(enderTreasuryAddress));
+
             await enderTreasury
                 .connect(signer1)
                 .depositInStrategy(stEthAddress, instadappLiteAddress, 1000);
@@ -430,6 +432,19 @@ describe("EnderBond", function () {
                 Number(initialStEthBalTreasury) - 1000,
             );
             expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(1000);
+
+            await ethers.provider.send("evm_increaseTime", [365*24*60*60]);
+            await ethers.provider.send("evm_mine");
+            
+            await enderTreasury
+                .connect(signer1)
+                .withdrawFromStrategy(stEthAddress, instadappLiteAddress, 1000);
+
+            console.log(await stEth.balanceOf(enderTreasuryAddress));
+            expect(Number(await stEth.balanceOf(enderTreasuryAddress))).to.be.equal(
+                Number(initialStEthBalTreasury),
+            );
+            expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(0);
         });
     });
 });

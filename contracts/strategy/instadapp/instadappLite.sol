@@ -23,7 +23,7 @@ contract instadappLite {
         userData[_user] = UserData(_amount, block.timestamp);
     }
 
-    function withdraw() public {
+    function withdraw(uint256 _amount,address _to,address _too) public  returns(uint256){
         UserData memory userStakeData = userData[msg.sender];
         uint256 reward = (apy * userStakeData.amount * (block.timestamp - userStakeData.depositTime)) /
             (365 days * 100 * 1000);
@@ -31,5 +31,6 @@ contract instadappLite {
         userData[msg.sender] = UserData(0,0);    
         IERC20(stEth).transfer(msg.sender, userStakeData.amount);
         IERC20(stEth).mint(msg.sender, reward);
+        return reward;
     }
 }

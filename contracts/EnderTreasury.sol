@@ -17,6 +17,8 @@ import "./interfaces/IInstadappLite.sol";
 import "./interfaces/ILybraFinance.sol";
 import "./interfaces/IEnderBond.sol";
 
+import "hardhat/console.sol";
+
 error NotAllowed();
 // error ZeroAddress();
 error TransferFailed();
@@ -249,6 +251,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      */
 
     function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
+        console.log("block.timestamp",block.timestamp);
     // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
 
         if (_depositAmt == 0) revert ZeroAmount();
@@ -276,6 +279,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         address _strategy,
         uint256 _withdrawAmt
     ) public validStrategy(strategy) returns (uint256 _returnAmount) {
+        console.log("block.timestamp",block.timestamp);
         if (_withdrawAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         uint256 balBef = totalAssetStakedInStrategy[_asset];
