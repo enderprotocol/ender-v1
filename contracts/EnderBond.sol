@@ -230,7 +230,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         console.log(day, "day");
         availableFundsAtMaturity[(block.timestamp + (maturity * DAY_IN_SECONDS)) / DAY_IN_SECONDS] += principal;
         userDeposit[tokenId] += principal;
-        (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
+        (uint256 avgRefractionIndex, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
         console.log(avgRefractionIndex, "avgRefractionIndex");
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
         console.log(rewardSharePerUserIndex[tokenId], "rewardSharePerUserIndex[tokenId] ");
