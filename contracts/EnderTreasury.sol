@@ -56,6 +56,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public nominalYield;
     uint256 public availableFundsPercentage;
     uint256 public reserveFundsPercentage;
+    // uint256 public stEthBalBeforeStDep;
     // uint256 public totalEthStakedInStrategy;
     // uint256 public totalDeposit
 
@@ -254,6 +255,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         console.log("block.timestamp",block.timestamp);
     // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
 
+        // stEthBalBeforeStDep = IERC20(_asset).balanceOf(address(this));
         if (_depositAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
@@ -282,7 +284,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         console.log("block.timestamp",block.timestamp);
         if (_withdrawAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
-        uint256 balBef = totalAssetStakedInStrategy[_asset];
+        // uint256 balBef = totalAssetStakedInStrategy[_asset];
         if (_strategy == instadapp) {
             IERC20(_asset).approve(instadapp, _withdrawAmt);
             _returnAmount = IInstadappLite(instadapp).withdraw(_withdrawAmt, address(this), address(this));
@@ -290,10 +292,10 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             IERC20(_asset).approve(lybraFinance, _withdrawAmt);
             _returnAmount = ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
         }
-        uint256 balAfter = IERC20(_asset).balanceOf(address(this));
-        if (balAfter > balBef) {
-            console.log("balAfter - balBef",balAfter,balBef);
-            totalRewardsFromStrategy[_asset] += balAfter - balBef;
+        // uint256 balAfter = IERC20(_asset).balanceOf(address(this));
+        if (_returnAmount > 0) {
+            // console.log("balAfter - balBef",_withdrawAmt,_returnAmount);
+            totalRewardsFromStrategy[_asset] += _returnAmount;
         }
     }
 
