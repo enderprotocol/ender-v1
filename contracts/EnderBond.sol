@@ -205,7 +205,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
-        tokenId = _deposit(principal, maturity, token, bondFee, false);
+        tokenId = _deposit(principal, maturity, token, bondFee);
 
         emit Deposit(msg.sender, tokenId);
     }
@@ -214,10 +214,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 principal,
         uint256 maturity,
         address token,
-        uint256 bondFee,
-        bool _rebond
+        uint256 bondFee
+        // bool _rebond
     ) private returns (uint256 tokenId) {
-        if (_rebond && bondFee > 0) principal = (principal * (100 - bondFee)) / 100;
+        principal = (principal * (100 - bondFee)) / 100;
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
@@ -291,7 +291,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             userBondPrincipalAmount[tokenId] = 0;
         }
         // not a rebond
-        else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee, true);
+        else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee);
     }
 
     // /**
