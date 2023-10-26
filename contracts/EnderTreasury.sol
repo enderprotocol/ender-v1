@@ -292,6 +292,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         }
         uint256 balAfter = IERC20(_asset).balanceOf(address(this));
         if (balAfter > balBef) {
+            console.log("balAfter - balBef",balAfter,balBef);
             totalRewardsFromStrategy[_asset] += balAfter - balBef;
         }
     }

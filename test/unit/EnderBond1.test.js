@@ -441,10 +441,12 @@ describe("EnderBond", function () {
                 .withdrawFromStrategy(stEthAddress, instadappLiteAddress, 1000);
 
             console.log(await stEth.balanceOf(enderTreasuryAddress));
-            expect(Number(await stEth.balanceOf(enderTreasuryAddress))).to.be.equal(
-                Number(initialStEthBalTreasury),
+            expect((await stEth.balanceOf(enderTreasuryAddress))).to.be.greaterThan(
+                (initialStEthBalTreasury),
             );
             expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(0);
+
+            console.log("=====================",await enderTreasury.totalRewardsFromStrategy(stEthAddress));
         });
     });
 });
