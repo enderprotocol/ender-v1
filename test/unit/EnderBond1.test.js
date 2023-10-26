@@ -410,14 +410,21 @@ describe("EnderBond", function () {
       );
     });
     it.only("checkin the rewardSharePerUserIndex   ", async function () {
-      const depositAmountEth = "1";
+      const depositAmountEth = "5";
       const depositPrincipal = ethers.parseEther(depositAmountEth);
+      const amountEthTransfer = "1";
+      const ethTransfer = ethers.parseEther(amountEthTransfer);
       await endToken.grantRole(MINTER_ROLE, owner.address);
       await endToken.setFee(20);
       await endToken.connect(owner).mint(signer1.address, depositPrincipal);
-      await endToken
-        .connect(signer1)
-        .transfer(signer2.address, depositPrincipal);
+      await endToken.connect(signer1).transfer(signer2.address, ethTransfer);
+
+      await ethers.provider.send("evm_setNextBlockTimestamp", [
+        1698233706 + 25 * 3600,
+      ]);
+      await endToken.connect(signer1).transfer(signer2.address, ethTransfer);
+      console.log(await endToken.allowance(endTokenAddress,enderBondAddress));
+      await endToken.distributeRefractionFees();
     });
   });
 });

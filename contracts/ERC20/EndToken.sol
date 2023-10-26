@@ -150,7 +150,8 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         if (feesToTransfer == 0) revert ZeroFeeCollected();
         refractionFeeTotal = 0;
         lastEpoch = block.timestamp;
-        approve(enderBond, feesToTransfer);
+        // console.log("[[[]]]",feesToTransfer);
+        _approve(address(this),enderBond, feesToTransfer);
         IEnderBond(enderBond).updateRewardShareIndex(feesToTransfer);
         // _transfer(address(this), enderBond, feesToTransfer);
         emit RefractionFeesDistributed(enderBond, feesToTransfer);

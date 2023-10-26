@@ -109,6 +109,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         __EIP712_init("EnderBond", "1");
         rateOfChange = 100;
         lido = _lido;
+        totalRewardPriciple = 1;
         setAddress(endToken_, 2);
 
         setBondFeeEnabled(true);
