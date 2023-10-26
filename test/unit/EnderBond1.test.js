@@ -414,18 +414,18 @@ describe("EnderBond", function () {
       const depositPrincipalEnd = ethers.parseEther(depositAmountEnd);
       const amountEndTransfer = "1";
       const endTransfer = ethers.parseEther(amountEndTransfer);
+
       await endToken.grantRole(MINTER_ROLE, owner.address);
       await endToken.setFee(20);
       await endToken.connect(owner).mint(signer1.address, depositPrincipalEnd);
       await endToken.connect(signer1).transfer(signer2.address, endTransfer);
 
-      await endToken.connect(signer1).transfer(signer2.address, ethTransfer);
+      await endToken.connect(signer1).transfer(signer2.address, endTransfer);
       console.log(await endToken.allowance(endTokenAddress, enderBondAddress));
       await endToken.distributeRefractionFees();
 
       const depositAmountEth = "1";
       const depositPrincipal = ethers.parseEther(depositAmountEth);
-      // console.log({depositPrincipal});
       const maturity = 90;
       const bondFee = 5;
 
