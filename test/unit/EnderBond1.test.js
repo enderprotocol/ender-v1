@@ -675,6 +675,16 @@ describe.only("EnderBondWithDraw", function () {
         600000000000000
       );
 
+      const currentTime1 = await ethers.provider.getBlock("latest");
+      //   console.log(currentTime.timestamp, "currentTime");
+
+      await ethers.provider.send("evm_setNextBlockTimestamp", [
+        currentTime1.timestamp + 24 * 3600,
+      ]);
+      await enderTreasury
+        .connect(signer1)
+        .depositInStrategy(stEthAddress, instadappLiteAddress, 600000000000000);
+
       expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
       const currentTime = await ethers.provider.getBlock("latest");
       //   console.log(currentTime.timestamp, "currentTime");
