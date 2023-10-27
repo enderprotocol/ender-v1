@@ -330,14 +330,14 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param account Address of user's wallet
      * @param amount Collect amount
      */
-    function collect(address account, uint256 amount) external onlyBond {
-        IERC20(endToken).transfer(account, amount);
-    }
+    // function collect(address account, uint256 amount) external onlyBond {
+    //     IERC20(endToken).transfer(account, amount);
+    // }
 
-    function mintEndToUser(address _to, uint256 _amount) external {
-        ///just return for temp  should changethe
-        IEndToken(endToken).mint(_to, _amount);
-    }
+    // function mintEndToUser(address _to, uint256 _amount) external {
+    //     ///just return for temp  should changethe
+    //     IEndToken(endToken).mint(_to, _amount);
+    // }
 
     /**
      * @dev Calculates the total return for a given asset.

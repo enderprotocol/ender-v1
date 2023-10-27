@@ -501,7 +501,7 @@ describe("EnderBond", function () {
                     .depositInStrategy(stEthAddress, instadappLiteAddress, 1000),
             ).to.be.revertedWithCustomError(enderTreasury, "CanNotDepositToStrategyBeforeOneDay()");
         });
-        it.only("Should only allow another deposit after 1 day of previous one", async function () {
+        it("Should only allow another deposit after 1 day of previous one", async function () {
             const depositAmountEnd = "5";
             const depositPrincipalEnd = ethers.parseEther(depositAmountEnd);
             const amountEndTransfer = "1";
@@ -545,6 +545,14 @@ describe("EnderBond", function () {
             await enderTreasury
                 .connect(signer1)
                 .depositInStrategy(stEthAddress, instadappLiteAddress, 1000);
+        });
+        it("Should set treasury setter functoins", async function () {
+            await enderTreasury.setAddress(signer1.getAddress(),1);
+            await enderTreasury.setAddress(signer1.getAddress(),2);
+            await enderTreasury.setAddress(signer1.getAddress(),3);
+            await enderTreasury.setAddress(signer1.getAddress(),4);
+            await enderTreasury.setStrategy([signer1.getAddress()],true);
+            await enderTreasury.setNominalYield(5);
         });
     });
 });
