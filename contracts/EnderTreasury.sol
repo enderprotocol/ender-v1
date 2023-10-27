@@ -209,21 +209,21 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         } else IERC20(_token).transfer(_account, _amount);
     }
 
-    function stakeRebasingReward(uint256 _tokenId, address _tokenAddress) public returns (uint256 rebaseReward) {
-        uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
-        uint256 depositReturn = calculateDepositReturn(_tokenAddress);
-        //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 9decimal
-        (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
-        (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
+    // function stakeRebasingReward(uint256 _tokenId, address _tokenAddress) public returns (uint256 rebaseReward) {
+    //     uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
+    //     uint256 depositReturn = calculateDepositReturn(_tokenAddress);
+    //     //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 9decimal
+    //     (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
+    //     (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
 
-        depositReturn = (ethPrice * depositReturn) / ethDecimal;
+    //     depositReturn = (ethPrice * depositReturn) / ethDecimal;
 
-        bondReturn = (priceEnd * bondReturn) / endDecimal;
+    //     bondReturn = (priceEnd * bondReturn) / endDecimal;
 
-        rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
+    //     rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
 
-        rebaseReward = ((rebaseReward * 1e1) / priceEnd);
-    }
+    //     rebaseReward = ((rebaseReward * 1e1) / priceEnd);
+    // }
 
     function getStakingReward(address _asset) public returns (uint256 mintAmount) {
         uint256 depositReturn = totalAssetStakedInStrategy[_asset] +
@@ -311,6 +311,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             currentFundsAmount -= fundsInfo[param.stakingToken].reserveFunds;
             fundsInfo[param.stakingToken].reserveFunds = 0;
             console.log(currentFundsAmount, "currentFundsAmount1");
+            console.log(fundsInfo[param.stakingToken].availableFunds, "fundsInfo[param.stakingToken].availableFunds");
             if (fundsInfo[param.stakingToken].availableFunds < currentFundsAmount) {
                 console.log(currentFundsAmount, "currentFundsAmount2");
                 uint256 withdrawAmount = withdrawFromStrategy(param.stakingToken, instadapp, currentFundsAmount);
