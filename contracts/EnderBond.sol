@@ -223,7 +223,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         )
     {
         principal = (principal * (100 - bondFee)) / 100;
-        console.log("principal",principal);
+        console.log("principal", principal);
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
@@ -232,17 +232,16 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         availableFundsAtMaturity[(block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         userDeposit[tokenId] += principal;
         (uint256 avgRefractionIndex, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
-        console.log(rewardPrinciple, "rewardPrinciple",avgRefractionIndex);
+        console.log(rewardPrinciple, "rewardPrinciple", avgRefractionIndex);
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
         console.log(rewardSharePerUserIndex[tokenId], "rewardSharePerUserIndex[tokenId] ");
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         totalDeposit += principal;
-        totalRewardPriciple += rewardPrinciple; 
+        totalRewardPriciple += rewardPrinciple;
 
         uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 100);
         // uint256 depositPrincipal = (principal * 4 * (11) * (8)) / (365 * 100 * 100);
-
-        console.log(depositPrincipal);
+        IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
         userBondPrincipalAmount[tokenId] = depositPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
 
@@ -264,7 +263,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param tokenId The ID of the token to be withdrawn.
      */
     function withdraw(uint256 tokenId) external nonReentrant {
-        _withdraw(tokenId, 0, 0);
+        _withdraw(tokenId);
 
         emit Withdraw(msg.sender, tokenId);
     }
@@ -272,9 +271,9 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     /**
      * @notice Private function for withdraw and withdraw request
      * @param _tokenId Bond nft tokenid
-     * @param _maturity Value of new maturity
+
      */
-    function _withdraw(uint256 _tokenId, uint256 _maturity, uint256 bondFee) private returns (uint256 tokenId) {
+    function _withdraw(uint256 _tokenId) private returns (uint256 tokenId) {
         Bond storage bond = bonds[_tokenId];
 
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
@@ -284,22 +283,24 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // update current bond
         bond.withdrawn = true;
 
-        if (_maturity == 0) {
-            endTreasury.withdraw(
-                IEnderBase.EndRequest(
-                    msg.sender,
-                    bond.token,
-                    bond.bondFee > 0 && bondFeeEnabled ? (bond.principal * (100 - bond.bondFee)) / 100 : bond.principal
-                )
-            ); // is a rebond
-            uint256 reward = calculateBondRewardAmount(_tokenId);
-            endTreasury.mintEndRewToUser(msg.sender, reward);
-            claimRefractionRewards(tokenId);
-            totalBondPrincipalAmount -= userBondPrincipalAmount[tokenId];
-            userBondPrincipalAmount[tokenId] = 0;
-        }
+        // if (_maturity == 0) {
+        console.log("in iffffff the Ender withdraw");
+        endTreasury.withdraw(
+            IEnderBase.EndRequest(
+                msg.sender,
+                bond.token,
+                bond.bondFee > 0 && bondFeeEnabled ? (bond.principal * (100 - bond.bondFee)) / 100 : bond.principal
+            )
+        ); // is a rebond
+        console.log("in the Ender withdraw");
+        uint256 reward = calculateBondRewardAmount(_tokenId);
+        endTreasury.mintEndToUser(msg.sender, reward);
+        claimRefractionRewards(tokenId);
+        totalBondPrincipalAmount -= userBondPrincipalAmount[tokenId];
+        userBondPrincipalAmount[tokenId] = 0;
+        // }
         // not a rebond
-        else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee);
+        // else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee);
     }
 
     // /**
@@ -346,13 +347,13 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param tokenId  Token id of BondNFT
      * @param maturity  New maturiy value
      */
-    function rebond(uint256 tokenId, uint256 maturity, uint256 bondFee) external nonReentrant returns (uint256 bondId) {
-        if (maturity < 7 || maturity > 365) revert InvalidMaturity();
+    // function rebond(uint256 tokenId, uint256 maturity, uint256 bondFee) external nonReentrant returns (uint256 bondId) {
+    //     if (maturity < 7 || maturity > 365) revert InvalidMaturity();
 
-        bondId = _withdraw(tokenId, maturity, bondFee);
+    //     bondId = _withdraw(tokenId, maturity, bondFee);
 
-        emit Rebond(msg.sender, tokenId, bondId);
-    }
+    //     emit Rebond(msg.sender, tokenId, bondId);
+    // }
 
     /**
      * @dev Sets the reward share for a given `_reward` .
@@ -387,8 +388,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _tokenId
     ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 100 + (rateOfChange * (_maturity - 1)/ (2 * 100));
-        rewardPrinciple = (_principle * avgRefractionIndex)/100;
+        avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
+        rewardPrinciple = (_principle * avgRefractionIndex) / 100;
         // pendingReward = rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]);
     }
 

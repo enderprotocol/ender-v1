@@ -183,22 +183,12 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         }
     }
 
-    /**
-     * @notice Deposit function
-     * @param rebond Flag for rebond
-     * @param param Deposit parameter
-     */
-    function deposit(
-        bool rebond,
-        // uint256 _tokenId,
-        // uint256 maturity,
-        // uint256 bondFee,
-        EndRequest memory param
-    ) external onlyBond {
+    function depositTreasury(EndRequest memory param) external onlyBond {
         unchecked {
             // update available info
             fundsInfo[param.stakingToken].availableFunds += ((param.tokenAmt) * availableFundsPercentage) / 100;
             fundsInfo[param.stakingToken].reserveFunds += ((param.tokenAmt) * reserveFundsPercentage) / 100;
+            console.log(fundsInfo[param.stakingToken].availableFunds ,   fundsInfo[param.stakingToken].reserveFunds ,"   fundsInfo[param.stakingToken].reserveFunds ");
             // uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
             // uint256 depositReturn = calculateDepositReturn(param.stakingToken);
 
@@ -252,8 +242,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      */
 
     function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
-        console.log("block.timestamp",block.timestamp);
-    // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
+        console.log("block.timestamp", block.timestamp);
+        // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
 
         // stEthBalBeforeStDep = IERC20(_asset).balanceOf(address(this));
         if (_depositAmt == 0) revert ZeroAmount();
@@ -281,7 +271,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         address _strategy,
         uint256 _withdrawAmt
     ) public validStrategy(strategy) returns (uint256 _returnAmount) {
-        console.log("block.timestamp",block.timestamp);
+        console.log("block.timestamp", block.timestamp);
         if (_withdrawAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         // uint256 balBef = totalAssetStakedInStrategy[_asset];
@@ -313,6 +303,9 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
                 uint256 withdrawAmount = withdrawFromStrategy(param.stakingToken, instadapp, currentFundsAmount);
                 fundsInfo[param.stakingToken].availableFunds += withdrawAmount;
             }
+
+            console.log(fundsInfo[param.stakingToken].availableFunds, " fundsInfo[param.stakingToken].availableFunds");
+            console.log(currentFundsAmount, "currentFundsAmount");
             fundsInfo[param.stakingToken].availableFunds -= currentFundsAmount;
         }
         // bond token transfer
@@ -328,7 +321,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         IERC20(endToken).transfer(account, amount);
     }
 
-    function mintEndRewToUser(address _to, uint256 _amount) external {
+    function mintEndToUser(address _to, uint256 _amount) external {
         ///just return for temp  should changethe
         IEndToken(endToken).mint(_to, _amount);
     }
