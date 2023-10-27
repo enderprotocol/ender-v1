@@ -194,7 +194,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee < 0 || bondFee > 100) revert InvalidBondFee();
-        if (!bondFeeEnabled && bondFee > 0 && bondFee <= 100) revert BondFeeDisabled();
 
         // token transfer
         if (token == address(0)) {
@@ -282,17 +281,13 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         // update current bond
         bond.withdrawn = true;
+        console.log(bond.principal, "cheeeeeeee");
 
-        endTreasury.withdraw(
-            IEnderBase.EndRequest(
-                msg.sender,
-                bond.token,
-                bond.bondFee > 0 && bondFeeEnabled ? (bond.principal * (100 - bond.bondFee)) / 100 : bond.principal
-            )
-        ); // is a rebond
+        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal));
 
         uint256 reward = calculateBondRewardAmount(_tokenId);
         endTreasury.mintEndToUser(msg.sender, reward);
+        console.log(_tokenId, "tokennnn");
         claimRefractionRewards(_tokenId);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
         userBondPrincipalAmount[_tokenId] = 0;
@@ -437,7 +432,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function claimRefractionRewards(uint256 _tokenId) public {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        if (userBondPrincipalAmount[_tokenId] > 0) revert NotBondUser();
+        if (userBondPrincipalAmount[_tokenId] <= 0) revert NotBondUser();
 
         Bond memory temp = bonds[_tokenId];
 
