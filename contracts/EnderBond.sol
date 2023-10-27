@@ -283,8 +283,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // update current bond
         bond.withdrawn = true;
 
-        // if (_maturity == 0) {
-        console.log("in iffffff the Ender withdraw");
         endTreasury.withdraw(
             IEnderBase.EndRequest(
                 msg.sender,
@@ -292,15 +290,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
                 bond.bondFee > 0 && bondFeeEnabled ? (bond.principal * (100 - bond.bondFee)) / 100 : bond.principal
             )
         ); // is a rebond
-        console.log("in the Ender withdraw");
+
         uint256 reward = calculateBondRewardAmount(_tokenId);
         endTreasury.mintEndToUser(msg.sender, reward);
-        claimRefractionRewards(tokenId);
+        claimRefractionRewards(_tokenId);
         totalBondPrincipalAmount -= userBondPrincipalAmount[tokenId];
         userBondPrincipalAmount[tokenId] = 0;
-        // }
-        // not a rebond
-        // else tokenId = _deposit(bond.principal, _maturity, bond.token, bondFee);
     }
 
     // /**
