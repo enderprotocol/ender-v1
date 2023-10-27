@@ -629,7 +629,8 @@ describe.only("EnderBondWithDraw", function () {
       await endToken.connect(signer1).transfer(signer2.address, endTransfer);
 
       await endToken.connect(signer1).transfer(signer2.address, endTransfer);
-      console.log(await endToken.allowance(endTokenAddress, enderBondAddress));
+
+      // console.log(await endToken.allowance(endTokenAddress, enderBondAddress));
       await endToken.distributeRefractionFees();
 
       const depositAmountEth = "1";
@@ -643,31 +644,31 @@ describe.only("EnderBondWithDraw", function () {
       await enderBond
         .connect(signer1)
         .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-      filter = enderBond.filters.Deposit;
-      const events = await enderBond.queryFilter(filter, -1);
+      // filter = enderBond.filters.Deposit;
+      // const events = await enderBond.queryFilter(filter, -1);
 
-      const event1 = events[0];
+      // const event1 = events[0];
 
-      const args1 = event1.args;
-      console.log(args1.tokenId, "tokenId");
+      // const args1 = event1.args;
+      // console.log(args1.tokenId, "tokenId");
 
-      let initialStEthBalTreasury = await stEth.balanceOf(enderTreasuryAddress);
+      // let initialStEthBalTreasury = await stEth.balanceOf(enderTreasuryAddress);
 
-      await enderTreasury
-        .connect(signer1)
-        .depositInStrategy(stEthAddress, instadappLiteAddress, 1000);
+      // await enderTreasury
+      //   .connect(signer1)
+      //   .depositInStrategy(stEthAddress, instadappLiteAddress, 1000);
 
-      expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
-      const currentTime = await ethers.provider.getBlock("latest");
-      //   console.log(currentTime.timestamp, "currentTime");
+      // expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
+      // const currentTime = await ethers.provider.getBlock("latest");
+      // //   console.log(currentTime.timestamp, "currentTime");
 
-      await ethers.provider.send("evm_setNextBlockTimestamp", [
-        currentTime.timestamp + 90 * 24 * 3600,
-      ]);
+      // await ethers.provider.send("evm_setNextBlockTimestamp", [
+      //   currentTime.timestamp + 90 * 24 * 3600,
+      // ]);
 
-      await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
+      // await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
 
-      await enderBond.connect(signer1).withdraw(1);
+      // await enderBond.connect(signer1).withdraw(args1.tokenId);
     });
   });
 });

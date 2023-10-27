@@ -350,7 +350,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function updateRewardShareIndex(uint256 _reward) external {
         IERC20(endToken).transferFrom(endToken, address(this), _reward);
-        // rateOfChange += 100;
         rewardShareIndex = rewardShareIndex + (_reward / totalRewardPriciple);
     }
 
