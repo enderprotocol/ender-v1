@@ -281,7 +281,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         // update current bond
         bond.withdrawn = true;
-        console.log(bond.principal, "cheeeeeeee");
 
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal));
 
