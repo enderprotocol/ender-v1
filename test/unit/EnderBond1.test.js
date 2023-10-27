@@ -3,7 +3,7 @@ const { ethers, upgrades } = require("hardhat");
 const { BigNumber } = require("ethers");
 
 const { EigenLayerStrategyManagerAddress } = require("../utils/common");
-// const { describe } = require("node:test");
+const { describe } = require("node:test");
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
 const baseURI =
   "https://endworld-backend-git-dev-metagaming.vercel.app/nft/metadata/";
