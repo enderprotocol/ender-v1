@@ -56,6 +56,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public nominalYield;
     uint256 public availableFundsPercentage;
     uint256 public reserveFundsPercentage;
+    uint256 public lastDepositTime;
     // uint256 public stEthBalBeforeStDep;
     // uint256 public totalEthStakedInStrategy;
     // uint256 public totalDeposit
@@ -243,6 +244,11 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      */
 
     function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
+        if (lastDepositTime == 0) {
+            lastDepositTime = block.timestamp;
+        } else if (lastDepositTime + 1 days > block.timestamp) {
+            revert CanNotDepositToStrategyBeforeOneDay();
+        }
         console.log("block.timestamp", block.timestamp);
         // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
 
