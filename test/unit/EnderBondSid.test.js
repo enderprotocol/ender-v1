@@ -456,7 +456,7 @@ describe("EnderBond", function () {
                 await enderTreasury.totalRewardsFromStrategy(stEthAddress),
             );
         });
-        it.only("Should not allow deposit inot the strategy before 1 day of last deposit", async function () {
+        it("Should not allow deposit inot the strategy before 1 day of last deposit", async function () {
             const depositAmountEnd = "5";
             const depositPrincipalEnd = ethers.parseEther(depositAmountEnd);
             const amountEndTransfer = "1";
@@ -493,37 +493,66 @@ describe("EnderBond", function () {
                 Number(initialStEthBalTreasury) - 1000,
             );
             expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(1000);
-            
+
             console.log("==================================");
             await expect(
-                await enderTreasury
+                enderTreasury
                     .connect(signer1)
                     .depositInStrategy(stEthAddress, instadappLiteAddress, 1000),
             ).to.be.revertedWithCustomError(enderTreasury, "CanNotDepositToStrategyBeforeOneDay()");
+        });
+        it("Should only allow another deposit after 1 day of previous one", async function () {
+            const depositAmountEnd = "5";
+            const depositPrincipalEnd = ethers.parseEther(depositAmountEnd);
+            const amountEndTransfer = "1";
+            const endTransfer = ethers.parseEther(amountEndTransfer);
 
-            // await ethers.provider.send("evm_increaseTime", [365 * 24 * 60 * 60]);
-            // await ethers.provider.send("evm_mine");
+            await endToken.grantRole(MINTER_ROLE, owner.address);
+            await endToken.setFee(20);
+            await endToken.connect(owner).mint(signer1.address, depositPrincipalEnd);
+            await endToken.connect(signer1).transfer(signer2.address, endTransfer);
 
-            // await enderTreasury
-            //   .connect(signer1)
-            //   .withdrawFromStrategy(stEthAddress, instadappLiteAddress, 1000);
+            await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+            console.log(await endToken.allowance(endTokenAddress, enderBondAddress));
+            await endToken.distributeRefractionFees();
 
-            // console.log(await stEth.balanceOf(enderTreasuryAddress));
-            // expect(await stEth.balanceOf(enderTreasuryAddress)).to.be.greaterThan(
-            //   initialStEthBalTreasury
-            // );
-            // expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(
-            //   0
-            // );
+            const depositAmountEth = "1";
+            const depositPrincipal = ethers.parseEther(depositAmountEth);
+            const maturity = 90;
+            const bondFee = 5;
 
-            // expect(
-            //   await enderTreasury.totalRewardsFromStrategy(stEthAddress)
-            // ).to.be.equal((1000 * 4) / 100);
+            await stEth.mint(await signer1.getAddress(), depositPrincipal);
 
-            // console.log(
-            //   "=====================",
-            //   await enderTreasury.totalRewardsFromStrategy(stEthAddress)
-            // );
+            await stEth.connect(signer1).approve(enderBondAddress, depositPrincipal);
+            await enderBond
+                .connect(signer1)
+                .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+
+            let initialStEthBalTreasury = await stEth.balanceOf(enderTreasuryAddress);
+            console.log(await stEth.balanceOf(enderTreasuryAddress));
+
+            await enderTreasury
+                .connect(signer1)
+                .depositInStrategy(stEthAddress, instadappLiteAddress, 1000);
+            expect(Number(await stEth.balanceOf(enderTreasuryAddress))).to.be.equal(
+                Number(initialStEthBalTreasury) - 1000,
+            );
+            expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(1000);
+
+            console.log("==================================");
+            await ethers.provider.send("evm_increaseTime", [24 * 60 * 60]);
+            await ethers.provider.send("evm_mine");
+            await enderTreasury
+                .connect(signer1)
+                .depositInStrategy(stEthAddress, instadappLiteAddress, 1000);
+        });
+        it("Should set treasury setter functoins", async function () {
+            await enderTreasury.setAddress(signer1.getAddress(),1);
+            await enderTreasury.setAddress(signer1.getAddress(),2);
+            await enderTreasury.setAddress(signer1.getAddress(),3);
+            await enderTreasury.setAddress(signer1.getAddress(),4);
+            await enderTreasury.setStrategy([signer1.getAddress()],true);
+            await enderTreasury.setNominalYield(5);
         });
     });
 });
