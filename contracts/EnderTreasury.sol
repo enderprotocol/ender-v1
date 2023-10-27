@@ -28,6 +28,7 @@ error InvalidBaseRate();
 error ZeroAmount();
 error InvalidRatio();
 error NotEnoughAvailableFunds();
+error CanNotDepositToStrategyBeforeOneDay();
 
 contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
