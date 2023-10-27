@@ -294,8 +294,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 reward = calculateBondRewardAmount(_tokenId);
         endTreasury.mintEndToUser(msg.sender, reward);
         claimRefractionRewards(_tokenId);
-        totalBondPrincipalAmount -= userBondPrincipalAmount[tokenId];
-        userBondPrincipalAmount[tokenId] = 0;
+        totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
+        userBondPrincipalAmount[_tokenId] = 0;
     }
 
     // /**
