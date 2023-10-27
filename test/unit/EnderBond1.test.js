@@ -589,8 +589,8 @@ describe.only("EnderBondWithDraw", function () {
         instadappLiteAddress,
         ethers.ZeroAddress,
         ethers.ZeroAddress,
-        30,
         70,
+        30,
       ],
       {
         initializer: "initializeTreasury",
@@ -662,10 +662,17 @@ describe.only("EnderBondWithDraw", function () {
       console.log(args1.tokenId, "tokenId");
 
       let initialStEthBalTreasury = await stEth.balanceOf(enderTreasuryAddress);
-       
+
       await enderTreasury
         .connect(signer1)
-        .depositInStrategy(stEthAddress, instadappLiteAddress, 1000);
+        .depositInStrategy(stEthAddress, instadappLiteAddress, 1850000000000000);
+
+      expect(Number(await stEth.balanceOf(enderTreasuryAddress))).to.be.equal(
+        Number(initialStEthBalTreasury) - 1850000000000000
+      );
+      expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(
+        1850000000000000
+      );
 
       expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
       const currentTime = await ethers.provider.getBlock("latest");
@@ -678,6 +685,10 @@ describe.only("EnderBondWithDraw", function () {
       await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
 
       await enderBond.connect(signer1).withdraw(args1.tokenId);
+
+      expect(await stEth.balanceOf(signer1.address)).to.be.equal(
+        950000000000000000n
+      );
     });
   });
 });

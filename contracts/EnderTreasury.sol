@@ -82,6 +82,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         // address _stEthELS
         initializer
     {
+        if (_availableFundsPercentage < 70 && _reserveFundsPercentage < 30) revert InvalidRatio();
         __Ownable_init();
         // stEthELS = _stEthELS;
         enderStaking = _enderStaking;
@@ -297,18 +298,20 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         // if invalid reserve funds then withdraw from protocol
         uint256 currentFundsAmount = param.tokenAmt;
         console.log(currentFundsAmount, "currentFundsAmount");
-         console.log(fundsInfo[param.stakingToken].reserveFunds, "fundsInfo[param.stakingToken].reserveFunds");
+        console.log(fundsInfo[param.stakingToken].reserveFunds, "fundsInfo[param.stakingToken].reserveFunds");
 
         if (fundsInfo[param.stakingToken].reserveFunds < param.tokenAmt) {
             currentFundsAmount -= fundsInfo[param.stakingToken].reserveFunds;
             fundsInfo[param.stakingToken].reserveFunds = 0;
+            console.log(currentFundsAmount, "currentFundsAmount1");
             if (fundsInfo[param.stakingToken].availableFunds < currentFundsAmount) {
+                console.log(currentFundsAmount, "currentFundsAmount2");
                 uint256 withdrawAmount = withdrawFromStrategy(param.stakingToken, instadapp, currentFundsAmount);
                 fundsInfo[param.stakingToken].availableFunds += withdrawAmount;
             }
 
             console.log(fundsInfo[param.stakingToken].availableFunds, " fundsInfo[param.stakingToken].availableFunds");
-            console.log(currentFundsAmount, "currentFundsAmount");
+            console.log(currentFundsAmount, "currentFundsAmount3");
             fundsInfo[param.stakingToken].availableFunds -= currentFundsAmount;
         }
         // bond token transfer

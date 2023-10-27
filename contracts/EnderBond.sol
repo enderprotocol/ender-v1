@@ -222,7 +222,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         )
     {
         principal = (principal * (100 - bondFee)) / 100;
-        console.log("principal", principal);
+        console.log(principal, "principal");
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
