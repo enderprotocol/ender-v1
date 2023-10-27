@@ -644,31 +644,40 @@ describe.only("EnderBondWithDraw", function () {
       await enderBond
         .connect(signer1)
         .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-      // filter = enderBond.filters.Deposit;
-      // const events = await enderBond.queryFilter(filter, -1);
 
-      // const event1 = events[0];
+      expect(await stEth.balanceOf(enderTreasuryAddress)).to.equal(
+        depositPrincipal
+      );
+      console.log(
+        await stEth.balanceOf(enderTreasuryAddress),
+        "stEth.balanceOf(enderTreasuryAddress)"
+      );
 
-      // const args1 = event1.args;
-      // console.log(args1.tokenId, "tokenId");
+      filter = enderBond.filters.Deposit;
+      const events = await enderBond.queryFilter(filter, -1);
 
-      // let initialStEthBalTreasury = await stEth.balanceOf(enderTreasuryAddress);
+      const event1 = events[0];
 
-      // await enderTreasury
-      //   .connect(signer1)
-      //   .depositInStrategy(stEthAddress, instadappLiteAddress, 1000);
+      const args1 = event1.args;
+      console.log(args1.tokenId, "tokenId");
 
-      // expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
-      // const currentTime = await ethers.provider.getBlock("latest");
-      // //   console.log(currentTime.timestamp, "currentTime");
+      let initialStEthBalTreasury = await stEth.balanceOf(enderTreasuryAddress);
+       
+      await enderTreasury
+        .connect(signer1)
+        .depositInStrategy(stEthAddress, instadappLiteAddress, 1000);
 
-      // await ethers.provider.send("evm_setNextBlockTimestamp", [
-      //   currentTime.timestamp + 90 * 24 * 3600,
-      // ]);
+      expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
+      const currentTime = await ethers.provider.getBlock("latest");
+      //   console.log(currentTime.timestamp, "currentTime");
 
-      // await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
+      await ethers.provider.send("evm_setNextBlockTimestamp", [
+        currentTime.timestamp + 90 * 24 * 3600,
+      ]);
 
-      // await enderBond.connect(signer1).withdraw(args1.tokenId);
+      await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
+
+      await enderBond.connect(signer1).withdraw(args1.tokenId);
     });
   });
 });

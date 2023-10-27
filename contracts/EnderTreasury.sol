@@ -297,6 +297,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         // if invalid reserve funds then withdraw from protocol
         uint256 currentFundsAmount = param.tokenAmt;
         console.log(currentFundsAmount, "currentFundsAmount");
+         console.log(fundsInfo[param.stakingToken].reserveFunds, "fundsInfo[param.stakingToken].reserveFunds");
+
         if (fundsInfo[param.stakingToken].reserveFunds < param.tokenAmt) {
             currentFundsAmount -= fundsInfo[param.stakingToken].reserveFunds;
             fundsInfo[param.stakingToken].reserveFunds = 0;

@@ -226,8 +226,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
-        uint256 day = (block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY;
-        console.log(day, "day");
+        // uint256 day = (block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY;
+        // console.log(day, "day");
         availableFundsAtMaturity[(block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         userDeposit[tokenId] += principal;
         (uint256 avgRefractionIndex, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
