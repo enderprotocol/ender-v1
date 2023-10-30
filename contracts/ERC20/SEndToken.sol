@@ -3,9 +3,10 @@ pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "hardhat/console.sol";
 
-contract SEndToken is ERC20, Ownable {
+contract SEndToken is ERC20, Ownable ,ERC20Burnable{
     bool enableOrDisableTX;
     uint256 public status;
     mapping(address => bool) public isWhitelisted;
@@ -19,8 +20,8 @@ contract SEndToken is ERC20, Ownable {
     constructor() ERC20("Ender", "END") Ownable() {
         status = 1;
         // enableOrDisableTX = false;
-        console.log("im here");
-        _mint(msg.sender, 1000000 * 10 ** decimals());
+        // console.log("im here");
+        // _mint(msg.sender, 1000000 * 10 ** decimals());
     }
 
     function verifyStatus() internal view {
@@ -52,9 +53,17 @@ contract SEndToken is ERC20, Ownable {
         verifyStatus();
         ERC20._transfer(from, to, value);
     }
+    function burn(address from, uint256 value) public {
+        ERC20._transfer(from, address(0xdead), value);
+    }
 
     function whitelist(address _whitelistingAddress, bool _action) external {
         isWhitelisted[_whitelistingAddress] = _action;
         emit WhiteListChanged(_whitelistingAddress, _action);
+    }
+
+    ///for testing purpose
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
     }
 }
