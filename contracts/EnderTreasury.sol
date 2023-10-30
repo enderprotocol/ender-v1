@@ -209,33 +209,33 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         } else IERC20(_token).transfer(_account, _amount);
     }
 
-    // function stakeRebasingReward(uint256 _tokenId, address _tokenAddress) public returns (uint256 rebaseReward) {
-    //     uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
-    //     uint256 depositReturn = calculateDepositReturn(_tokenAddress);
-    //     //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 9decimal
-    //     (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
-    //     (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
-
-    //     depositReturn = (ethPrice * depositReturn) / ethDecimal;
-
-    //     bondReturn = (priceEnd * bondReturn) / endDecimal;
-
-    //     rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
-
-    //     rebaseReward = ((rebaseReward * 1e1) / priceEnd);
-    // }
-
-    function getStakingReward(address _asset) public returns (uint256 mintAmount) {
-        uint256 depositReturn = totalAssetStakedInStrategy[_asset] +
-            totalRewardsFromStrategy[_asset] +
-            IERC20(_asset).balanceOf(address(this)) -
-            (fundsInfo[_asset].availableFunds + fundsInfo[_asset].reserveFunds);
-
+    function stakeRebasingReward(address _tokenAddress) public returns (uint256 rebaseReward) {
         uint256 bondReturn = IEnderBond(enderBond).endMint();
-        uint256 nominalReturn = depositReturn * nominalYield;
-        mintAmount = depositReturn - bondReturn + nominalReturn;
-        IEndToken(_asset).mint(enderStaking, mintAmount);
+        uint256 depositReturn = calculateDepositReturn(_tokenAddress);
+        //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 9decimal
+        (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
+        (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
+
+        depositReturn = (ethPrice * depositReturn) / ethDecimal;
+
+        bondReturn = (priceEnd * bondReturn) / endDecimal;
+
+        rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
+
+        rebaseReward = ((rebaseReward * 1e1) / priceEnd);
     }
+
+    // function getStakingReward(address _asset) public returns (uint256 mintAmount) {
+    //     uint256 depositReturn = totalAssetStakedInStrategy[_asset] +
+    //         totalRewardsFromStrategy[_asset] +
+    //         IERC20(_asset).balanceOf(address(this)) -
+    //         (fundsInfo[_asset].availableFunds + fundsInfo[_asset].reserveFunds);
+
+    //     uint256 bondReturn = IEnderBond(enderBond).endMint();
+    //     uint256 nominalReturn = depositReturn * nominalYield;
+    //     mintAmount = depositReturn - bondReturn + nominalReturn;
+    //     IEndToken(_asset).mint(enderStaking, mintAmount);
+    // }
 
     /**
      * @notice function to deposit available funds to strategies.
@@ -331,14 +331,14 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param account Address of user's wallet
      * @param amount Collect amount
      */
-    // function collect(address account, uint256 amount) external onlyBond {
-    //     IERC20(endToken).transfer(account, amount);
-    // }
+    function collect(address account, uint256 amount) external onlyBond {
+        IERC20(endToken).transfer(account, amount);
+    }
 
-    // function mintEndToUser(address _to, uint256 _amount) external {
-    //     ///just return for temp  should changethe
-    //     IEndToken(endToken).mint(_to, _amount);
-    // }
+    function mintEndToUser(address _to, uint256 _amount) external {
+        ///just return for temp  should changethe
+        IEndToken(endToken).mint(_to, _amount);
+    }
 
     /**
      * @dev Calculates the total return for a given asset.
