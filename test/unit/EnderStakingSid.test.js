@@ -165,7 +165,6 @@ describe("EnderBond", function () {
         //     expect(await enderStaking.calculateRebaseIndex()).to.equal(1);
         //     expect(userInfo[1]).to.equal(timeStamp.timestamp);
         //     expect(await sEnd.balanceOf(await owner.getAddress())).to.be.equal(stakeAmount * 3);
-
         // });
         it("Should withdraw end tokens", async function () {
             let withdrawpSendAmount = "100000000";

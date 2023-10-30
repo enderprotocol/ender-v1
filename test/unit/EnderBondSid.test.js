@@ -123,6 +123,8 @@ describe("EnderBond", function () {
         await bondNFT.waitForDeployment();
         bondNFTAddress = await bondNFT.getAddress();
 
+        await enderBond.setTxFees("50000");
+
         await enderStaking.setAddress(enderBondAddress, 1);
         await enderStaking.setAddress(enderTreasuryAddress, 2);
 
@@ -201,6 +203,26 @@ describe("EnderBond", function () {
             const args1 = event1.args;
 
             expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
+        });
+        it.only("Should decuct fees on each transfer of NFT", async function () {
+            const depositPrincipal = 100000000000000;
+            const maturity = 90;
+            const bondFee = 5;
+
+            await stEth.mint(await signer1.getAddress(), "1000000000000000000000000000");
+            await enderBond.connect(owner).setBondableTokens([endTokenAddress], true);
+
+            await stEth.connect(signer1).approve(enderBondAddress, depositPrincipal);
+            await enderBond
+                .connect(signer1)
+                .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+                console.log(await signer1.getAddress(),await owner.getAddress());
+                console.log(await bondNFT.ownerOf(1));
+            let userBondPrincipalAmountBef = await enderBond.userBondPrincipalAmount(1);
+            console.log(userBondPrincipalAmountBef);
+            await bondNFT.connect(signer1).safeTransferFrom(await signer1.getAddress(),await owner.getAddress(),1);
+            let userBondPrincipalAmountAf = await enderBond.userBondPrincipalAmount(1);
+            expect(Number(userBondPrincipalAmountAf)).to.be.lessThan(userBondPrincipalAmountBef);
         });
     });
     describe("Deposit Reverts", function () {
