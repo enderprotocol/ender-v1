@@ -362,7 +362,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         uint256 requiredReserveFund = (totalStaked * reserveFundsPercentage) / 100;
         uint256 existingReserveFund = fundsInfo[_stEthAddress].reserveFunds;
 
-        if (existingReserveFund >= requiredReserveFund) {
+        if (existingReserveFund > requiredReserveFund) {
             totalReturn += existingReserveFund - requiredReserveFund;
             depositInStrategy(_stEthAddress, _strategy, totalReturn);
         } else {
@@ -370,9 +370,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
                 uint256 remainingReturns = totalReturn - requiredReserveFund;
                 fundsInfo[_stEthAddress].reserveFunds += requiredReserveFund;
                 depositInStrategy(_stEthAddress, _strategy, remainingReturns);
-            }
-
-            if (totalReturn > 0) {
+            } else {
                 requiredReserveFund -= totalReturn;
                 uint256 requiredAmount = withdrawFromStrategy(_stEthAddress, _strategy, requiredReserveFund);
                 fundsInfo[_stEthAddress].reserveFunds += totalReturn + requiredAmount;
@@ -381,6 +379,31 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
         balanceLastEpoch = IERC20(_stEthAddress).balanceOf(address(this));
     }
+
+    // function recordEpochResults1(address _stEthAddress, address _strategy) public {
+    //     uint256 totalReturn = calculateTotalReturn(_stEthAddress);
+    //     uint256 totalStaked = totalAssetStakedInStrategy[_stEthAddress];
+    //     uint256 requiredReserveFund = (totalStaked * reserveFundsPercentage) / 100;
+    //     uint256 existingReserveFund = fundsInfo[_stEthAddress].reserveFunds;
+
+    //     if (existingReserveFund < requiredReserveFund) {
+    //         uint256 temp = requiredReserveFund - existingReserveFund;
+
+    //         if (totalReturn > temp) {
+    //             fundsInfo[_stEthAddress].reserveFunds += requiredReserveFund;
+    //             depositInStrategy(_stEthAddress, _strategy, totalReturn - temp);
+    //         } else {
+    //             requiredReserveFund = totalReturn;
+    //             fundsInfo[_stEthAddress].reserveFunds += totalReturn;
+    //             withdrawFromStrategy(_stEthAddress, _strategy, temp - totalReturn);
+    //         }
+    //     } else {
+    //         totalReturn += existingReserveFund - requiredReserveFund;
+    //         depositInStrategy(_stEthAddress, _strategy, totalReturn);
+    //     }
+
+    //     balanceLastEpoch = IERC20(_stEthAddress).balanceOf(address(this));
+    // }
 
     /**
      * @dev Calculates the deposit return based on the total return and available funds.
