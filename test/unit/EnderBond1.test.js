@@ -522,7 +522,9 @@ describe.only("EnderBondWithDraw", function () {
     sEndTokenAddress,
     instadappLitelidoStaking,
     stEth,
-    bondNFT;
+    bondNFT,
+    oracle,
+    oracleAddress;
 
   before(async function () {
     const StEth = await ethers.getContractFactory("StEth");
@@ -532,6 +534,7 @@ describe.only("EnderBondWithDraw", function () {
     const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
     const EnderStaking = await ethers.getContractFactory("EnderStaking");
     const SEnd = await ethers.getContractFactory("SEndToken");
+    const Oracle = await ethers.getContractFactory("EnderOracle");
 
     stEth = await StEth.deploy();
     stEthAddress = await stEth.getAddress();
@@ -539,8 +542,8 @@ describe.only("EnderBondWithDraw", function () {
     sEnd = await SEnd.deploy();
     sEndTokenAddress = await sEnd.getAddress();
 
-    instadappLite = await InstadappLite.deploy(stEthAddress);
-    instadappLiteAddress = await instadappLite.getAddress();
+    instadappLitelidoStaking = await InstadappLite.deploy(stEthAddress);
+    instadappLiteAddress = await instadappLitelidoStaking.getAddress();
 
     endToken = await upgrades.deployProxy(EndToken, [], {
       initializer: "initialize",
@@ -580,6 +583,13 @@ describe.only("EnderBondWithDraw", function () {
     //     ethers.ZeroAddress,
     // );
     // console.log({EnderTreasury});
+
+    oracle = await upgrades.deployProxy(Oracle, [], {
+      initializer: "initialize",
+    });
+
+    oracleAddress = await oracle.getAddress();
+
     enderTreasury = await upgrades.deployProxy(
       EnderTreasury,
       [
@@ -591,6 +601,7 @@ describe.only("EnderBondWithDraw", function () {
         ethers.ZeroAddress,
         70,
         30,
+        oracleAddress,
       ],
       {
         initializer: "initializeTreasury",
@@ -662,25 +673,21 @@ describe.only("EnderBondWithDraw", function () {
       console.log(args1.tokenId, "tokenId");
 
       let initialStEthBalTreasury = await stEth.balanceOf(enderTreasuryAddress);
-      const depositInStrategy = "0.5";
-      const stEthTransfer = ethers.parseEther(depositInStrategy);
+      // const depositInStrategy = "0.0005";
+      // const stEthTransfer = ethers.parseEther(depositInStrategy);
+      // console.log(stEthTransfer, "stEthTransfer");
       await enderTreasury
         .connect(signer1)
-        .depositInStrategy(
-          stEthAddress,
-          instadappLiteAddress,
-          depositPrincipal
-        );
-
+        .depositInStrategy(stEthAddress, instadappLiteAddress, 500000000000000);
+      console.log("im here==============");
       expect(Number(await stEth.balanceOf(enderTreasuryAddress))).to.be.equal(
-        Number(initialStEthBalTreasury) - depositPrincipal
+        Number(initialStEthBalTreasury) - 500000000000000
       );
       expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(
-        depositPrincipal
+        500000000000000
       );
 
       const currentTime1 = await ethers.provider.getBlock("latest");
-      //   console.log(currentTime.timestamp, "currentTime");
 
       await ethers.provider.send("evm_setNextBlockTimestamp", [
         currentTime1.timestamp + 24 * 3600,
@@ -690,7 +697,95 @@ describe.only("EnderBondWithDraw", function () {
         .depositInStrategy(
           stEthAddress,
           instadappLiteAddress,
-          depositPrincipal
+          500000000000000
+        );
+
+      expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
+      const currentTime = await ethers.provider.getBlock("latest");
+      //   console.log(currentTime.timestamp, "currentTime");
+
+      await ethers.provider.send("evm_setNextBlockTimestamp", [
+        currentTime.timestamp + 90 * 24 * 3600,
+      ]);
+
+      await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
+
+      await enderBond.connect(signer1).withdraw(args1.tokenId);
+
+      expect(await stEth.balanceOf(signer1.address)).to.be.equal(
+        950000000000000000n
+      );
+    });
+    it.only("check the withdraw functionality", async () => {
+      const depositAmountEnd = "5";
+      const depositPrincipalEnd = ethers.parseEther(depositAmountEnd);
+      const amountEndTransfer = "1";
+      const endTransfer = ethers.parseEther(amountEndTransfer);
+
+      await endToken.grantRole(MINTER_ROLE, owner.address);
+      await endToken.setFee(20);
+      await endToken.connect(owner).mint(signer1.address, depositPrincipalEnd);
+      await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+
+      await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+
+      // console.log(await endToken.allowance(endTokenAddress, enderBondAddress));
+      await endToken.distributeRefractionFees();
+
+      const depositAmountEth = "1";
+      const depositPrincipal = ethers.parseEther(depositAmountEth);
+      const maturity = 90;
+      const bondFee = 5;
+
+      await stEth.mint(await signer1.getAddress(), depositPrincipal);
+
+      await stEth.connect(signer1).approve(enderBondAddress, depositPrincipal);
+
+      await enderBond
+        .connect(signer1)
+        .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
+      expect(await stEth.balanceOf(enderTreasuryAddress)).to.equal(
+        depositPrincipal
+      );
+      console.log(
+        await stEth.balanceOf(enderTreasuryAddress),
+        "stEth.balanceOf(enderTreasuryAddress)"
+      );
+
+      filter = enderBond.filters.Deposit;
+      const events = await enderBond.queryFilter(filter, -1);
+
+      const event1 = events[0];
+
+      const args1 = event1.args;
+      console.log(args1.tokenId, "tokenId");
+
+      let initialStEthBalTreasury = await stEth.balanceOf(enderTreasuryAddress);
+      // const depositInStrategy = "0.0005";
+      // const stEthTransfer = ethers.parseEther(depositInStrategy);
+      // console.log(stEthTransfer, "stEthTransfer");
+      await enderTreasury
+        .connect(signer1)
+        .depositInStrategy(stEthAddress, instadappLiteAddress, 500000000000000);
+      console.log("im here==============");
+      expect(Number(await stEth.balanceOf(enderTreasuryAddress))).to.be.equal(
+        Number(initialStEthBalTreasury) - 500000000000000
+      );
+      expect(Number(await stEth.balanceOf(instadappLiteAddress))).to.be.equal(
+        500000000000000
+      );
+
+      const currentTime1 = await ethers.provider.getBlock("latest");
+
+      await ethers.provider.send("evm_setNextBlockTimestamp", [
+        currentTime1.timestamp + 24 * 3600,
+      ]);
+      await enderTreasury
+        .connect(signer1)
+        .depositInStrategy(
+          stEthAddress,
+          instadappLiteAddress,
+          500000000000000
         );
 
       expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);

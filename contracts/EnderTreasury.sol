@@ -252,7 +252,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         } else if (lastDepositTime + 1 days > block.timestamp) {
             revert CanNotDepositToStrategyBeforeOneDay();
         }
-        console.log("block.timestamp", block.timestamp);
+        
         // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
 
         // stEthBalBeforeStDep = IERC20(_asset).balanceOf(address(this));
