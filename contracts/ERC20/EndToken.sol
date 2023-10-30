@@ -13,7 +13,6 @@ error ZeroAddress();
 error InvalidParam();
 error InvalidEarlyEpoch();
 error ZeroFeeCollected();
-error OneYearVestingNotComplites();
 
 /**
  * @title EndToken contract
@@ -32,8 +31,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     uint256 private lastTransfer;
 
     uint256 public lastEpoch;
-    uint256 public lastMintTime;
-    uint256 public mintPercentage;
 
     address public enderBond;
 
@@ -65,10 +62,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
         ///// this is only for testing
         _mint(msg.sender, 1e13);
-    }
-
-    function setMintPercentage(uint256 _mintPerc) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        mintPercentage = _mintPerc;
     }
 
     /**
@@ -118,20 +111,8 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
      */
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         if (to == address(0)) revert ZeroAddress();
+
         _mint(to, amount);
-    }
-
-    function mintYearly(address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if ((block.timestamp - lastMintTime) < 365 days) {
-            revert OneYearVestingNotComplites();
-        }
-        lastMintTime = block.timestamp;
-        mint(address(this), (totalSupply() * mintPercentage) / 100);
-        mintPercentage--;
-    }
-
-    function withdraw(address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        transfer(to,amount);
     }
 
     function _transfer(address from, address to, uint256 amount) internal override {

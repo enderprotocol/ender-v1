@@ -964,8 +964,10 @@ describe.only("EnderBondWithdraw", function () {
 
       // Wait for the bond to mature
       await increaseTime(90 * 24 * 3600);
-         await 
-      // Withdraw and assert results
+      await // Withdraw and assert results
+
+      await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
+      
       await withdrawAndSetup(signer1, tokenId);
     });
 
