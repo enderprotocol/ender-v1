@@ -78,7 +78,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         address _lybraFinance,
         address _eigenLayer,
         uint256 _availableFundsPercentage,
-        uint256 _reserveFundsPercentage
+        uint256 _reserveFundsPercentage,
+        address _oracle
     )
         external
         // address _stEthELS
@@ -88,6 +89,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         __Ownable_init();
         // stEthELS = _stEthELS;
         enderStaking = _enderStaking;
+        enderOracle = IEnderOracle(_oracle);
         instadapp = _instadapp;
         lybraFinance = _lybraFinance;
         eigenLayer = _eigenLayer;
