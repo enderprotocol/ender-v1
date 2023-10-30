@@ -106,7 +106,7 @@ describe("EnderBond", function () {
                 ethers.ZeroAddress,
                 30,
                 70,
-                enderOracleAddress
+                enderOracleAddress,
             ],
             {
                 initializer: "initializeTreasury",
@@ -139,14 +139,44 @@ describe("EnderBond", function () {
             expect(await enderStaking.endToken()).to.equal(endTokenAddress);
         });
         it("Should set bond and treasurry addresses", async function () {
-            await enderStaking.setAddress(enderBondAddress,1);
-            await enderStaking.setAddress(enderTreasuryAddress,2);
+            await enderStaking.setAddress(enderBondAddress, 1);
+            await enderStaking.setAddress(enderTreasuryAddress, 2);
             expect(await enderStaking.sEndToken()).to.equal(sEndTokenAddress);
             expect(await enderStaking.enderBond()).to.equal(enderBondAddress);
         });
         it("Should stake end tokens", async function () {
-            await endToken.approve(enderStakingAddress,"100000000");
-            await enderStaking.stake("10000000")
+            let stakeAmount = "100000000";
+            await endToken.approve(enderStakingAddress, stakeAmount);
+            await enderStaking.stake(stakeAmount);
+            const timeStamp = await ethers.provider.getBlock("latest");
+            let userInfo = await enderStaking.userInfo(await owner.getAddress());
+            expect(userInfo[0]).to.equal(stakeAmount);
+            expect(userInfo[1]).to.equal(timeStamp.timestamp);
+            expect(await sEnd.balanceOf(await owner.getAddress())).to.be.equal(stakeAmount);
+        });
+
+        // it("Should re-stake end tokens", async function () {
+        //     let stakeAmount = "100000000";
+        //     await endToken.approve(enderStakingAddress, stakeAmount);
+        //     await enderStaking.stake(stakeAmount);
+        //     const timeStamp = await ethers.provider.getBlock("latest");
+        //     let userInfo = await enderStaking.userInfo(await owner.getAddress());
+        //     expect(userInfo[0]).to.equal("300000000");
+        //     expect(await enderStaking.calculateRebaseIndex()).to.equal(1);
+        //     expect(userInfo[1]).to.equal(timeStamp.timestamp);
+        //     expect(await sEnd.balanceOf(await owner.getAddress())).to.be.equal(stakeAmount * 3);
+
+        // });
+        it("Should withdraw end tokens", async function () {
+            let withdrawpSendAmount = "100000000";
+            await sEnd.approve(enderStakingAddress, withdrawpSendAmount);
+            await enderStaking.withdraw(withdrawpSendAmount);
+            let endBalOwner = await endToken.balanceOf(await owner.getAddress());
+            expect(endBalOwner).to.be.equal("10000000000000");
+            let userInfo = await enderStaking.userInfo(await owner.getAddress());
+            expect(userInfo[0]).to.equal(0);
+            expect(userInfo[1]).to.equal(0);
+            expect(await sEnd.balanceOf(await owner.getAddress())).to.be.equal(0);
         });
     });
 });
