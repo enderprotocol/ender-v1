@@ -279,7 +279,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _tokenId Bond nft tokenid
 
      */
-    function _withdraw(uint256 _tokenId) private returns (uint256 tokenId) {
+    function _withdraw(uint256 _tokenId) private  {
         Bond storage bond = bonds[_tokenId];
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
