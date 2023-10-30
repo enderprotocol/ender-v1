@@ -22,7 +22,8 @@ describe("EnderBond", function () {
         enderBondAddress,
         enderTreasuryAddress,
         enderStakingAddress,
-        instadappLiteAddress;
+        instadappLiteAddress,
+        enderOracleAddress;
 
     let endToken,
         enderBond,
@@ -33,7 +34,8 @@ describe("EnderBond", function () {
         sEndTokenAddress,
         instadappLitelidoStaking,
         stEth,
-        bondNFT;
+        bondNFT,
+        enderOracle;
 
     before(async function () {
         const StEth = await ethers.getContractFactory("StEth");
@@ -43,6 +45,12 @@ describe("EnderBond", function () {
         const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
         const EnderStaking = await ethers.getContractFactory("EnderStaking");
         const SEnd = await ethers.getContractFactory("SEndToken");
+        const EnderOracle = await ethers.getContractFactory("EnderOracle");
+
+        enderOracle = await upgrades.deployProxy(EnderOracle, [], {
+            initializer: "initialize",
+        });
+        enderOracleAddress = await enderOracle.getAddress();
 
         stEth = await StEth.deploy();
         stEthAddress = await stEth.getAddress();
@@ -98,6 +106,7 @@ describe("EnderBond", function () {
                 ethers.ZeroAddress,
                 30,
                 70,
+                enderOracleAddress
             ],
             {
                 initializer: "initializeTreasury",

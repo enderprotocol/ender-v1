@@ -40,6 +40,8 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
     function initialize(address _end, address _sEnd) external initializer {
         __Ownable_init();
+        // setAddress(_enderBond, 1);
+        // setAddress(_enderTreasury, 2);
         setAddress(_end, 3);
         setAddress(_sEnd, 4);
     }
