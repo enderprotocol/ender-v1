@@ -33,6 +33,14 @@ contract SEndToken is ERC20, Ownable {
         }
     }
 
+    /**
+     * @notice Returns the number of decimals
+     * @return uint8 The number of decimal places the token uses
+     */
+    function decimals() public view virtual override returns (uint8) {
+        return 9;
+    }
+
     function setStatus(uint256 _status) public {
         if (msg.sender != owner()) {
             revert NotOwner();

@@ -144,5 +144,9 @@ describe("EnderBond", function () {
             expect(await enderStaking.sEndToken()).to.equal(sEndTokenAddress);
             expect(await enderStaking.enderBond()).to.equal(enderBondAddress);
         });
+        it("Should stake end tokens", async function () {
+            await endToken.approve(enderStakingAddress,"100000000");
+            await enderStaking.stake("10000000")
+        });
     });
 });

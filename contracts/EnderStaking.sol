@@ -9,6 +9,7 @@ import "./interfaces/IEndToken.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEnderBond.sol";
+import "hardhat/console.sol";
 
 error ZeroAddress();
 error InvalidAmount();
@@ -148,27 +149,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         emit Withdraw(msg.sender, amount);
     }
 
-    /**
-     * @notice Harvest only the rewards
-     */
-    // function harvest() external {
-    //     uint256 pending = pendingReward(msg.sender);
-
-    //     if (pending != 0) {
-    //         // update userinfo
-    //         unchecked {
-    //             UserInfo storage userItem = userInfo[msg.sender];
-    //             userItem.pending = 0;
-    //             userItem.lastBlock = block.number;
-    //         }
-
-    //         // mint reward token to user
-    //         IEndToken(endToken).mint(msg.sender, pending);
-
-    //         emit Harvest(msg.sender, pending);
-    //     }
-    // }
-
     function getStakingReward(address _asset) external {
         uint256 totalReward = IEnderTreasury(enderTreasury).getStakingReward(_asset);
         uint256 rw2 = (totalReward * 10) / 100;
@@ -180,17 +160,23 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
         uint256 rebasingIndex = calculateRebaseIndex();
+        console.log("rebasingIndex",rebasingIndex);
         sEndTokens = _endAmount / rebasingIndex;
     }
 
     function calculateRebaseIndex() public view returns (uint256 rebasingIndex) {
-        rebasingIndex = IERC20(endToken).balanceOf(address(this)) / IERC20(sEndToken).totalSupply();
+        uint256 endBalStaking = IERC20(endToken).balanceOf(address(this));
+        uint256 sEndTotalSupply = IERC20(sEndToken).totalSupply();
+        console.log(endBalStaking,sEndTotalSupply);
+        if (endBalStaking == 0 || sEndTotalSupply == 0) {
+            rebasingIndex = 1;
+        } else {
+            rebasingIndex = IERC20(endToken).balanceOf(address(this)) / IERC20(sEndToken).totalSupply();
+        }
     }
 
     function claimRebaseRewards() internal view returns (uint256 reward) {
         //TODO
         reward = IERC20(sEndToken).balanceOf(msg.sender) * calculateRebaseIndex();
     }
-
-    //the epoc function
 }
