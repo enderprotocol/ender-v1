@@ -28,6 +28,7 @@ error InvalidAmount();
 error InvalidNonce();
 error InvalidMaturity();
 error InvalidBondFee();
+error NotBondNFT();
 
 /**
  * @title EnderBond contract
@@ -60,6 +61,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public totalBondPrincipalAmount;
     uint256 public endMint;
     uint256 public bondYieldBaseRate;
+    uint256 public txFees;
     uint256 constant SECONDS_IN_DAY = 86400;
 
     /// @notice An array containing all maturities.
@@ -130,6 +132,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         else if (_type == 5) lido = _addr;
 
         emit AddressUpdated(_addr, _type);
+    }
+
+    function setTxFees(uint256 _txFees) public onlyOwner {
+        txFees = _txFees;
     }
 
     function getAddress(uint256 _type) external view returns (address addr) {
@@ -239,6 +245,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalRewardPriciple += rewardPrinciple;
 
         uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 100);
+        console.log("depositPrincipal",getInterest(maturity) * principal);
         // uint256 depositPrincipal = (principal * 4 * (11) * (8)) / (365 * 100 * 100);
         IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
         userBondPrincipalAmount[tokenId] = depositPrincipal;
@@ -274,7 +281,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function _withdraw(uint256 _tokenId) private returns (uint256 tokenId) {
         Bond storage bond = bonds[_tokenId];
-
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         if (block.timestamp < bond.startTime + bond.maturity) revert BondNotMatured();
@@ -290,6 +296,16 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         claimRefractionRewards(_tokenId);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
         userBondPrincipalAmount[_tokenId] = 0;
+    }
+
+    function deductFeesFromTransfer(uint256 _tokenId) public {
+        if (msg.sender != address(bondNFT)) {
+            revert NotBondNFT();
+        }
+        if (userBondPrincipalAmount[_tokenId] == 0) {
+            revert NotBondUser();
+        }
+        userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
     }
 
     function _validateRefraction(

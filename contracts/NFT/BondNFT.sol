@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "../interfaces/IEnderBond.sol";
 
 error ZeroAddress();
 error NotBondContract();
@@ -65,6 +66,13 @@ contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         newTokenId = _tokenIdsCounter.current();
 
         _mint(to, newTokenId);
+    }
+
+    function _transfer(address from, address to, uint256 tokenId) internal override {
+        if (from != address(0) && to != address(0)) {
+            IEnderBond(bond).deductFeesFromTransfer(tokenId);
+        }
+        super._transfer(from, to, tokenId);
     }
 
     //  function burn(uint256 _tokenId) external onlyBond  {

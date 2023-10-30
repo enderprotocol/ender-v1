@@ -12,5 +12,5 @@ interface IEnderTreasury is IEnderBase {
 
     function mintEndToUser(address, uint256) external;
 
-    function getStakingReward(address _tokenAddress) external returns (uint256 rebaseReward);
+    function stakeRebasingReward(address _asset) external returns (uint256 rebaseReward);
 }

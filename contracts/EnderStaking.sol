@@ -153,7 +153,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     }
 
     function getStakingReward(address _asset) external {
-        uint256 totalReward = IEnderTreasury(enderTreasury).getStakingReward(_asset);
+        uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         uint256 rw2 = (totalReward * 10) / 100;
 
         uint256 sendTokens = calculateSEndTokens(rw2);
