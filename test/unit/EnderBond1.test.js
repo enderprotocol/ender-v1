@@ -641,10 +641,10 @@ describe.only("EnderBondWithDraw", function () {
       await stEth.mint(await signer1.getAddress(), depositPrincipal);
 
       await stEth.connect(signer1).approve(enderBondAddress, depositPrincipal);
+
       await enderBond
         .connect(signer1)
         .deposit(depositPrincipal, maturity, bondFee, stEthAddress);
-
       expect(await stEth.balanceOf(enderTreasuryAddress)).to.equal(
         depositPrincipal
       );
@@ -666,7 +666,11 @@ describe.only("EnderBondWithDraw", function () {
       const stEthTransfer = ethers.parseEther(depositInStrategy);
       await enderTreasury
         .connect(signer1)
-        .depositInStrategy(stEthAddress, instadappLiteAddress, depositPrincipal);
+        .depositInStrategy(
+          stEthAddress,
+          instadappLiteAddress,
+          depositPrincipal
+        );
 
       expect(Number(await stEth.balanceOf(enderTreasuryAddress))).to.be.equal(
         Number(initialStEthBalTreasury) - depositPrincipal
@@ -683,7 +687,11 @@ describe.only("EnderBondWithDraw", function () {
       ]);
       await enderTreasury
         .connect(signer1)
-        .depositInStrategy(stEthAddress, instadappLiteAddress, depositPrincipal);
+        .depositInStrategy(
+          stEthAddress,
+          instadappLiteAddress,
+          depositPrincipal
+        );
 
       expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
       const currentTime = await ethers.provider.getBlock("latest");

@@ -33,13 +33,20 @@ contract EnderOracle is IEnderOracle, Initializable, OwnableUpgradeable {
     }
 
     function getPrice(address token) external view returns (uint256 price, uint8 priceDecimal) {
-        if (priceFeed[token] == address(0)) return (0, 0);
+        // if (priceFeed[token] == address(0)) return (0, 0);
 
-        unchecked {
-            int256 _price = IPriceFeed(priceFeed[token]).latestAnswer();
-            priceDecimal = IPriceFeed(priceFeed[token]).decimals();
+        // unchecked {
+        //     int256 _price = IPriceFeed(priceFeed[token]).latestAnswer();
+        //     priceDecimal = IPriceFeed(priceFeed[token]).decimals();
 
-            price = _price >= 0 ? uint256(_price) : 0;
+        //     price = _price >= 0 ? uint256(_price) : 0;
+        // }
+        if (token == address(0)) {
+            price = 170000000000; //$ is 8 decimal
+            priceDecimal = 0;
+        } else {
+            price = 100000000; //$ is 8 decimal
+            priceDecimal = 9;
         }
     }
 }
