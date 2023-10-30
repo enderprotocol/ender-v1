@@ -292,22 +292,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         userBondPrincipalAmount[_tokenId] = 0;
     }
 
-    // /**
-    //  * @notice Function to return the collectable amount
-    //  * @param tokenId  Token id of BondNFT
-    //  */
-    // function collectable(uint256 tokenId) public view returns (uint256 amount) {
-    //     Bond storage bond = bonds[tokenId];
-
-    //     unchecked {
-    //         if (bond.startTime == 0) amount = 0;
-    //         else if (bond.startTime + bond.maturity <= block.timestamp) amount = bond.endAmt;
-    //         else {
-    //             amount = (bond.endAmt * (block.timestamp - bond.startTime)) / bond.maturity;
-    //         }
-    //     }
-    // }
-
     function _validateRefraction(
         uint256 _amount,
         uint256 _nonce,
