@@ -252,7 +252,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         } else if (lastDepositTime + 1 days > block.timestamp) {
             revert CanNotDepositToStrategyBeforeOneDay();
         }
-        
+
         // function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public {
 
         // stEthBalBeforeStDep = IERC20(_asset).balanceOf(address(this));
@@ -358,7 +358,25 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      */
     function recordEpochResults(address _stEthAddress, address _strategy) public {
         uint256 totalReturn = calculateTotalReturn(_stEthAddress);
-        depositInStrategy(_stEthAddress, _strategy, totalReturn);
+        uint256 totalStaked = totalAssetStakedInStrategy[_stEthAddress];
+        uint256 requiredReserveFund = (totalStaked * reserveFundsPercentage) / 100;
+        uint256 existingReserveFund = fundsInfo[_stEthAddress].reserveFunds;
+
+        if (existingReserveFund >= requiredReserveFund) {
+            depositInStrategy(_stEthAddress, _strategy, totalReturn);
+        } else {
+            if (totalReturn > requiredReserveFund) {
+                uint256 remainingReturns = totalReturn - requiredReserveFund;
+                fundsInfo[_stEthAddress].reserveFunds += requiredReserveFund;
+                depositInStrategy(_stEthAddress, _strategy, remainingReturns);
+            }
+
+            if (totalReturn > 0) {
+                requiredReserveFund -= totalReturn;
+                fundsInfo[_stEthAddress].reserveFunds += totalReturn;
+                withdrawFromStrategy(_stEthAddress, _strategy, requiredReserveFund);
+            }
+        }
 
         balanceLastEpoch = IERC20(_stEthAddress).balanceOf(address(this));
     }

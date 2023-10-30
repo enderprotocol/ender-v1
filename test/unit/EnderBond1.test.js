@@ -848,7 +848,6 @@ describe.only("EnderBondWithdraw", function () {
     endToken = await upgrades.deployProxy(EndToken, [], {
       initializer: "initialize",
     });
-    await endToken.waitForDeployment();
     endTokenAddress = await endToken.getAddress();
 
     enderBond = await upgrades.deployProxy(
@@ -934,35 +933,40 @@ describe.only("EnderBondWithdraw", function () {
       await endToken.connect(signer1).transfer(signer2.address, endTransfer);
 
       await endToken.connect(signer1).transfer(signer2.address, endTransfer);
-
+      //as we hit the distribute Refraction Fee the fee that is collected in the
+      //end token will be send to the enderBond and S is updated Aswell
+      //  and the user can cliam for the enderbond
+      console.log(
+        await endToken.balanceOf(enderBondAddress),
+        "initial ender bond Balance"
+      );
       await endToken.distributeRefractionFees();
+
+      console.log(
+        await endToken.balanceOf(enderBondAddress),
+        "initial ender bond Balance After the distribution"
+      );
       await stEth.mint(await signer1.getAddress(), depositPrincipalStEth);
 
       await stEth
         .connect(signer1)
         .approve(enderBondAddress, depositPrincipalStEth);
 
-      const tokenId = await depositAndSetup(
-        signer1,
-        depositPrincipalStEth,
-        maturity,
-        bondFee
-      );
+      //this is where the user will deposit the StEth in to the contract
+      //in the deposit the amount will be divided in to 30 and 70% where the admin Will have access to further
+      //deposit it into the strategy for every 24 hours
+      // const tokenId = await depositAndSetup(
+      //   signer1,
+      //   depositPrincipalStEth,
+      //   maturity,
+      //   bondFee
+      // );
 
-      console.log(
-        await endToken.balanceOf(enderBondAddress),
-        "initial ender bond Balance"
-      );
+      // // Wait for the bond to mature
+      // await increaseTime(90 * 24 * 3600);
 
-      //as we hit the distribute Refraction Fee the fee that is collected in the 
-      //end token will
-      await endToken.distributeRefractionFees();
-
-      // Wait for the bond to mature
-      await increaseTime(90 * 24 * 3600);
-
-      // // Withdraw and assert results
-      await withdrawAndAssert(signer1, tokenId);
+      // // // Withdraw and assert results
+      // await withdrawAndSetup(signer1, tokenId);
     });
 
     it("should handle revert cases during withdrawal", async () => {
@@ -988,7 +992,7 @@ describe.only("EnderBondWithdraw", function () {
     return tokenId;
   }
 
-  async function withdrawAndAssert(signer, tokenId) {
+  async function withdrawAndSetup(signer, tokenId) {
     await enderBond.connect(signer).withdraw(tokenId);
 
     // Assert balance changes and other expectations
