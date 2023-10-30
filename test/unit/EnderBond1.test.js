@@ -955,26 +955,26 @@ describe.only("EnderBondWithdraw", function () {
       //this is where the user will deposit the StEth in to the contract
       //in the deposit the amount will be divided in to 30 and 70% where the admin Will have access to further
       //deposit it into the strategy for every 24 hours
-      // const tokenId = await depositAndSetup(
-      //   signer1,
-      //   depositPrincipalStEth,
-      //   maturity,
-      //   bondFee
-      // );
+      const tokenId = await depositAndSetup(
+        signer1,
+        depositPrincipalStEth,
+        maturity,
+        bondFee
+      );
 
-      // // Wait for the bond to mature
-      // await increaseTime(90 * 24 * 3600);
-
-      // // // Withdraw and assert results
-      // await withdrawAndSetup(signer1, tokenId);
+      // Wait for the bond to mature
+      await increaseTime(90 * 24 * 3600);
+         await 
+      // Withdraw and assert results
+      await withdrawAndSetup(signer1, tokenId);
     });
 
-    it("should handle revert cases during withdrawal", async () => {
-      // Simulate conditions that trigger reverts during withdrawal
-      // ...
-      // Perform withdrawal and handle expected reverts
-      // ...
-    });
+    // it("should handle revert cases during withdrawal", async () => {
+    //   // Simulate conditions that trigger reverts during withdrawal
+    //   // ...
+    //   // Perform withdrawal and handle expected reverts
+    //   // ...
+    // });
   });
 
   async function depositAndSetup(signer, depositAmount, maturity, bondFee) {

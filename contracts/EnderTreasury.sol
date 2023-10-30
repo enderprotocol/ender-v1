@@ -337,7 +337,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         IERC20(endToken).transfer(account, amount);
     }
 
-    function mintEndToUser(address _to, uint256 _amount) external {
+    function mintEndToUser(address _to, uint256 _amount) external onlyBond {
         ///just return for temp  should changethe
         IEndToken(endToken).mint(_to, _amount);
     }
@@ -363,6 +363,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         uint256 existingReserveFund = fundsInfo[_stEthAddress].reserveFunds;
 
         if (existingReserveFund >= requiredReserveFund) {
+            totalReturn += existingReserveFund - requiredReserveFund;
             depositInStrategy(_stEthAddress, _strategy, totalReturn);
         } else {
             if (totalReturn > requiredReserveFund) {
@@ -373,8 +374,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
             if (totalReturn > 0) {
                 requiredReserveFund -= totalReturn;
-                fundsInfo[_stEthAddress].reserveFunds += totalReturn;
-                withdrawFromStrategy(_stEthAddress, _strategy, requiredReserveFund);
+                uint256 requiredAmount = withdrawFromStrategy(_stEthAddress, _strategy, requiredReserveFund);
+                fundsInfo[_stEthAddress].reserveFunds += totalReturn + requiredAmount;
             }
         }
 
