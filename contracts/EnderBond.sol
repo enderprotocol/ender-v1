@@ -106,13 +106,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @dev Initializes the contract
      * @param endToken_ The address of the END token
      */
-    function initialize(address endToken_, address _lido) public initializer {
+    function initialize(address endToken_, address _lido, address _oracle) public initializer {
         __Ownable_init();
         __EIP712_init("EnderBond", "1");
         rateOfChange = 100;
         lido = _lido;
         totalRewardPriciple = 1;
         setAddress(endToken_, 2);
+        enderOracle = IEnderOracle(_oracle);
 
         setBondFeeEnabled(true);
     }
@@ -237,15 +238,16 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         availableFundsAtMaturity[(block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         userDeposit[tokenId] += principal;
         (uint256 avgRefractionIndex, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
-        console.log(rewardPrinciple, "rewardPrinciple", avgRefractionIndex);
+
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
         console.log(rewardSharePerUserIndex[tokenId], "rewardSharePerUserIndex[tokenId] ");
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
+        userBondYieldShareIndex[tokenId] = bondYeildShareIndex;
         totalDeposit += principal;
         totalRewardPriciple += rewardPrinciple;
 
         uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 100);
-        console.log("depositPrincipal",getInterest(maturity) * principal);
+        console.log("depositPrincipal", (getInterest(maturity) * principal) / (365 * 100));
         // uint256 depositPrincipal = (principal * 4 * (11) * (8)) / (365 * 100 * 100);
         IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
         userBondPrincipalAmount[tokenId] = depositPrincipal;
@@ -279,7 +281,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _tokenId Bond nft tokenid
 
      */
-    function _withdraw(uint256 _tokenId) private  {
+    function _withdraw(uint256 _tokenId) private {
         Bond storage bond = bonds[_tokenId];
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
@@ -291,12 +293,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal));
 
         uint256 reward = calculateBondRewardAmount(_tokenId);
+        console.log(reward, "reward in the contract");
         endTreasury.mintEndToUser(msg.sender, reward);
         console.log(_tokenId, "tokennnn");
         claimRefractionRewards(_tokenId);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
         userBondPrincipalAmount[_tokenId] = 0;
     }
+    // 663308219.178081191
 
     function deductFeesFromTransfer(uint256 _tokenId) public {
         if (msg.sender != address(bondNFT)) {
@@ -445,12 +449,15 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */
-    function updateBondYieldShareIndex() external {
-        (uint256 price, ) = enderOracle.getPrice(address(0));
-        (uint256 priceEnd, ) = enderOracle.getPrice(address(endToken));
-        uint256 _endMint = price * totalBondPrincipalAmount * priceEnd;
-        endMint += _endMint;
-        bondYeildShareIndex = bondYeildShareIndex + (endMint / totalBondPrincipalAmount);
+    function epochBondYieldShareIndex() external onlyOwner {
+        (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
+        (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
+
+        uint256 _endMint = (priceEth * priceEnd * totalBondPrincipalAmount) / ((10 ** ethDecimal) * (10 ** endDecimal));
+        endMint += _endMint * 1e2;
+        console.log(endMint, "endMint");
+
+        bondYeildShareIndex = bondYeildShareIndex + ((endMint * (10 ** endDecimal)) / totalBondPrincipalAmount);
     }
 
     /**
@@ -459,7 +466,11 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @return _reward The reward amount for the bond.
      */
     function calculateBondRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
-        _reward = userBondPrincipalAmount[_tokenId] * (bondYeildShareIndex - userBondYieldShareIndex[_tokenId]);
+        _reward = bondYeildShareIndex == userBondYieldShareIndex[_tokenId]
+            ? userBondPrincipalAmount[_tokenId] * 1
+            : userBondPrincipalAmount[_tokenId] * (bondYeildShareIndex - userBondYieldShareIndex[_tokenId]);
+
+        console.log(bondYeildShareIndex, "bondYeildShareIndex");
     }
 
     receive() external payable {}

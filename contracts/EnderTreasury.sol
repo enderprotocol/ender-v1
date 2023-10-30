@@ -218,9 +218,9 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
 
-        depositReturn = (ethPrice * depositReturn) / ethDecimal;
+        depositReturn = (ethPrice * depositReturn) / 10 ** ethDecimal;
 
-        bondReturn = (priceEnd * bondReturn) / endDecimal;
+        bondReturn = (priceEnd * bondReturn) / 10 ** endDecimal;
 
         rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
 
@@ -306,22 +306,16 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     function withdraw(EndRequest memory param) external onlyBond {
         // if invalid reserve funds then withdraw from protocol
         uint256 currentFundsAmount = param.tokenAmt;
-        console.log(currentFundsAmount, "currentFundsAmount");
-        console.log(fundsInfo[param.stakingToken].reserveFunds, "fundsInfo[param.stakingToken].reserveFunds");
 
         if (fundsInfo[param.stakingToken].reserveFunds < param.tokenAmt) {
             currentFundsAmount -= fundsInfo[param.stakingToken].reserveFunds;
             fundsInfo[param.stakingToken].reserveFunds = 0;
-            console.log(currentFundsAmount, "currentFundsAmount1");
-            console.log(fundsInfo[param.stakingToken].availableFunds, "fundsInfo[param.stakingToken].availableFunds");
+
             if (fundsInfo[param.stakingToken].availableFunds < currentFundsAmount) {
-                console.log(currentFundsAmount, "currentFundsAmount2");
                 uint256 withdrawAmount = withdrawFromStrategy(param.stakingToken, instadapp, currentFundsAmount);
                 fundsInfo[param.stakingToken].availableFunds += withdrawAmount;
             }
 
-            console.log(fundsInfo[param.stakingToken].availableFunds, " fundsInfo[param.stakingToken].availableFunds");
-            console.log(currentFundsAmount, "currentFundsAmount3");
             fundsInfo[param.stakingToken].availableFunds -= currentFundsAmount;
         }
         // bond token transfer

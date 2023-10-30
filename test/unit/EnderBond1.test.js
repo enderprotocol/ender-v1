@@ -3,6 +3,7 @@ const { ethers, upgrades } = require("hardhat");
 const { BigNumber } = require("ethers");
 
 const { EigenLayerStrategyManagerAddress } = require("../utils/common");
+const exp = require("constants");
 // const { describe } = require("node:test");
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
 const baseURI =
@@ -850,9 +851,15 @@ describe.only("EnderBondWithdraw", function () {
     });
     endTokenAddress = await endToken.getAddress();
 
+    oracle = await upgrades.deployProxy(Oracle, [], {
+      initializer: "initialize",
+    });
+
+    oracleAddress = await oracle.getAddress();
+
     enderBond = await upgrades.deployProxy(
       EnderBond,
-      [endTokenAddress, instadappLiteAddress],
+      [endTokenAddress, instadappLiteAddress, oracleAddress],
       {
         initializer: "initialize",
       }
@@ -861,7 +868,6 @@ describe.only("EnderBondWithdraw", function () {
     enderBondAddress = await enderBond.getAddress();
 
     await endToken.setBond(enderBondAddress);
-    await endToken.setFee(1);
 
     enderStaking = await upgrades.deployProxy(
       EnderStaking,
@@ -871,12 +877,6 @@ describe.only("EnderBondWithdraw", function () {
       }
     );
     enderStakingAddress = await enderStaking.getAddress();
-
-    oracle = await upgrades.deployProxy(Oracle, [], {
-      initializer: "initialize",
-    });
-
-    oracleAddress = await oracle.getAddress();
 
     enderTreasury = await upgrades.deployProxy(
       EnderTreasury,
@@ -913,21 +913,21 @@ describe.only("EnderBondWithdraw", function () {
     await enderBond.setBondableTokens([stEthAddress], true);
     await enderBond.setAddress(enderTreasuryAddress, 1);
     await enderBond.setAddress(bondNFTAddress, 3);
+
     [owner, wallet1, signer1, signer2, signer3] = await ethers.getSigners();
+
+    await endToken.grantRole(MINTER_ROLE, owner.address);
+    await endToken.setFee(20);
   });
 
   describe("withdraw", async () => {
     it("should successfully withdraw and update balances", async () => {
-      const depositAmount = ethers.parseEther("5");
       const maturity = 90;
       const bondFee = 5;
       const depositAmountEnd = expandTo18Decimals(5);
       const depositPrincipalStEth = expandTo18Decimals(1);
-      // const depositPrincipalSteth = ethers.parseEther(amountTransferStEth);
 
-      // const amountEndTransfer = "1";
       const endTransfer = expandTo18Decimals(1);
-      await endToken.grantRole(MINTER_ROLE, owner.address);
       await endToken.setFee(20);
       await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
       await endToken.connect(signer1).transfer(signer2.address, endTransfer);
@@ -936,16 +936,15 @@ describe.only("EnderBondWithdraw", function () {
       //as we hit the distribute Refraction Fee the fee that is collected in the
       //end token will be send to the enderBond and S is updated Aswell
       //  and the user can cliam for the enderbond
-      console.log(
-        await endToken.balanceOf(enderBondAddress),
-        "initial ender bond Balance"
-      );
+
+      expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
       await endToken.distributeRefractionFees();
 
-      console.log(
-        await endToken.balanceOf(enderBondAddress),
-        "initial ender bond Balance After the distribution"
+      //there are two tx done above which have 20% fee it will be equal to 400000000000000000
+      expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(
+        expandTo18Decimals(0.4)
       );
+
       await stEth.mint(await signer1.getAddress(), depositPrincipalStEth);
 
       await stEth
@@ -961,21 +960,111 @@ describe.only("EnderBondWithdraw", function () {
         maturity,
         bondFee
       );
+      //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
+      await enderBond.epochBondYieldShareIndex();
+
+      console.log(
+        await enderBond.bondYeildShareIndex(),
+        "await enderBond.bondYeildShareIndex()"
+      );
+      console.log(
+        await enderBond.userBondYieldShareIndex(tokenId),
+        "await enderBond.userBondYieldShareIndex(tokenId)"
+      );
+      expect(await enderBond.bondYeildShareIndex()).to.be.greaterThan(
+        await enderBond.userBondYieldShareIndex(tokenId)
+      );
 
       // Wait for the bond to mature
       await increaseTime(90 * 24 * 3600);
-      await // Withdraw and assert results
-
-      await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
-      
       await withdrawAndSetup(signer1, tokenId);
+      expect(await stEth.balanceOf(signer1.address)).to.be.equal(
+        depositPrincipalStEth - expandTo18Decimals(0.05)
+      );
+
+      // console.log(await enderBond.)
     });
+    // it("should successfully withdraw from the treasury", async () => {
+    //   const maturity = 90;
+    //   const bondFee = 5;
+    //   const depositAmountEnd = expandTo18Decimals(5);
+    //   const depositPrincipalStEth = expandTo18Decimals(1);
+
+    //   const endTransfer = expandTo18Decimals(1);
+    //   await endToken.setFee(20);
+    //   await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
+    //   await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+
+    //   await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+
+    //   await stEth.mint(await signer1.getAddress(), depositPrincipalStEth);
+
+    //   await stEth
+    //     .connect(signer1)
+    //     .approve(enderBondAddress, depositPrincipalStEth);
+
+    //   //this is where the user will deposit the StEth in to the contract
+    //   //in the deposit the amount will be divided in to 30 and 70% where the admin Will have access to further
+    //   //deposit it into the strategy for every 24 hours
+    //   const tokenId = await depositAndSetup(
+    //     signer1,
+    //     depositPrincipalStEth,
+    //     maturity,
+    //     bondFee
+    //   );
+
+    //   // Wait for the bond to mature
+    //   await increaseTime(90 * 24 * 3600);
+
+    //   await withdrawAndSetup(signer1, tokenId);
+    // });
 
     // it("should handle revert cases during withdrawal", async () => {
-    //   // Simulate conditions that trigger reverts during withdrawal
-    //   // ...
-    //   // Perform withdrawal and handle expected reverts
-    //   // ...
+    //   const maturity = 90;
+    //   const bondFee = 5;
+    //   const depositAmountEnd = expandTo18Decimals(5);
+    //   const depositPrincipalStEth = expandTo18Decimals(1);
+
+    //   const endTransfer = expandTo18Decimals(1);
+
+    //   await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
+    //   await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+
+    //   await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+
+    //   await endToken.distributeRefractionFees();
+
+    //   await stEth.mint(await signer1.getAddress(), depositPrincipalStEth);
+
+    //   await stEth
+    //     .connect(signer1)
+    //     .approve(enderBondAddress, depositPrincipalStEth);
+
+    //   //this is where the user will deposit the StEth in to the contract
+    //   //in the deposit the amount will be divided in to 30 and 70% where the admin Will have access to further
+    //   //deposit it into the strategy for every 24 hours
+    //   const tokenId = await depositAndSetup(
+    //     signer1,
+    //     depositPrincipalStEth,
+    //     maturity,
+    //     bondFee
+    //   );
+
+    //   // Wait for the bond to mature
+    //   await expect(
+    //     withdrawAndSetup(signer1, tokenId)
+    //   ).to.be.revertedWithCustomError(enderBond, "BondNotMatured");
+    //   await increaseTime(90 * 24 * 3600);
+    //   await withdrawAndSetup(signer1, tokenId);
+
+    //   await expect(
+    //     withdrawAndSetup(signer1, tokenId)
+    //   ).to.be.revertedWithCustomError(enderBond, "BondAlreadyWithdrawn");
+
+    //   await expect(
+    //     withdrawAndSetup(signer2, tokenId)
+    //   ).to.be.revertedWithCustomError(enderBond, "NotBondUser");
+    //   console.log("last-----------------------------");
     // });
   });
 
@@ -995,10 +1084,8 @@ describe.only("EnderBondWithdraw", function () {
   }
 
   async function withdrawAndSetup(signer, tokenId) {
+    await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
     await enderBond.connect(signer).withdraw(tokenId);
-
-    // Assert balance changes and other expectations
-    // ...
   }
 
   async function increaseTime(seconds) {
