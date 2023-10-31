@@ -114,6 +114,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalRewardPriciple = 1;
         setAddress(endToken_, 2);
         enderOracle = IEnderOracle(_oracle);
+        bondYieldBaseRate = 400;
 
         setBondFeeEnabled(true);
     }
@@ -137,6 +138,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     function setTxFees(uint256 _txFees) public onlyOwner {
         txFees = _txFees;
+    }
+
+    function setBondYieldBaseRate(uint256 _bondYieldBaseRate) public onlyOwner {
+        bondYieldBaseRate = _bondYieldBaseRate;
     }
 
     function getAddress(uint256 _type) external view returns (address addr) {
@@ -172,7 +177,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         emit BondableTokensUpdated(tokens, enabled);
     }
 
-    function getInterest(uint256 maturity) public pure returns (uint256 maturityModifier) {
+    function getInterest(uint256 maturity) public view returns (uint256 rate) {
+        uint256 maturityModifier;
         unchecked {
             if (maturity > 360) maturityModifier = 150;
             if (maturity > 320) maturityModifier = 140;
@@ -187,6 +193,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             if (maturity > 30) maturityModifier = 85;
             if (maturity > 15) maturityModifier = 80;
             if (maturity > 7) maturityModifier = 70;
+            rate = bondYieldBaseRate * maturityModifier;
         }
     }
 
@@ -252,7 +259,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalDeposit += principal;
         totalRewardPriciple += rewardPrinciple;
         console.log(getInterest(maturity), "getInterest(maturity)");
-        uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 100);
+        uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 1e6);
         console.log("depositPrincipal", (getInterest(maturity) * principal) / (365 * 100));
         // uint256 depositPrincipal = (principal * 4 * (11) * (8)) / (365 * 100 * 100);
         IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
