@@ -172,17 +172,21 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         emit BondableTokensUpdated(tokens, enabled);
     }
 
-    function getInterest(uint256 maturity) public view returns (uint256 rate) {
-        console.log(bondYieldBaseRate, "bondYieldBaseRate");
-
+    function getInterest(uint256 maturity) public pure returns (uint256 maturityModifier) {
         unchecked {
-            if (maturity > 180) rate = ((maturity - 180) * 15) / 180 + (bondYieldBaseRate + 30);
-            else if (maturity > 90) rate = ((maturity - 90) * 15) / 90 + (bondYieldBaseRate + 15);
-            else if (maturity > 60) rate = ((maturity - 60) * 15) / 30 + bondYieldBaseRate;
-            else if (maturity > 30) rate = ((maturity - 30) * 30) / 30 + (bondYieldBaseRate - 30);
-            else if (maturity > 15) rate = ((maturity - 15) * 15) / 15 + (bondYieldBaseRate - 45);
-            else if (maturity > 7) rate = ((maturity - 7) * 15) / 8 + (bondYieldBaseRate - 60);
-            else rate = ((maturity - 7) * 30) / 6 + (bondYieldBaseRate - 90);
+            if (maturity > 360) maturityModifier = 150;
+            if (maturity > 320) maturityModifier = 140;
+            if (maturity > 280) maturityModifier = 130;
+            if (maturity > 260) maturityModifier = 125;
+            if (maturity > 220) maturityModifier = 120;
+            if (maturity > 180) maturityModifier = 115;
+            if (maturity > 150) maturityModifier = 110;
+            if (maturity > 120) maturityModifier = 105;
+            if (maturity > 90) maturityModifier = 100;
+            if (maturity > 60) maturityModifier = 90;
+            if (maturity > 30) maturityModifier = 85;
+            if (maturity > 15) maturityModifier = 80;
+            if (maturity > 7) maturityModifier = 70;
         }
     }
 
