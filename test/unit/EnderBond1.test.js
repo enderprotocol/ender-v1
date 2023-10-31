@@ -809,7 +809,7 @@ function convert(number) {
 //     });
 //   });
 // });
-describe.only("EnderBondWithdraw", function () {
+describe.only("EnderBond Deposit and Withdraw", function () {
   let owner, wallet1, signer1, signer2, signer3;
   let endTokenAddress,
     enderBondAddress,
