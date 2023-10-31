@@ -122,17 +122,8 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
             if (fee != 0) {
                 unchecked {
-                    // if (block.timestamp >= lastTransfer + 1 days) {
-                    //     lastTransfer -= block.timestamp % 1 days;
-                    //     prevAmount = todayAmount;
-                    //     todayAmount = fee;
-                    //     console.log(todayAmount, "todayAmount");
-
-                    //     emit DayfeeUpdated(prevAmount, block.timestamp);
-                    // } else {
                     todayAmount += fee;
                     console.log(todayAmount, "todayAmount else");
-                    // }
                 }
 
                 super._transfer(from, address(this), fee);
@@ -150,7 +141,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         if (feesToTransfer == 0) revert ZeroFeeCollected();
         refractionFeeTotal = 0;
         lastEpoch = block.timestamp;
-        // console.log("[[[]]]",feesToTransfer);
+        console.log("feesCollected", feesToTransfer);
         _approve(address(this), enderBond, feesToTransfer);
         IEnderBond(enderBond).epochRewardShareIndex(feesToTransfer);
         // _transfer(address(this), enderBond, feesToTransfer);

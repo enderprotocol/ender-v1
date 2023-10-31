@@ -30,6 +30,7 @@ error InvalidMaturity();
 error InvalidBondFee();
 error NotBondNFT();
 error WaitForFirstDeposit();
+error NoRewardCollected();
 
 /**
  * @title EnderBond contract
@@ -317,8 +318,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         userBondPrincipalAmount[_tokenId] = 0;
     }
 
-    // 663308219.178081191
-
     function deductFeesFromTransfer(uint256 _tokenId) public {
         if (msg.sender != address(bondNFT)) {
             revert NotBondNFT();
@@ -328,42 +327,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         }
         userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
     }
-
-    function _validateRefraction(
-        uint256 _amount,
-        uint256 _nonce,
-        uint256 _deadline,
-        bytes calldata _signature
-    ) private view returns (bool) {
-        if (userNonces[msg.sender] >= _nonce) revert InvalidNonce();
-        if (block.timestamp > _deadline) revert SignatureExpired();
-
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    keccak256("Rebond(uint256 amount, uint256 deadline, uint256 nonce)"),
-                    _amount,
-                    _deadline,
-                    _nonce
-                )
-            )
-        );
-
-        return ECDSAUpgradeable.recover(digest, _signature) == endSignature;
-    }
-
-    /**
-     * @notice Function to rebond
-     * @param tokenId  Token id of BondNFT
-     * @param maturity  New maturiy value
-     */
-    // function rebond(uint256 tokenId, uint256 maturity, uint256 bondFee) external nonReentrant returns (uint256 bondId) {
-    //     if (maturity < 7 || maturity > 365) revert InvalidMaturity();
-
-    //     bondId = _withdraw(tokenId, maturity, bondFee);
-
-    //     emit Rebond(msg.sender, tokenId, bondId);
-    // }
 
     /**
      * @dev Sets the reward share for a given `_reward` .
@@ -377,7 +340,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         //error if the total reward is greater than the total reward , then thats fked
 
-        rewardShareIndex = (rewardShareIndex * 1e18) + ((_reward * 1e18) / totalRewardPriciple);
+        rewardShareIndex = (rewardShareIndex * 1e8) + ((_reward * 1e8) / totalRewardPriciple);
         console.log(rewardShareIndex, "rewardShareIndex first time");
     }
 
@@ -460,15 +423,24 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     function claimRefractionRewards(uint256 _tokenId) public {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         if (userBondPrincipalAmount[_tokenId] <= 0) revert NotBondUser();
+        if (rewardShareIndex == rewardSharePerUserIndex[_tokenId]) revert NoRewardCollected();
 
         Bond memory temp = bonds[_tokenId];
 
         (, uint rewardPrinciple) = calculateRefractionData(temp.principal, temp.maturity, _tokenId);
 
+        // console.log(
+        //     (rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e8,
+        //     "reward for refraction"
+        // );
+        console.log(rewardShareIndex,rewardSharePerUserIndex[_tokenId],"rewardShareIndex - rewardSharePerUserIndex[_tokenId]");
+        // console.log("(rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e8",(rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e8);
+
         IERC20(endToken).transfer(
             msg.sender,
-            (rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]))
+            (rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e8
         );
+        rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
     }
 
     /**
