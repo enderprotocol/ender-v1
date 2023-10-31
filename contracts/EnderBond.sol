@@ -173,6 +173,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     }
 
     function getInterest(uint256 maturity) public view returns (uint256 rate) {
+        console.log(bondYieldBaseRate, "bondYieldBaseRate");
+
         unchecked {
             if (maturity > 180) rate = ((maturity - 180) * 15) / 180 + (bondYieldBaseRate + 30);
             else if (maturity > 90) rate = ((maturity - 90) * 15) / 90 + (bondYieldBaseRate + 15);
@@ -245,7 +247,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         userBondYieldShareIndex[tokenId] = bondYeildShareIndex;
         totalDeposit += principal;
         totalRewardPriciple += rewardPrinciple;
-
+        console.log(getInterest(maturity), "getInterest(maturity)");
         uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 100);
         console.log("depositPrincipal", (getInterest(maturity) * principal) / (365 * 100));
         // uint256 depositPrincipal = (principal * 4 * (11) * (8)) / (365 * 100 * 100);
@@ -449,7 +451,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
-     */ 
+     */
     function epochBondYieldShareIndex() external onlyOwner {
         (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
