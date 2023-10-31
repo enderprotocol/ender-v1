@@ -29,6 +29,7 @@ error InvalidNonce();
 error InvalidMaturity();
 error InvalidBondFee();
 error NotBondNFT();
+error WaitForFirstDeposit();
 
 /**
  * @title EnderBond contract
@@ -111,7 +112,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         __EIP712_init("EnderBond", "1");
         rateOfChange = 100;
         lido = _lido;
-        totalRewardPriciple = 1;
         setAddress(endToken_, 2);
         enderOracle = IEnderOracle(_oracle);
         bondYieldBaseRate = 400;
@@ -213,6 +213,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 bondFee,
         address token
     ) external payable nonReentrant returns (uint256 tokenId) {
+        console.log("====================================");
         if (principal == 0) revert InvalidAmount();
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
@@ -253,29 +254,28 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // console.log(day, "day");
         availableFundsAtMaturity[(block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         userDeposit[tokenId] += principal;
-        (uint256 avgRefractionIndex, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
+        (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
 
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
-        console.log(rewardSharePerUserIndex[tokenId], "rewardSharePerUserIndex[tokenId] ");
+        console.log(rewardShareIndex, "rewardShareIndex");
+        console.log(rewardSharePerUserIndex[tokenId], "rewardSharePerUserIndex[tokenId]");
+
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         userBondYieldShareIndex[tokenId] = bondYeildShareIndex;
+        console.log(bondYeildShareIndex, "bondYeildShareIndex ");
+        console.log(userBondYieldShareIndex[tokenId], "userBondYieldShareIndex[tokenId] ");
         totalDeposit += principal;
         totalRewardPriciple += rewardPrinciple;
-        console.log(getInterest(maturity), "getInterest(maturity)");
+        console.log("getInterest(maturity)", getInterest(maturity));
         uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 1e6);
         console.log("depositPrincipal", (getInterest(maturity) * principal) / (365 * 1e6));
-        // uint256 depositPrincipal = (principal * 4 * (11) * (8)) / (365 * 100 * 100);
         IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
         userBondPrincipalAmount[tokenId] = depositPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
 
-        // deposit
-        // uint256 endAmt = endTreasury.deposit(_rebond, _tokenId, IEnderBase.EndRequest(msg.sender, _token, _principal));
-        unchecked {
-            maturity = maturity * 1 days;
-        }
         // save bond info
         bonds[tokenId] = Bond(false, principal, block.timestamp, maturity, token, bondFee);
+        console.log("===============end=====================");
     }
 
     /**
@@ -370,8 +370,15 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _reward The reward to be added to the reward share.
      */
     function updateRewardShareIndex(uint256 _reward) external {
+        if (totalRewardPriciple == 0) revert WaitForFirstDeposit();
+
+        console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
         IERC20(endToken).transferFrom(endToken, address(this), _reward);
+
+        //error if the total reward is greater than the total reward , then thats fked
+
         rewardShareIndex = rewardShareIndex + (_reward / totalRewardPriciple);
+        console.log(rewardShareIndex, "rewardShareIndex first time");
     }
 
     /**
@@ -398,6 +405,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
+        console.log(avgRefractionIndex, "avgRefractionIndex");
         rewardPrinciple = (_principle * avgRefractionIndex) / 100;
         // pendingReward = rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]);
     }

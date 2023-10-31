@@ -194,6 +194,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             fundsInfo[param.stakingToken].availableFunds += ((param.tokenAmt) * availableFundsPercentage) / 100;
             fundsInfo[param.stakingToken].reserveFunds += ((param.tokenAmt) * reserveFundsPercentage) / 100;
 
+            console.log(fundsInfo[param.stakingToken].availableFunds, "fundsInfo[param.stakingToken].availableFunds ");
+            console.log(fundsInfo[param.stakingToken].reserveFunds, "fundsInfo[param.stakingToken].reserveFunds ");
             // uint256 bondReturn = IEnderBond(enderBond).calculateBondRewardAmount(_tokenId);
             // uint256 depositReturn = calculateDepositReturn(param.stakingToken);
 

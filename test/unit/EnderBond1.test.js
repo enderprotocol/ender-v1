@@ -947,12 +947,14 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       //as we hit the distribute Refraction Fee the fee that is collected in the
       //end token will be send to the enderBond and S is updated Aswell
       //  and the user can cliam for the enderbond
-      await endToken.distributeRefractionFees();
+      //******* this will revert here because , we cant call this function until first deposit
+      // is done  *******************
+      // await endToken.distributeRefractionFees();
+      await expect(
+        endToken.distributeRefractionFees()
+      ).to.be.revertedWithCustomError(enderBond, "WaitForFirstDeposit");
 
-      //there are two tx done above which have 20% fee it will be equal to 400000000000000000
-      expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(
-        expandTo18Decimals(0.4)
-      );
+      expect(await enderBond.rewardShareIndex()).to.be.equal(0);
 
       await stEth.mint(await signer1.getAddress(), depositPrincipalStEth);
 
@@ -969,24 +971,50 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         maturity,
         bondFee
       );
+
       //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       await enderBond.epochBondYieldShareIndex();
 
-      // console.log(
-      //   await enderBond.bondYeildShareIndex(),
-      //   "await enderBond.bondYeildShareIndex()"
-      // );
-      // console.log(
-      //   await enderBond.userBondYieldShareIndex(tokenId),
-      //   "await enderBond.userBondYieldShareIndex(tokenId)"
-      // );
-      // expect(await enderBond.bondYeildShareIndex()).to.be.greaterThan(
-      //   await enderBond.userBondYieldShareIndex(tokenId)
-      // );
+      expect(await enderBond.bondYeildShareIndex()).to.be.greaterThan(
+        await enderBond.userBondYieldShareIndex(tokenId)
+      );
+      //now this can be called because the first deposit has done
+      await endToken.distributeRefractionFees();
 
-      // const userAddressBefore = await endToken.balanceOf(signer1.address);
+      //  there are two tx done above which have 20% fee it will be equal to 400000000000000000
+      expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(
+        expandTo18Decimals(0.4)
+      );
 
-      // // Wait for the bond to mature
+      //for depositing second time by the same user
+
+      await stEth.mint(await signer1.getAddress(), depositPrincipalStEth);
+
+      await stEth
+        .connect(signer1)
+        .approve(enderBondAddress, depositPrincipalStEth);
+
+      const tokenId2 = await depositAndSetup(
+        signer1,
+        depositPrincipalStEth,
+        maturity * 2,
+        bondFee
+      );
+
+      expect(await bondNFT.ownerOf(tokenId2)).to.be.equal(
+        await bondNFT.ownerOf(tokenId)
+      );
+
+      expect(await enderBond.bondYeildShareIndex()).to.be.equal(
+        await enderBond.userBondYieldShareIndex(tokenId2)
+      );
+
+      //now we hit the refraction function in the token contract
+      //which will update the rewardShareIndex in the enderbond
+
+      const userAddressBefore = await endToken.balanceOf(signer1.address);
+
+      // Wait for the bond to mature
       // await increaseTime(90 * 24 * 3600);
       // await withdrawAndSetup(signer1, tokenId);
       // expect(await stEth.balanceOf(signer1.address)).to.be.equal(
@@ -995,8 +1023,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       // const userAddressAfter = await endToken.balanceOf(signer1.address);
 
       // expect(userAddressAfter).to.be.equal(userAddressBefore + 663308219);
-
-      // console.log(await enderBond.)
     });
     // it("should successfully withdraw from the treasury", async () => {
     //   const maturity = 90;
