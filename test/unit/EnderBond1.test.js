@@ -16,6 +16,9 @@ const ADMIN_ROLE =
 function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
+function expandTo9Decimals(n) {
+  return ethers.parseUnits(n.toString(), 9);
+}
 function convert(number) {
   return ethers.BigNumber.from(number).toNumber();
 }
@@ -975,12 +978,17 @@ describe.only("EnderBondWithdraw", function () {
         await enderBond.userBondYieldShareIndex(tokenId)
       );
 
+      const userAddressBefore = await endToken.balanceOf(signer1.address);
+
       // Wait for the bond to mature
       await increaseTime(90 * 24 * 3600);
       await withdrawAndSetup(signer1, tokenId);
       expect(await stEth.balanceOf(signer1.address)).to.be.equal(
         depositPrincipalStEth - expandTo18Decimals(0.05)
       );
+      const userAddressAfter = await endToken.balanceOf(signer1.address);
+
+      expect(userAddressAfter).to.be.equal(userAddressBefore + 663308219);
 
       // console.log(await enderBond.)
     });

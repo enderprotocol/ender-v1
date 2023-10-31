@@ -300,6 +300,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
         userBondPrincipalAmount[_tokenId] = 0;
     }
+
     // 663308219.178081191
 
     function deductFeesFromTransfer(uint256 _tokenId) public {
@@ -448,16 +449,16 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
-     */
+     */ 
     function epochBondYieldShareIndex() external onlyOwner {
         (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
-
-        uint256 _endMint = (priceEth * priceEnd * totalBondPrincipalAmount) / ((10 ** ethDecimal) * (10 ** endDecimal));
-        endMint += _endMint * 1e2;
+        console.log(totalBondPrincipalAmount, "totalBondPrincipalAmount");
+        uint256 _endMint = (priceEth * priceEnd * totalBondPrincipalAmount) / (10 ** ethDecimal);
+        endMint += _endMint * 100;
         console.log(endMint, "endMint");
 
-        bondYeildShareIndex = bondYeildShareIndex + ((endMint * (10 ** endDecimal)) / totalBondPrincipalAmount);
+        bondYeildShareIndex = bondYeildShareIndex + ((endMint) / totalBondPrincipalAmount);
     }
 
     /**
@@ -467,8 +468,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function calculateBondRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
         _reward = bondYeildShareIndex == userBondYieldShareIndex[_tokenId]
-            ? userBondPrincipalAmount[_tokenId] * 1
-            : userBondPrincipalAmount[_tokenId] * (bondYeildShareIndex - userBondYieldShareIndex[_tokenId]);
+            ? (userBondPrincipalAmount[_tokenId] * 1) / 1e9
+            : (userBondPrincipalAmount[_tokenId] * (bondYeildShareIndex - userBondYieldShareIndex[_tokenId])) / 1e9;
 
         console.log(bondYeildShareIndex, "bondYeildShareIndex");
     }

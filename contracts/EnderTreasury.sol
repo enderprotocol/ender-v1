@@ -214,7 +214,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     function stakeRebasingReward(address _tokenAddress) public returns (uint256 rebaseReward) {
         uint256 bondReturn = IEnderBond(enderBond).endMint();
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
-        //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 9decimal
+        //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 18decimal
         (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
 
@@ -224,7 +224,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
         rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
 
-        rebaseReward = ((rebaseReward * 1e1) / priceEnd);
+        rebaseReward = ((rebaseReward * 1e10) / priceEnd);
     }
 
     // function getStakingReward(address _asset) public returns (uint256 mintAmount) {

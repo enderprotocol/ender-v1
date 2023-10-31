@@ -46,7 +46,7 @@ contract EnderOracle is IEnderOracle, Initializable, OwnableUpgradeable {
             priceDecimal = 18;
         } else {
             price = 100000000; //$ is 8 decimal
-            priceDecimal = 9;
+            priceDecimal = 18;
         }
     }
 }
