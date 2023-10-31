@@ -145,7 +145,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         }
         userSEndToken[msg.sender] -= amount;
         // transfer token
-        console.log("pending",pending);
+        console.log("pending", pending);
         ISEndToken(sEndToken).burn(msg.sender, amount);
         ISEndToken(endToken).transfer(msg.sender, pending);
 
@@ -158,7 +158,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
         uint256 sendTokens = calculateSEndTokens(rw2);
         ISEndToken(sEndToken).transfer(enderBond, sendTokens);
-        IEnderBond(enderBond).updateRewardShareIndexForSend(sendTokens, ISEndToken(sEndToken).totalSupply());
+        IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens, ISEndToken(sEndToken).totalSupply());
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
@@ -184,9 +184,8 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         console.log("userSEndToken[msg.sender]", userSEndToken[msg.sender]);
         if (_sendAMount > userSEndToken[msg.sender]) {
             reward = userSEndToken[msg.sender] * calculateRebaseIndex();
-        }else{
+        } else {
             reward = _sendAMount * calculateRebaseIndex();
-
         }
     }
 }

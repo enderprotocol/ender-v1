@@ -369,7 +369,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @dev Sets the reward share for a given `_reward` .
      * @param _reward The reward to be added to the reward share.
      */
-    function updateRewardShareIndex(uint256 _reward) external {
+    function epochRewardShareIndex(uint256 _reward) external {
         if (totalRewardPriciple == 0) revert WaitForFirstDeposit();
 
         console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
@@ -377,7 +377,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         //error if the total reward is greater than the total reward , then thats fked
 
-        rewardShareIndex = rewardShareIndex + (_reward / totalRewardPriciple);
+        rewardShareIndex = (rewardShareIndex * 1e18) + ((_reward * 1e18) / totalRewardPriciple);
         console.log(rewardShareIndex, "rewardShareIndex first time");
     }
 
@@ -386,7 +386,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _reward The reward to be added to the reward share.
      * @param _totalPrinciple The total principle used for calculating the reward share.
      */
-    function updateRewardShareIndexForSend(uint256 _reward, uint256 _totalPrinciple) public {
+    function epochRewardShareIndexForSend(uint256 _reward, uint256 _totalPrinciple) public {
         rewardShareIndexSend = rewardShareIndexSend + (_reward / _totalPrinciple);
     }
 
