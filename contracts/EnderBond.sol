@@ -178,21 +178,24 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     }
 
     function getInterest(uint256 maturity) public view returns (uint256 rate) {
+        console.log(maturity, "maturity");
         uint256 maturityModifier;
         unchecked {
-            if (maturity > 360) maturityModifier = 150;
-            if (maturity > 320) maturityModifier = 140;
-            if (maturity > 280) maturityModifier = 130;
-            if (maturity > 260) maturityModifier = 125;
-            if (maturity > 220) maturityModifier = 120;
-            if (maturity > 180) maturityModifier = 115;
-            if (maturity > 150) maturityModifier = 110;
-            if (maturity > 120) maturityModifier = 105;
-            if (maturity > 90) maturityModifier = 100;
-            if (maturity > 60) maturityModifier = 90;
-            if (maturity > 30) maturityModifier = 85;
-            if (maturity > 15) maturityModifier = 80;
-            if (maturity > 7) maturityModifier = 70;
+            if (maturity >= 360) maturityModifier = 150;
+            if (maturity >= 320 && maturity < 360) maturityModifier = 140;
+            if (maturity >= 280 && maturity < 320) maturityModifier = 130;
+            if (maturity >= 260 && maturity < 280) maturityModifier = 125;
+            if (maturity >= 220 && maturity < 260) maturityModifier = 120;
+            if (maturity >= 180 && maturity < 220) maturityModifier = 115;
+            if (maturity >= 150 && maturity < 180) maturityModifier = 110;
+            if (maturity >= 120 && maturity < 150) maturityModifier = 105;
+            if (maturity >= 90 && maturity < 120) maturityModifier = 100;
+            if (maturity >= 60 && maturity < 90) maturityModifier = 90;
+            if (maturity >= 30 && maturity < 60) maturityModifier = 85;
+            if (maturity >= 15 && maturity < 30) maturityModifier = 80;
+            if (maturity >= 7 && maturity < 15) maturityModifier = 70;
+
+            console.log("----------", bondYieldBaseRate, maturityModifier);
             rate = bondYieldBaseRate * maturityModifier;
         }
     }
@@ -260,7 +263,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalRewardPriciple += rewardPrinciple;
         console.log(getInterest(maturity), "getInterest(maturity)");
         uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 1e6);
-        console.log("depositPrincipal", (getInterest(maturity) * principal) / (365 * 100));
+        console.log("depositPrincipal", (getInterest(maturity) * principal) / (365 * 1e6));
         // uint256 depositPrincipal = (principal * 4 * (11) * (8)) / (365 * 100 * 100);
         IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
         userBondPrincipalAmount[tokenId] = depositPrincipal;
