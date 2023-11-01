@@ -17,7 +17,7 @@ contract SEndToken is ERC20, Ownable ,ERC20Burnable{
 
     event WhiteListChanged(address indexed _whitelistingAddress, bool indexed _action);
 
-    constructor() ERC20("Ender", "END") Ownable() {
+    constructor() ERC20("SEnder", "SEND") Ownable() {
         status = 1;
         // enableOrDisableTX = false;
         // console.log("im here");
@@ -39,7 +39,7 @@ contract SEndToken is ERC20, Ownable ,ERC20Burnable{
      * @return uint8 The number of decimal places the token uses
      */
     function decimals() public view virtual override returns (uint8) {
-        return 9;
+        return 18;
     }
 
     function setStatus(uint256 _status) public {

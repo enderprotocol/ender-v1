@@ -258,18 +258,17 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
 
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
-        console.log(rewardShareIndex, "rewardShareIndex");
-        console.log(rewardSharePerUserIndex[tokenId], "rewardSharePerUserIndex[tokenId]");
 
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         userBondYieldShareIndex[tokenId] = bondYeildShareIndex;
-        console.log(bondYeildShareIndex, "bondYeildShareIndex ");
-        console.log(userBondYieldShareIndex[tokenId], "userBondYieldShareIndex[tokenId] ");
+
         totalDeposit += principal;
         totalRewardPriciple += rewardPrinciple;
-        console.log("getInterest(maturity)", getInterest(maturity));
-        uint256 depositPrincipal = (getInterest(maturity) * principal) / (365 * 1e6);
-        console.log("depositPrincipal", (getInterest(maturity) * principal) / (365 * 1e6));
+
+        uint256 depositPrincipal = (getInterest(maturity) * ((1 + (bondFee))) * principal) / (365 * 1e8);
+
+        console.log(depositPrincipal, "depositPrincipal");
+
         IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
         userBondPrincipalAmount[tokenId] = depositPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
@@ -310,23 +309,26 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal));
 
         uint256 reward = calculateBondRewardAmount(_tokenId);
-        console.log(reward, "reward in the contract");
+
         endTreasury.mintEndToUser(msg.sender, reward);
-        console.log(_tokenId, "tokennnn");
+
         claimRefractionRewards(_tokenId);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
-        userBondPrincipalAmount[_tokenId] = 0;
+
+        userBondPrincipalAmount[_tokenId] == 0;
+
+        delete bonds[_tokenId];
     }
 
-    function deductFeesFromTransfer(uint256 _tokenId) public {
-        if (msg.sender != address(bondNFT)) {
-            revert NotBondNFT();
-        }
-        if (userBondPrincipalAmount[_tokenId] == 0) {
-            revert NotBondUser();
-        }
-        userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
-    }
+    // function deductFeesFromTransfer(uint256 _tokenId) public {
+    //     if (msg.sender != address(bondNFT)) {
+    //         revert NotBondNFT();
+    //     }
+    //     if (userBondPrincipalAmount[_tokenId] == 0) {
+    //         revert NotBondUser();
+    //     }
+    //     userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
+    // }
 
     /**
      * @dev Sets the reward share for a given `_reward` .
@@ -340,7 +342,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         //error if the total reward is greater than the total reward , then thats fked
 
-        rewardShareIndex = (rewardShareIndex * 1e8) + ((_reward * 1e8) / totalRewardPriciple);
+        rewardShareIndex = (rewardShareIndex) + ((_reward * 10 ** 18) / totalRewardPriciple);
         console.log(rewardShareIndex, "rewardShareIndex first time");
     }
 
@@ -422,23 +424,16 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function claimRefractionRewards(uint256 _tokenId) public {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        if (userBondPrincipalAmount[_tokenId] <= 0) revert NotBondUser();
+        if (userBondPrincipalAmount[_tokenId] == 0) revert NotBondUser();
         if (rewardShareIndex == rewardSharePerUserIndex[_tokenId]) revert NoRewardCollected();
 
         Bond memory temp = bonds[_tokenId];
 
         (, uint rewardPrinciple) = calculateRefractionData(temp.principal, temp.maturity, _tokenId);
 
-        // console.log(
-        //     (rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e8,
-        //     "reward for refraction"
-        // );
-        console.log(rewardShareIndex,rewardSharePerUserIndex[_tokenId],"rewardShareIndex - rewardSharePerUserIndex[_tokenId]");
-        // console.log("(rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e8",(rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e8);
-
         IERC20(endToken).transfer(
             msg.sender,
-            (rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e8
+            ((rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
         );
         rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
     }
@@ -462,12 +457,11 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _tokenId The unique identifier of the bond.
      * @return _reward The reward amount for the bond.
      */
-    function calculateBondRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
-        _reward = bondYeildShareIndex == userBondYieldShareIndex[_tokenId]
-            ? (userBondPrincipalAmount[_tokenId] * 1) / 1e9
-            : (userBondPrincipalAmount[_tokenId] * (bondYeildShareIndex - userBondYieldShareIndex[_tokenId])) / 1e9;
+    function calculateBondRewardAmount(uint256 _tokenId) public returns (uint256 _reward) {
+        _reward = (userBondPrincipalAmount[_tokenId] * (bondYeildShareIndex - userBondYieldShareIndex[_tokenId]));
 
-        console.log(bondYeildShareIndex, "bondYeildShareIndex");
+        delete userBondYieldShareIndex[_tokenId];
+        console.log(_reward, "_reward in end");
     }
 
     receive() external payable {}

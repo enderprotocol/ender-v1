@@ -122,13 +122,13 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
             if (fee != 0) {
                 unchecked {
-                    todayAmount += fee;
-                    console.log(todayAmount, "todayAmount else");
+                    refractionFeeTotal += fee;
+                    console.log(refractionFeeTotal, "todayAmount else");
                 }
 
                 super._transfer(from, address(this), fee);
 
-                refractionFeeTotal += fee;
+                console.log(refractionFeeTotal, "refractionFeeTotal");
             }
 
             super._transfer(from, to, amount - fee);
@@ -140,6 +140,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 feesToTransfer = refractionFeeTotal;
         if (feesToTransfer == 0) revert ZeroFeeCollected();
         refractionFeeTotal = 0;
+        console.log(refractionFeeTotal,"refractionFeeTotal in the disribution");
         lastEpoch = block.timestamp;
         console.log("feesCollected", feesToTransfer);
         _approve(address(this), enderBond, feesToTransfer);
