@@ -116,19 +116,18 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     }
 
     function _transfer(address from, address to, uint256 amount) internal override {
-        if (excludeWallets[from] || excludeWallets[to]) super._transfer(from, to, amount);
-        else {
+        if (excludeWallets[from] || excludeWallets[to]) {
+            console.log("excluded");
+            super._transfer(from, to, amount);
+        } else {
             uint256 fee = (amount * refractionFeePercentage) / 100;
 
             if (fee != 0) {
                 unchecked {
                     refractionFeeTotal += fee;
-                    console.log(refractionFeeTotal, "todayAmount else");
                 }
 
                 super._transfer(from, address(this), fee);
-
-                console.log(refractionFeeTotal, "refractionFeeTotal");
             }
 
             super._transfer(from, to, amount - fee);
@@ -140,7 +139,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 feesToTransfer = refractionFeeTotal;
         if (feesToTransfer == 0) revert ZeroFeeCollected();
         refractionFeeTotal = 0;
-        console.log(refractionFeeTotal,"refractionFeeTotal in the disribution");
+
         lastEpoch = block.timestamp;
         console.log("feesCollected", feesToTransfer);
         _approve(address(this), enderBond, feesToTransfer);

@@ -265,6 +265,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalDeposit += principal;
         totalRewardPriciple += rewardPrinciple;
 
+        console.log(getInterest(maturity), "getInterest(maturity)");
+        console.log(100 + (bondFee), ": 100 + (bondFee)");
+        console.log(principal, "principal");
+
         uint256 depositPrincipal = (getInterest(maturity) * ((100 + (bondFee))) * principal) / (365 * 1e8);
 
         console.log(depositPrincipal, "depositPrincipal");
@@ -316,6 +320,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
 
         userBondPrincipalAmount[_tokenId] == 0;
+        delete userBondYieldShareIndex[_tokenId];
 
         delete bonds[_tokenId];
     }
@@ -435,6 +440,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             msg.sender,
             ((rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
         );
+        
         rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
     }
 
@@ -457,10 +463,9 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _tokenId The unique identifier of the bond.
      * @return _reward The reward amount for the bond.
      */
-    function calculateBondRewardAmount(uint256 _tokenId) public returns (uint256 _reward) {
+    function calculateBondRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
         _reward = (userBondPrincipalAmount[_tokenId] * (bondYeildShareIndex - userBondYieldShareIndex[_tokenId]));
 
-        delete userBondYieldShareIndex[_tokenId];
         console.log(_reward, "_reward in end");
     }
 
