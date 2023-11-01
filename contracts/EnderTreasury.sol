@@ -32,7 +32,7 @@ error CanNotDepositToStrategyBeforeOneDay();
 
 contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
-    mapping(address => FundInfo) internal fundsInfo;
+    mapping(address => FundInfo) public fundsInfo;
     mapping(address => uint256) public totalAssetStakedInStrategy;
     mapping(address => uint256) public totalRewardsFromStrategy;
     struct FundInfo {
@@ -85,7 +85,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         // address _stEthELS
         initializer
     {
-        if (_availableFundsPercentage < 70 && _reserveFundsPercentage < 30) revert InvalidRatio();
+        if (_availableFundsPercentage != 70 && _reserveFundsPercentage != 30) revert InvalidRatio();
         __Ownable_init();
         // stEthELS = _stEthELS;
         enderStaking = _enderStaking;
@@ -351,6 +351,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @dev Records the results of an epoch, including the deposit into a strategy.
      * @param _stEthAddress The address of the asset (e.g., stETH token).
      * @param _strategy The address of the strategy to deposit the total return.
+     * this will be hit in order to balance the balance in the available and str
      */
     function recordEpochResults(address _stEthAddress, address _strategy) public {
         uint256 totalReturn = calculateTotalReturn(_stEthAddress);

@@ -315,8 +315,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 reward = calculateBondRewardAmount(_tokenId);
 
         endTreasury.mintEndToUser(msg.sender, reward);
-
-        claimRefractionRewards(_tokenId);
+        if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId);
+        if (rewardSharePerUserIndexSend[_tokenId] != rewardShareIndexSend) claimStakingReward(_tokenId);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
 
         userBondPrincipalAmount[_tokenId] == 0;
@@ -325,15 +325,15 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         delete bonds[_tokenId];
     }
 
-    // function deductFeesFromTransfer(uint256 _tokenId) public {
-    //     if (msg.sender != address(bondNFT)) {
-    //         revert NotBondNFT();
-    //     }
-    //     if (userBondPrincipalAmount[_tokenId] == 0) {
-    //         revert NotBondUser();
-    //     }
-    //     userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
-    // }
+    function deductFeesFromTransfer(uint256 _tokenId) public {
+        if (msg.sender != address(bondNFT)) {
+            revert NotBondNFT();
+        }
+        if (userBondPrincipalAmount[_tokenId] == 0) {
+            revert NotBondUser();
+        }
+        userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
+    }
 
     /**
      * @dev Sets the reward share for a given `_reward` .
@@ -357,7 +357,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _totalPrinciple The total principle used for calculating the reward share.
      */
     function epochRewardShareIndexForSend(uint256 _reward, uint256 _totalPrinciple) public {
-        rewardShareIndexSend = rewardShareIndexSend + (_reward / _totalPrinciple);
+        rewardShareIndexSend = rewardShareIndexSend + ((_reward * 10 ** 18) / _totalPrinciple);
     }
 
     /**
@@ -415,12 +415,13 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         );
 
         uint sEndTokenReward = pendingReward +
-            (rewardPrinciple * (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId]));
+            ((rewardPrinciple * (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
 
         if (sEndTokenReward > 0) {
             IERC20(endToken).transfer(msg.sender, sEndTokenReward);
             ISEndToken(sEndToken).burn(msg.sender, sEndTokenReward);
         }
+        rewardSharePerUserIndexSend[_tokenId] = rewardShareIndexSend;
     }
 
     /**
@@ -440,7 +441,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             msg.sender,
             ((rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
         );
-        
+
         rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
     }
 

@@ -99,9 +99,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     function stake(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
 
-        // transfer tokens
-
-        // update user info
         UserInfo storage userItem = userInfo[msg.sender];
         uint256 sEndAmount = calculateSEndTokens(amount + userItem.amount);
         console.log("sEndAmount", sEndAmount);
@@ -117,7 +114,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         userItem.amount += amount + pendingRew;
         userItem.stakedAt = block.timestamp;
 
-        ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
+        
         ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
         emit Stake(msg.sender, amount, pendingRew);
     }
@@ -152,7 +149,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         emit Withdraw(msg.sender, amount);
     }
 
-    function getStakingReward(address _asset) external {
+    function epochStakingReward(address _asset) external {
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         uint256 rw2 = (totalReward * 10) / 100;
 

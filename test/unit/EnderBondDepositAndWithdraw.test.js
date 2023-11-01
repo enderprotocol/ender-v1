@@ -254,14 +254,14 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       );
 
       const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
-     console.log("first")
+      console.log("first");
       //as the distribution is done user now can withdraw the rewards
       await enderBond.connect(signer1).claimRefractionRewards(tokenId);
 
-      //as he claimed the rewards
-    //   expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
-    //     initialBalanceOfuser
-    //   );
+      //   as he claimed the rewards
+      expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
+        initialBalanceOfuser
+      );
       console.log(
         await endToken.balanceOf(enderBondAddress),
         "),------------------)"
@@ -306,13 +306,13 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       const initalBalanceOfEnderBond = await endToken.balanceOf(
         enderBondAddress
       );
-    //   await endToken.distributeRefractionFees();
+      //   await endToken.distributeRefractionFees();
 
       //  there are one tx done above which have 20% fee it will be equal to 0.080000000896
       //because the refraction rewarded colledted when the rewared is transferred to the tokenId1
-    //   expect(await endToken.balanceOf(enderBondAddress)).to.be.greaterThan(
-    //     initalBalanceOfEnderBond
-    //   );
+      //   expect(await endToken.balanceOf(enderBondAddress)).to.be.greaterThan(
+      //     initalBalanceOfEnderBond
+      //   );
 
       console.log(
         await endToken.balanceOf(enderBondAddress),
@@ -322,14 +322,14 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       const initialBalanceOfuser1 = await endToken.balanceOf(signer1.address);
 
       //as the distribution is done user now can withdraw the rewards
-    //   await enderBond.connect(signer1).claimRefractionRewards(tokenId2);
+      //   await enderBond.connect(signer1).claimRefractionRewards(tokenId2);
 
-    //   await enderBond.connect(signer1).claimRefractionRewards(tokenId);
+      //   await enderBond.connect(signer1).claimRefractionRewards(tokenId);
 
       //as he claimed the rewards
-    //   expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
-    //     initialBalanceOfuser1
-    //   );
+      //   expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
+      //     initialBalanceOfuser1
+      //   );
 
       //now we hit the refraction function in the token contract
       //which will update the rewardShareIndex in the enderbond
@@ -340,11 +340,8 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await increaseTime(90 * 24 * 3600);
 
       console.log(await stEth.balanceOf(signer1.address), "signer1");
-      //as the user claims the s0 of the user will be upated
-      await expect(
-        withdrawAndSetup(signer1, tokenId)
-      ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
-    //   await endToken.distributeRefractionFees();
+
+      //   await endToken.distributeRefractionFees();
 
       console.log(
         await endToken.balanceOf(signer1.address),
