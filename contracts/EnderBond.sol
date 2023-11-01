@@ -265,7 +265,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalDeposit += principal;
         totalRewardPriciple += rewardPrinciple;
 
-        uint256 depositPrincipal = (getInterest(maturity) * ((1 + (bondFee))) * principal) / (365 * 1e8);
+        uint256 depositPrincipal = (getInterest(maturity) * ((100 + (bondFee))) * principal) / (365 * 1e8);
 
         console.log(depositPrincipal, "depositPrincipal");
 
