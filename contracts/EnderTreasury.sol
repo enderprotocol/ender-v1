@@ -58,6 +58,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public availableFundsPercentage;
     uint256 public reserveFundsPercentage;
     uint256 public lastDepositTime;
+    uint256 public epochDeposit;
+    uint256 public epochWithdrawl;
     // uint256 public stEthBalBeforeStDep;
     // uint256 public totalEthStakedInStrategy;
     // uint256 public totalDeposit
@@ -190,6 +192,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
     function depositTreasury(EndRequest memory param) external onlyBond {
         unchecked {
+            epochDeposit += param.tokenAmt;
             // update available info
             fundsInfo[param.stakingToken].availableFunds += ((param.tokenAmt) * availableFundsPercentage) / 100;
             fundsInfo[param.stakingToken].reserveFunds += ((param.tokenAmt) * reserveFundsPercentage) / 100;
@@ -306,6 +309,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param param Withdraw parameter
      */
     function withdraw(EndRequest memory param) external onlyBond {
+        epochWithdrawl += param.tokenAmt;
         // if invalid reserve funds then withdraw from protocol
         uint256 currentFundsAmount = param.tokenAmt;
 
@@ -344,7 +348,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @return totalReturn The total return, which is the change in asset balance.
      */
     function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
-        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) - balanceLastEpoch;
+        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl - epochDeposit - balanceLastEpoch;
     }
 
     /**
@@ -373,7 +377,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
                 fundsInfo[_stEthAddress].reserveFunds += totalReturn + requiredAmount;
             }
         }
-
+        epochDeposit = 0;
+        epochWithdrawl = 0;
         balanceLastEpoch = IERC20(_stEthAddress).balanceOf(address(this));
     }
 
