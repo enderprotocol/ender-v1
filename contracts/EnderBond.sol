@@ -73,6 +73,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     address private endToken;
     address private sEndToken;
     address public lido;
+    address public stEth;
     IBondNFT private bondNFT;
     IEnderTreasury private endTreasury;
     IEnderOracle private enderOracle;
@@ -133,6 +134,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         else if (_type == 3) bondNFT = IBondNFT(_addr);
         else if (_type == 4) endSignature = _addr;
         else if (_type == 5) lido = _addr;
+        else if (_type == 6) stEth = _addr;
 
         emit AddressUpdated(_addr, _type);
     }
@@ -223,14 +225,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount();
-            uint256 stEthAmount = ILido(lido).submit(address(0));
-            IERC20(token).transfer(address(endTreasury), stEthAmount);
+            (bool suc, ) = payable(lido).call{value: msg.value}(abi.encodeWithSignature("submit()"));
+            require(suc, "lido eth deposit failed");
+            IERC20(stEth).transfer(address(endTreasury), IERC20(stEth).balanceOf(address(this)));
         } else {
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
         tokenId = _deposit(principal, maturity, token, bondFee);
-
         emit Deposit(msg.sender, tokenId);
     }
 
