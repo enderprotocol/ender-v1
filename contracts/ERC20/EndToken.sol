@@ -25,6 +25,7 @@ error WaitingTimeNotCompleted();
  */
 contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     address public treasury;
+    address public admin;
 
     uint256 public refractionFeePercentage;
     uint256 public refractionFeeTotal;
@@ -125,6 +126,11 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         emit TreasuryContractChanged(treasury_);
     }
 
+    function setAdmin(address _admin) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_admin == address(0)) revert ZeroAddress();
+        admin = _admin;
+    }
+
     function mintAndVest() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 time = block.timestamp;
         if (vestedTime[1] + 365 days > time) revert WaitingTimeNotCompleted();
@@ -141,7 +147,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
         vestedAmounts[4] = mintAmount / 4;
         vestedTime[4] = time + 90 days + 180 days;
-        
+
         mintFee -= 10;
 
         mint(address(this), mintAmount);
@@ -168,7 +174,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
             vestedTime[4] = 0;
         }
 
-        transfer(msg.sender, withdrawAmount);
+        transfer(admin, withdrawAmount);
     }
 
     /**

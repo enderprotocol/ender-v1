@@ -347,7 +347,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (msg.sender != address(bondNFT)) {
             revert NotBondNFT();
         }
-        if (userBondPrincipalAmount[_tokenId] == 0) {
+        if (userBondPrincipalAmount[_tokenId] == 0) {   
             revert NotBondUser();
         }
         userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
