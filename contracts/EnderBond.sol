@@ -64,6 +64,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public endMint;
     uint256 public bondYieldBaseRate;
     uint256 public txFees;
+    uint256 public minDepositAmount;
     uint256 constant SECONDS_IN_DAY = 86400;
 
     /// @notice An array containing all maturities.
@@ -137,6 +138,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         else if (_type == 6) stEth = _addr;
 
         emit AddressUpdated(_addr, _type);
+    }
+
+    function setMinDepAmount(uint256 _amt) public onlyOwner{
+        minDepositAmount = _amt;
     }
 
     function setTxFees(uint256 _txFees) public onlyOwner {
@@ -217,7 +222,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         address token
     ) external payable nonReentrant returns (uint256 tokenId) {
         console.log("====================================");
-        if (principal == 0) revert InvalidAmount();
+        if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee < 0 || bondFee > 100) revert InvalidBondFee();
@@ -320,6 +325,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId);
         if (rewardSharePerUserIndexSend[_tokenId] != rewardShareIndexSend) claimStakingReward(_tokenId);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
+        bondNFT.transferFrom(msg.sender,address(this),_tokenId);
+        bondNFT.burn(_tokenId);
 
         userBondPrincipalAmount[_tokenId] == 0;
         delete userBondYieldShareIndex[_tokenId];
@@ -375,6 +382,35 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _maturity,
         uint256 _tokenId
     ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
         console.log(avgRefractionIndex, "avgRefractionIndex");

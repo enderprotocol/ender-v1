@@ -154,7 +154,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         uint256 rw2 = (totalReward * 10) / 100;
 
         uint256 sendTokens = calculateSEndTokens(rw2);
-        ISEndToken(sEndToken).transfer(enderBond, sendTokens);
+        ISEndToken(sEndToken).mint(enderBond, sendTokens);
         IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens, ISEndToken(sEndToken).totalSupply());
     }
 
