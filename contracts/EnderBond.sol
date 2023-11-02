@@ -31,6 +31,7 @@ error InvalidBondFee();
 error NotBondNFT();
 error WaitForFirstDeposit();
 error NoRewardCollected();
+error NotTreasury();
 
 /**
  * @title EnderBond contract
@@ -65,7 +66,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public bondYieldBaseRate;
     uint256 public txFees;
     uint256 public minDepositAmount;
-    uint256 constant SECONDS_IN_DAY = 86400;
+    uint256 public SECONDS_IN_DAY = 86400;
+    uint256 public lastDay;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
@@ -118,7 +120,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         setAddress(endToken_, 2);
         enderOracle = IEnderOracle(_oracle);
         bondYieldBaseRate = 400;
-
+        SECONDS_IN_DAY = 86400;
+        lastDay = block.timestamp/SECONDS_IN_DAY;
         setBondFeeEnabled(true);
     }
 
@@ -258,8 +261,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
-        // uint256 day = (block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY;
-        // console.log(day, "day");
         availableFundsAtMaturity[(block.timestamp + ((maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         userDeposit[tokenId] += principal;
         (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
@@ -318,7 +319,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         bond.withdrawn = true;
 
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal));
-
         uint256 reward = calculateBondRewardAmount(_tokenId);
 
         endTreasury.mintEndToUser(msg.sender, reward);
@@ -332,6 +332,15 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         delete userBondYieldShareIndex[_tokenId];
 
         delete bonds[_tokenId];
+    }
+
+    function getLoopCount() public returns (uint256 amountRequired) {
+        if(msg.sender != address(endTreasury)) revert NotTreasury();
+        uint256 currentDay = block.timestamp/SECONDS_IN_DAY;
+        for(uint256 i=lastDay;i<=currentDay;i++){
+            amountRequired += availableFundsAtMaturity[i];
+        }
+        lastDay = currentDay;
     }
 
     function deductFeesFromTransfer(uint256 _tokenId) public {

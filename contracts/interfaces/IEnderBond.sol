@@ -11,4 +11,7 @@ interface IEnderBond {
     function epochRewardShareIndex(uint256 _reward) external;
 
     function deductFeesFromTransfer(uint256 _tokenId) external;
+
+    function getLoopCount() external returns (uint256 amountRequired);
+
 }

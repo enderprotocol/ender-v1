@@ -17,6 +17,7 @@ error ThreeMonthVestingNotComplete();
 error ZeroAmount();
 error MoreThanMintAmount();
 error VestingNotCompleted();
+error WaitingTimeNotCompleted();
 
 /**
  * @title EndToken contract
@@ -38,13 +39,12 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     uint256 public mintPrec;
 
-    uint256 public treasuryMintAmount;
+    uint256 public currentMintCount;
 
-    uint256 public treasuryClaimTime;
+    //Mint
+    uint256 public mintFee;
 
-    uint256 public treasuryClaimedAmount;
-
-    uint256 public treasuryMintTime;
+    uint256 public mintCount;
 
     address public enderBond;
 
@@ -52,6 +52,11 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     mapping(address => bool) public excludeWallets;
+
+    //mint
+
+    mapping(uint256 => uint256) public vestedAmounts; // count => amount
+    mapping(uint256 => uint256) public vestedTime; // count => time
 
     event TreasuryContractChanged(address indexed newTreasury);
     event FeeUpdated(uint256 fee);
@@ -69,6 +74,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         // add exclude wallets
         excludeWallets[address(this)] = true;
         excludeWallets[msg.sender] = true;
+        mintCount = 4;
 
         unchecked {
             lastTransfer = block.timestamp - (block.timestamp % 1 days);
@@ -119,20 +125,50 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         emit TreasuryContractChanged(treasury_);
     }
 
-    function treasuryMint() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if ((treasuryMintTime + 365 days) > block.timestamp) revert ThreeMonthVestingNotComplete();
-        treasuryMintTime = block.timestamp;
-        uint256 mintAmount = ((totalSupply()) * mintPrec) / 10000;
-        treasuryMintAmount = mintAmount;
+    function mintAndVest() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 time = block.timestamp;
+        if (vestedTime[1] + 365 days > time) revert WaitingTimeNotCompleted();
+        uint256 mintAmount = (totalSupply() * mintFee) / 10000;
+
+        vestedAmounts[1] = mintAmount / 4;
+        vestedTime[1] = time + 180 days;
+
+        vestedAmounts[2] = mintAmount / 4;
+        vestedTime[2] = time + 30 days + 180 days;
+
+        vestedAmounts[3] = mintAmount / 4;
+        vestedTime[3] = time + 60 days + 180 days;
+
+        vestedAmounts[4] = mintAmount / 4;
+        vestedTime[4] = time + 90 days + 180 days;
+        
+        mintFee -= 10;
+
         mint(address(this), mintAmount);
     }
 
-    function getMintedEnd(uint256 _amount, address _addr) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_amount == 0) revert ZeroAmount();
-        if (_amount > (treasuryMintAmount*4)/100) revert MoreThanMintAmount();
-        if (treasuryClaimTime + 90 days > block.timestamp) revert VestingNotCompleted();        
-        treasuryClaimTime = block.timestamp;
-        transfer(_addr, _amount);
+    function getMintedEnd() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 time = block.timestamp;
+        uint256 withdrawAmount;
+        if (time > vestedTime[1]) {
+            withdrawAmount += vestedAmounts[1];
+            vestedAmounts[1] = 0;
+            vestedTime[1] = 0;
+        } else if (time > vestedTime[2]) {
+            withdrawAmount += vestedAmounts[2];
+            vestedAmounts[2] = 0;
+            vestedTime[2] = 0;
+        } else if (time > vestedTime[3]) {
+            withdrawAmount += vestedAmounts[3];
+            vestedAmounts[3] = 0;
+            vestedTime[3] = 0;
+        } else if (time > vestedTime[4]) {
+            withdrawAmount += vestedAmounts[4];
+            vestedAmounts[4] = 0;
+            vestedTime[4] = 0;
+        }
+
+        transfer(msg.sender, withdrawAmount);
     }
 
     /**

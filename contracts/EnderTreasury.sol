@@ -35,6 +35,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => FundInfo) public fundsInfo;
     mapping(address => uint256) public totalAssetStakedInStrategy;
     mapping(address => uint256) public totalRewardsFromStrategy;
+    mapping(uint256 => uint256) public availableFundsAtMaturity;
+
     struct FundInfo {
         uint256 availableFunds;
         uint256 reserveFunds;
@@ -60,6 +62,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public lastDepositTime;
     uint256 public epochDeposit;
     uint256 public epochWithdrawl;
+
     // uint256 public stEthBalBeforeStDep;
     // uint256 public totalEthStakedInStrategy;
     // uint256 public totalDeposit
@@ -192,6 +195,10 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
     function depositTreasury(EndRequest memory param) external onlyBond {
         unchecked {
+            uint256 amountRequired = IEnderBond(enderBond).getLoopCount();
+            if (amountRequired > 0) {
+                withdrawFromStrategy(param.stakingToken, instadapp, amountRequired);
+            }
             epochDeposit += param.tokenAmt;
             // update available info
             fundsInfo[param.stakingToken].availableFunds += ((param.tokenAmt) * availableFundsPercentage) / 100;
@@ -309,6 +316,10 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param param Withdraw parameter
      */
     function withdraw(EndRequest memory param) external onlyBond {
+        uint256 amountRequired = IEnderBond(enderBond).getLoopCount();
+        if (amountRequired > 0) {
+            withdrawFromStrategy(param.stakingToken, instadapp, amountRequired);
+        }
         epochWithdrawl += param.tokenAmt;
         // if invalid reserve funds then withdraw from protocol
         uint256 currentFundsAmount = param.tokenAmt;
@@ -357,30 +368,30 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param _strategy The address of the strategy to deposit the total return.
      * this will be hit in order to balance the balance in the available and str
      */
-    function recordEpochResults(address _stEthAddress, address _strategy) public {
-        uint256 totalReturn = calculateTotalReturn(_stEthAddress);
-        uint256 totalStaked = totalAssetStakedInStrategy[_stEthAddress];
-        uint256 requiredReserveFund = (totalStaked * reserveFundsPercentage) / 100;
-        uint256 existingReserveFund = fundsInfo[_stEthAddress].reserveFunds;
+    // function recordEpochResults(address _stEthAddress, address _strategy) public {
+    //     uint256 totalReturn = calculateTotalReturn(_stEthAddress);
+    //     uint256 totalStaked = totalAssetStakedInStrategy[_stEthAddress];
+    //     uint256 requiredReserveFund = (totalStaked * reserveFundsPercentage) / 100;
+    //     uint256 existingReserveFund = fundsInfo[_stEthAddress].reserveFunds;
 
-        if (existingReserveFund > requiredReserveFund) {
-            totalReturn += existingReserveFund - requiredReserveFund;
-            depositInStrategy(_stEthAddress, _strategy, totalReturn);
-        } else {
-            if (totalReturn > requiredReserveFund) {
-                uint256 remainingReturns = totalReturn - requiredReserveFund;
-                fundsInfo[_stEthAddress].reserveFunds += requiredReserveFund;
-                depositInStrategy(_stEthAddress, _strategy, remainingReturns);
-            } else {
-                requiredReserveFund -= totalReturn;
-                uint256 requiredAmount = withdrawFromStrategy(_stEthAddress, _strategy, requiredReserveFund);
-                fundsInfo[_stEthAddress].reserveFunds += totalReturn + requiredAmount;
-            }
-        }
-        epochDeposit = 0;
-        epochWithdrawl = 0;
-        balanceLastEpoch = IERC20(_stEthAddress).balanceOf(address(this));
-    }
+    //     if (existingReserveFund > requiredReserveFund) {
+    //         totalReturn += existingReserveFund - requiredReserveFund;
+    //         depositInStrategy(_stEthAddress, _strategy, totalReturn);
+    //     } else {
+    //         if (totalReturn > requiredReserveFund) {
+    //             uint256 remainingReturns = totalReturn - requiredReserveFund;
+    //             fundsInfo[_stEthAddress].reserveFunds += requiredReserveFund;
+    //             depositInStrategy(_stEthAddress, _strategy, remainingReturns);
+    //         } else {
+    //             requiredReserveFund -= totalReturn;
+    //             uint256 requiredAmount = withdrawFromStrategy(_stEthAddress, _strategy, requiredReserveFund);
+    //             fundsInfo[_stEthAddress].reserveFunds += totalReturn + requiredAmount;
+    //         }
+    //     }
+    //     epochDeposit = 0;
+    //     epochWithdrawl = 0;
+    //     balanceLastEpoch = IERC20(_stEthAddress).balanceOf(address(this));
+    // }
 
     // function recordEpochResults1(address _stEthAddress, address _strategy) public {
     //     uint256 totalReturn = calculateTotalReturn(_stEthAddress);
