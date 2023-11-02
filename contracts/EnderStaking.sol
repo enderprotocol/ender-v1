@@ -35,7 +35,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     event PercentUpdated(uint256 percent);
     event AddressUpdated(address indexed addr, uint256 addrType);
     event StakingApyUpdated(uint256 stakingApy);
-    event Stake(address indexed account, uint256 stakeAmt, uint256 reward);
+    event Stake(address indexed account, uint256 stakeAmt);
     event Harvest(address indexed account, uint256 harvestAmt);
     event Withdraw(address indexed account, uint256 withdrawAmt);
 
@@ -102,21 +102,19 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         UserInfo storage userItem = userInfo[msg.sender];
         uint256 sEndAmount = calculateSEndTokens(amount + userItem.amount);
         console.log("sEndAmount", sEndAmount);
-        uint256 pendingRew;
-
-        if (userItem.amount != 0) {
-            // update pending
-            pendingRew = claimRebaseRewards(userItem.amount);
-            console.log("pendingRew", pendingRew);
-        }
+        // if (userItem.amount != 0) {
+        //     // update pending
+        //     pendingRew = claimRebaseRewards(userItem.amount);
+        //     console.log("pendingRew", pendingRew);
+        // }
 
         userSEndToken[msg.sender] += sEndAmount;
-        userItem.amount += amount + pendingRew;
+        userItem.amount += amount;
         userItem.stakedAt = block.timestamp;
 
         
         ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
-        emit Stake(msg.sender, amount, pendingRew);
+        emit Stake(msg.sender, amount);
     }
 
     /**
@@ -130,7 +128,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         if (amount > userItem.amount) amount = userItem.amount;
 
         // add reward
-        uint256 pending = claimRebaseRewards(amount);
+        uint256 reward = claimRebaseRewards(amount);
 
         // update userinfo
         unchecked {
@@ -142,9 +140,9 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         }
         userSEndToken[msg.sender] -= amount;
         // transfer token
-        console.log("pending", pending);
+        console.log("pending", reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
-        ISEndToken(endToken).transfer(msg.sender, pending);
+        ISEndToken(endToken).transfer(msg.sender, reward);
 
         emit Withdraw(msg.sender, amount);
     }
