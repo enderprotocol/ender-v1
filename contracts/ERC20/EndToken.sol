@@ -13,6 +13,10 @@ error ZeroAddress();
 error InvalidParam();
 error InvalidEarlyEpoch();
 error ZeroFeeCollected();
+error ThreeMonthVestingNotComplete();
+error ZeroAmount();
+error MoreThanMintAmount();
+error VestingNotCompleted();
 
 /**
  * @title EndToken contract
@@ -31,6 +35,16 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     uint256 private lastTransfer;
 
     uint256 public lastEpoch;
+
+    uint256 public mintPrec;
+
+    uint256 public treasuryMintAmount;
+
+    uint256 public treasuryClaimTime;
+
+    uint256 public treasuryClaimedAmount;
+
+    uint256 public treasuryMintTime;
 
     address public enderBond;
 
@@ -105,11 +119,27 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         emit TreasuryContractChanged(treasury_);
     }
 
+    function treasuryMint() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if ((treasuryMintTime + 365 days) > block.timestamp) revert ThreeMonthVestingNotComplete();
+        treasuryMintTime = block.timestamp;
+        uint256 mintAmount = ((totalSupply()) * mintPrec) / 10000;
+        treasuryMintAmount = mintAmount;
+        mint(address(this), mintAmount);
+    }
+
+    function getMintedEnd(uint256 _amount, address _addr) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_amount == 0) revert ZeroAmount();
+        if (_amount > (treasuryMintAmount*4)/100) revert MoreThanMintAmount();
+        if (treasuryClaimTime + 90 days > block.timestamp) revert VestingNotCompleted();        
+        treasuryClaimTime = block.timestamp;
+        transfer(_addr, _amount);
+    }
+
     /**
      * @notice Mints a specified amount of tokens to the treasury
      * @param amount The amount of tokens to mint
      */
-    function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
+    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
         if (to == address(0)) revert ZeroAddress();
 
         _mint(to, amount);

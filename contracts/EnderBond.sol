@@ -140,7 +140,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         emit AddressUpdated(_addr, _type);
     }
 
-    function setMinDepAmount(uint256 _amt) public onlyOwner{
+    function setMinDepAmount(uint256 _amt) public onlyOwner {
         minDepositAmount = _amt;
     }
 
@@ -260,7 +260,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         tokenId = bondNFT.mint(msg.sender);
         // uint256 day = (block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY;
         // console.log(day, "day");
-        availableFundsAtMaturity[(block.timestamp + (maturity * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
+        availableFundsAtMaturity[(block.timestamp + ((maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         userDeposit[tokenId] += principal;
         (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
 
@@ -325,7 +325,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId);
         if (rewardSharePerUserIndexSend[_tokenId] != rewardShareIndexSend) claimStakingReward(_tokenId);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
-        bondNFT.transferFrom(msg.sender,address(this),_tokenId);
+        bondNFT.transferFrom(msg.sender, address(this), _tokenId);
         bondNFT.burn(_tokenId);
 
         userBondPrincipalAmount[_tokenId] == 0;
@@ -382,35 +382,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _maturity,
         uint256 _tokenId
     ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
         console.log(avgRefractionIndex, "avgRefractionIndex");
