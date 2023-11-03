@@ -54,7 +54,7 @@ contract SEndToken is ERC20Upgradeable, AccessControlUpgradeable {
         }
     }
 
-    function giveMinterRole() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMinterRole() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(MINTER_ROLE, staking);
     }
 

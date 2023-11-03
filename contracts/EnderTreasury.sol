@@ -37,6 +37,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
     mapping(address => uint256) public totalAssetStakedInStrategy;
     mapping(address => uint256) public totalRewardsFromStrategy;
     mapping(uint256 => uint256) public availableFundsAtMaturity;
+    // mapping(address => uint256) public totalDepositAmount;
 
     struct FundInfo {
         uint256 availableFunds;
@@ -88,10 +89,10 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         address _eigenLayer,
         uint256 _availableFundsPercentage,
         uint256 _reserveFundsPercentage,
-        address _oracle,
-        uint256 _updateIntervel
+        address _oracle
     )
         external
+        // uint256 _updateIntervel
         // address _stEthELS
         initializer
     {
@@ -106,12 +107,12 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         strategies[instadapp] = true;
         strategies[lybraFinance] = true;
         strategies[eigenLayer] = true;
-        availableFundsPercentage = _availableFundsPercentage;
-        reserveFundsPercentage = _reserveFundsPercentage;
+        // availableFundsPercentage = _availableFundsPercentage;
+        // reserveFundsPercentage = _reserveFundsPercentage;
         // interval = _updateIntervel;
-        interval = _updateIntervel;
+        interval = 14 * 60 * 60;
         lastTimeStamp = block.timestamp;
-        if (availableFundsPercentage + _reserveFundsPercentage != 100) revert InvalidRatio();
+        // if (availableFundsPercentage + _reserveFundsPercentage != 100) revert InvalidRatio();
         setAddress(_endToken, 1);
         setAddress(_bond, 2);
         setBondYieldBaseRate(300);
@@ -212,9 +213,10 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
                 withdrawFromStrategy(param.stakingToken, instadapp, amountRequired);
             }
             epochDeposit += param.tokenAmt;
+            fundsInfo[param.stakingToken].depositFunds += param.tokenAmt;
             // update available info
-            fundsInfo[param.stakingToken].availableFunds += ((param.tokenAmt) * availableFundsPercentage) / 100;
-            fundsInfo[param.stakingToken].reserveFunds += ((param.tokenAmt) * reserveFundsPercentage) / 100;
+            // fundsInfo[param.stakingToken].availableFunds += ((param.tokenAmt) * availableFundsPercentage) / 100;
+            // fundsInfo[param.stakingToken].reserveFunds += ((param.tokenAmt) * reserveFundsPercentage) / 100;
 
             console.log(fundsInfo[param.stakingToken].availableFunds, "fundsInfo[param.stakingToken].availableFunds");
             console.log(fundsInfo[param.stakingToken].reserveFunds, "fundsInfo[param.stakingToken].reserveFunds");
@@ -236,6 +238,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
     }
 
     function stakeRebasingReward(address _tokenAddress) public returns (uint256 rebaseReward) {
+        balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
         uint256 bondReturn = IEnderBond(enderBond).endMint();
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
         //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 18decimal
@@ -249,6 +252,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
 
         rebaseReward = ((rebaseReward * 1e10) / priceEnd);
+        // console.log("IERC20(_tokenAddress).balanceOf(address(this))",IERC20(_tokenAddress).balanceOf(address(this)));
     }
 
     // function getStakingReward(address _asset) public returns (uint256 mintAmount) {
@@ -317,6 +321,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
             _returnAmount = ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
         }
         // uint256 balAfter = IERC20(_asset).balanceOf(address(this));
+        totalAssetStakedInStrategy[_asset] -= _withdrawAmt;
         if (_returnAmount > 0) {
             // console.log("balAfter - balBef",_withdrawAmt,_returnAmount);
             totalRewardsFromStrategy[_asset] += _returnAmount;
@@ -329,24 +334,26 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
      */
     function withdraw(EndRequest memory param) external onlyBond {
         uint256 amountRequired = IEnderBond(enderBond).getLoopCount();
-        if (amountRequired > 0) {
+        if (amountRequired > IERC20(param.stakingToken).balanceOf(address(this))) {
             withdrawFromStrategy(param.stakingToken, instadapp, amountRequired);
         }
         epochWithdrawl += param.tokenAmt;
+        fundsInfo[param.stakingToken].depositFunds -= param.tokenAmt;
+
         // if invalid reserve funds then withdraw from protocol
-        uint256 currentFundsAmount = param.tokenAmt;
+        // uint256 currentFundsAmount = param.tokenAmt;
 
-        if (fundsInfo[param.stakingToken].reserveFunds < param.tokenAmt) {
-            currentFundsAmount -= fundsInfo[param.stakingToken].reserveFunds;
-            fundsInfo[param.stakingToken].reserveFunds = 0;
+        // if (fundsInfo[param.stakingToken].reserveFunds < param.tokenAmt) {
+        //     currentFundsAmount -= fundsInfo[param.stakingToken].reserveFunds;
+        //     fundsInfo[param.stakingToken].reserveFunds = 0;
 
-            if (fundsInfo[param.stakingToken].availableFunds < currentFundsAmount) {
-                uint256 withdrawAmount = withdrawFromStrategy(param.stakingToken, instadapp, currentFundsAmount);
-                fundsInfo[param.stakingToken].availableFunds += withdrawAmount;
-            }
+        //     if (fundsInfo[param.stakingToken].availableFunds < currentFundsAmount) {
+        //         uint256 withdrawAmount = withdrawFromStrategy(param.stakingToken, instadapp, currentFundsAmount);
+        //         fundsInfo[param.stakingToken].availableFunds += withdrawAmount;
+        //     }
 
-            fundsInfo[param.stakingToken].availableFunds -= currentFundsAmount;
-        }
+        //     fundsInfo[param.stakingToken].availableFunds -= currentFundsAmount;
+        // }
         // bond token transfer
         _transferFunds(param.account, param.stakingToken, param.tokenAmt);
     }
@@ -375,62 +382,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
     }
 
     /**
-     * @dev Records the results of an epoch, including the deposit into a strategy.
-     * @param _stEthAddress The address of the asset (e.g., stETH token).
-     * @param _strategy The address of the strategy to deposit the total return.
-     * this will be hit in order to balance the balance in the available and str
-     */
-    // function recordEpochResults(address _stEthAddress, address _strategy) public {
-    //     uint256 totalReturn = calculateTotalReturn(_stEthAddress);
-    //     uint256 totalStaked = totalAssetStakedInStrategy[_stEthAddress];
-    //     uint256 requiredReserveFund = (totalStaked * reserveFundsPercentage) / 100;
-    //     uint256 existingReserveFund = fundsInfo[_stEthAddress].reserveFunds;
-
-    //     if (existingReserveFund > requiredReserveFund) {
-    //         totalReturn += existingReserveFund - requiredReserveFund;
-    //         depositInStrategy(_stEthAddress, _strategy, totalReturn);
-    //     } else {
-    //         if (totalReturn > requiredReserveFund) {
-    //             uint256 remainingReturns = totalReturn - requiredReserveFund;
-    //             fundsInfo[_stEthAddress].reserveFunds += requiredReserveFund;
-    //             depositInStrategy(_stEthAddress, _strategy, remainingReturns);
-    //         } else {
-    //             requiredReserveFund -= totalReturn;
-    //             uint256 requiredAmount = withdrawFromStrategy(_stEthAddress, _strategy, requiredReserveFund);
-    //             fundsInfo[_stEthAddress].reserveFunds += totalReturn + requiredAmount;
-    //         }
-    //     }
-    //     epochDeposit = 0;
-    //     epochWithdrawl = 0;
-    //     balanceLastEpoch = IERC20(_stEthAddress).balanceOf(address(this));
-    // }
-
-    // function recordEpochResults1(address _stEthAddress, address _strategy) public {
-    //     uint256 totalReturn = calculateTotalReturn(_stEthAddress);
-    //     uint256 totalStaked = totalAssetStakedInStrategy[_stEthAddress];
-    //     uint256 requiredReserveFund = (totalStaked * reserveFundsPercentage) / 100;
-    //     uint256 existingReserveFund = fundsInfo[_stEthAddress].reserveFunds;
-
-    //     if (existingReserveFund < requiredReserveFund) {
-    //         uint256 temp = requiredReserveFund - existingReserveFund;
-
-    //         if (totalReturn > temp) {
-    //             fundsInfo[_stEthAddress].reserveFunds += requiredReserveFund;
-    //             depositInStrategy(_stEthAddress, _strategy, totalReturn - temp);
-    //         } else {
-    //             requiredReserveFund = totalReturn;
-    //             fundsInfo[_stEthAddress].reserveFunds += totalReturn;
-    //             withdrawFromStrategy(_stEthAddress, _strategy, temp - totalReturn);
-    //         }
-    //     } else {
-    //         totalReturn += existingReserveFund - requiredReserveFund;
-    //         depositInStrategy(_stEthAddress, _strategy, totalReturn);
-    //     }
-
-    //     balanceLastEpoch = IERC20(_stEthAddress).balanceOf(address(this));
-    // }
-
-    /**
      * @dev Calculates the deposit return based on the total return and available funds.
      * @param _stEthAddress The address of the asset (e.g., stETH token).
      * @return depositReturn The deposit return as a fraction of available funds.
@@ -438,12 +389,11 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
 
     function calculateDepositReturn(address _stEthAddress) public view returns (uint256 depositReturn) {
         uint256 totalReturn = calculateTotalReturn(_stEthAddress);
-        depositReturn = totalReturn * (fundsInfo[_stEthAddress].availableFunds / balanceLastEpoch);
+        console.log("fundsInfo[_stEthAddress].depositFunds / balanceLastEpoch",fundsInfo[_stEthAddress].depositFunds,balanceLastEpoch);
+        depositReturn = totalReturn * (fundsInfo[_stEthAddress].depositFunds / balanceLastEpoch);
     }
 
-    function checkUpkeep(
-        bytes calldata 
-    ) external view override returns (bool upkeepNeeded, bytes memory performData) {
+    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
         upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
         // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
     }
