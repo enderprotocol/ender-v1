@@ -108,6 +108,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         strategies[eigenLayer] = true;
         availableFundsPercentage = _availableFundsPercentage;
         reserveFundsPercentage = _reserveFundsPercentage;
+        // interval = _updateIntervel;
         interval = _updateIntervel;
         lastTimeStamp = block.timestamp;
         if (availableFundsPercentage + _reserveFundsPercentage != 100) revert InvalidRatio();
