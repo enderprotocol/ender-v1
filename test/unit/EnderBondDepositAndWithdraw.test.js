@@ -346,7 +346,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       console.log(
         await endToken.balanceOf(signer1.address),
         "balance before the withdraw before"
-      );
+      );MINTER_ROLE
       await withdrawAndSetup(signer1, tokenId);
 
       await withdrawAndSetup(signer1, tokenId2);

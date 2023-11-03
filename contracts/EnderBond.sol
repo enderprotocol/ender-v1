@@ -60,7 +60,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public totalRewardPriciple;
     uint256 public rateOfChange;
     uint256 public totalDeposit;
-    uint256 public bondYeildShareIndex;
+    uint256 public bondYieldShareIndex;
     uint256 public totalBondPrincipalAmount;
     uint256 public endMint;
     uint256 public bondYieldBaseRate;
@@ -121,7 +121,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         enderOracle = IEnderOracle(_oracle);
         bondYieldBaseRate = 400;
         SECONDS_IN_DAY = 86400;
-        lastDay = block.timestamp/SECONDS_IN_DAY;
+        lastDay = block.timestamp / SECONDS_IN_DAY;
         setBondFeeEnabled(true);
     }
 
@@ -191,6 +191,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     function getInterest(uint256 maturity) public view returns (uint256 rate) {
         console.log(maturity, "maturity");
         uint256 maturityModifier;
+        //make it dynamic in phase 2
         unchecked {
             if (maturity >= 360) maturityModifier = 150;
             if (maturity >= 320 && maturity < 360) maturityModifier = 140;
@@ -256,6 +257,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             uint256 tokenId
         )
     {
+        IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
         principal = (principal * (100 - bondFee)) / 100;
         console.log(principal, "principal");
 
@@ -268,7 +270,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
 
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
-        userBondYieldShareIndex[tokenId] = bondYeildShareIndex;
+        userBondYieldShareIndex[tokenId] = bondYieldShareIndex;
 
         totalDeposit += principal;
         totalRewardPriciple += rewardPrinciple;
@@ -281,7 +283,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         console.log(depositPrincipal, "depositPrincipal");
 
-        IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
         userBondPrincipalAmount[tokenId] = depositPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
 
@@ -325,19 +326,19 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId);
         if (rewardSharePerUserIndexSend[_tokenId] != rewardShareIndexSend) claimStakingReward(_tokenId);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
-        bondNFT.transferFrom(msg.sender, address(this), _tokenId);
-        bondNFT.burn(_tokenId);
+        // bondNFT.transferFrom(msg.sender, address(this), _tokenId);
+        // bondNFT.burn(_tokenId)
 
         userBondPrincipalAmount[_tokenId] == 0;
         delete userBondYieldShareIndex[_tokenId];
-
-        delete bonds[_tokenId];
+        //have to add status for reedem
+        // delete bonds[_tokenId];
     }
 
     function getLoopCount() public returns (uint256 amountRequired) {
-        if(msg.sender != address(endTreasury)) revert NotTreasury();
-        uint256 currentDay = block.timestamp/SECONDS_IN_DAY;
-        for(uint256 i=lastDay;i<=currentDay;i++){
+        if (msg.sender != address(endTreasury)) revert NotTreasury();
+        uint256 currentDay = block.timestamp / SECONDS_IN_DAY;
+        for (uint256 i = lastDay; i <= currentDay; i++) {
             amountRequired += availableFundsAtMaturity[i];
         }
         lastDay = currentDay;
@@ -347,7 +348,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (msg.sender != address(bondNFT)) {
             revert NotBondNFT();
         }
-        if (userBondPrincipalAmount[_tokenId] == 0) {   
+        if (userBondPrincipalAmount[_tokenId] == 0) {
             revert NotBondUser();
         }
         userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
@@ -363,8 +364,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
         IERC20(endToken).transferFrom(endToken, address(this), _reward);
 
-        //error if the total reward is greater than the total reward , then thats fked
-
         rewardShareIndex = (rewardShareIndex) + ((_reward * 10 ** 18) / totalRewardPriciple);
         console.log(rewardShareIndex, "rewardShareIndex first time");
     }
@@ -376,6 +375,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function epochRewardShareIndexForSend(uint256 _reward, uint256 _totalPrinciple) public {
         rewardShareIndexSend = rewardShareIndexSend + ((_reward * 10 ** 18) / _totalPrinciple);
+        console.log(rewardShareIndexSend, "rewardShareIndexSend");
     }
 
     /**
@@ -413,7 +413,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _tokenId
     ) public view returns (uint256 pendingRewardSend, uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 1 + ((rateOfChange * (_maturity - 1)) / 2) * 10000;
+        avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
         rewardPrincipleSend = _principle * avgRefractionIndex;
         pendingRewardSend = rewardPrincipleSend * (rewardPrincipleSend - rewardSharePerUserIndexSend[_tokenId]);
     }
@@ -436,8 +436,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             ((rewardPrinciple * (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
 
         if (sEndTokenReward > 0) {
-            IERC20(endToken).transfer(msg.sender, sEndTokenReward);
-            ISEndToken(sEndToken).burn(msg.sender, sEndTokenReward);
+            // IERC20(endToken).transfer(msg.sender, sEndTokenReward);
+            ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
         }
         rewardSharePerUserIndexSend[_tokenId] = rewardShareIndexSend;
     }
@@ -474,7 +474,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         endMint += _endMint * 100;
         console.log(endMint, "endMint");
 
-        bondYeildShareIndex = bondYeildShareIndex + ((endMint) / totalBondPrincipalAmount);
+        bondYieldShareIndex = bondYieldShareIndex + ((endMint) / totalBondPrincipalAmount);
     }
 
     /**
@@ -483,7 +483,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @return _reward The reward amount for the bond.
      */
     function calculateBondRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
-        _reward = (userBondPrincipalAmount[_tokenId] * (bondYeildShareIndex - userBondYieldShareIndex[_tokenId]));
+        _reward = (userBondPrincipalAmount[_tokenId] * (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
 
         console.log(_reward, "_reward in end");
     }

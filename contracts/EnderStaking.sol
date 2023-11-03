@@ -25,6 +25,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     }
 
     uint256 public percentPerBlock;
+    uint public bondRewardPercentage;
 
     uint256 public stakingApy;
     address public endToken;
@@ -45,6 +46,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         // setAddress(_enderTreasury, 2);
         setAddress(_end, 3);
         setAddress(_sEnd, 4);
+        bondRewardPercentage = 10;
     }
 
     function setAddress(address _addr, uint256 _type) public onlyOwner {
@@ -68,6 +70,14 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         percentPerBlock = percent;
 
         emit PercentUpdated(percentPerBlock);
+    }
+
+    function setBondRewardPercentage(uint256 percent) external onlyOwner {
+        if (percent == 0) revert InvalidAmount();
+
+        bondRewardPercentage = percent;
+
+        emit PercentUpdated(bondRewardPercentage);
     }
 
     /**
@@ -100,13 +110,8 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         if (amount == 0) revert InvalidAmount();
 
         UserInfo storage userItem = userInfo[msg.sender];
-        uint256 sEndAmount = calculateSEndTokens(amount + userItem.amount);
+        uint256 sEndAmount = calculateSEndTokens(amount);
         console.log("sEndAmount", sEndAmount);
-        // if (userItem.amount != 0) {
-        //     // update pending
-        //     pendingRew = claimRebaseRewards(userItem.amount);
-        //     console.log("pendingRew", pendingRew);
-        // }
 
         userSEndToken[msg.sender] += sEndAmount;
         userItem.amount += amount;
@@ -122,21 +127,20 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      */
     function withdraw(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
-        if (ISEndToken(sEndToken).balanceOf(msg.sender) < 0) revert InvalidAmount();
+        if (ISEndToken(sEndToken).balanceOf(msg.sender) < amount) revert InvalidAmount();
         UserInfo storage userItem = userInfo[msg.sender];
-        if (amount > userItem.amount) amount = userItem.amount;
 
         // add reward
         uint256 reward = claimRebaseRewards(amount);
 
         // update userinfo
-        unchecked {
-            if (amount == userItem.amount) delete userInfo[msg.sender];
-            else {
-                // userItem.pending = 0;
-                userItem.amount -= amount;
-            }
-        }
+        // unchecked {
+        //     if (amount == userItem.amount) delete userInfo[msg.sender];
+        //     else {
+        //         // userItem.pending = 0;
+        //         userItem.amount -= amount;
+        //     }
+        // }
         userSEndToken[msg.sender] -= amount;
         // transfer token
         console.log("pending", reward);
@@ -148,17 +152,19 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
     function epochStakingReward(address _asset) external {
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
-        uint256 rw2 = (totalReward * 10) / 100;
+        uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
+        console.log(rw2, "rw2---");
 
         uint256 sendTokens = calculateSEndTokens(rw2);
         ISEndToken(sEndToken).mint(enderBond, sendTokens);
+        ISEndToken(endToken).mint(address(this), totalReward - rw2);
         IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens, ISEndToken(sEndToken).totalSupply());
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
         uint256 rebasingIndex = calculateRebaseIndex();
         console.log("rebasingIndex----------------", rebasingIndex);
-        sEndTokens = _endAmount / rebasingIndex;
+        sEndTokens = (_endAmount / rebasingIndex) / 1e18;
         console.log("sEndTokens", sEndTokens);
     }
 
@@ -169,17 +175,13 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         if (endBalStaking == 0 || sEndTotalSupply == 0) {
             rebasingIndex = 1;
         } else {
-            rebasingIndex = ISEndToken(endToken).balanceOf(address(this)) / ISEndToken(sEndToken).totalSupply();
+            rebasingIndex = (endBalStaking * 10 ** 18) / sEndTotalSupply;
         }
     }
 
     function claimRebaseRewards(uint256 _sendAMount) internal view returns (uint256 reward) {
-        //TODO
         console.log("userSEndToken[msg.sender]", userSEndToken[msg.sender]);
-        if (_sendAMount > userSEndToken[msg.sender]) {
-            reward = userSEndToken[msg.sender] * calculateRebaseIndex();
-        } else {
-            reward = _sendAMount * calculateRebaseIndex();
-        }
+
+        reward = (_sendAMount * calculateRebaseIndex()) / 10 ** 18;
     }
 }

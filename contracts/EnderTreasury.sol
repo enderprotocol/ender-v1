@@ -240,28 +240,33 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
     function stakeRebasingReward(address _tokenAddress) public returns (uint256 rebaseReward) {
         uint256 bondReturn = IEnderBond(enderBond).endMint();
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
+        console.log(depositReturn, "depositReturn");
         balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
-        if(depositReturn==0){
+        if (depositReturn == 0) {
             epochWithdrawl = 0;
             epochDeposit = 0;
-            rebaseReward=0;
-        }else{
+            rebaseReward = 0;
+        } else {
             //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 18decimal
             (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
             (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
 
             depositReturn = (ethPrice * depositReturn) / 10 ** ethDecimal;
 
-            bondReturn = (priceEnd * bondReturn) / 10 ** endDecimal;
+            console.log(depositReturn, "depositReturn ");
 
-            console.log();
-            rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
+            bondReturn = (priceEnd * bondReturn) / 10 ** ethDecimal;
 
-            rebaseReward = ((rebaseReward * 1e10) / priceEnd);
+            console.log(bondReturn, " bond return after");
+
+            rebaseReward = depositReturn - bondReturn + (depositReturn * nominalYield);
+
+            rebaseReward = ((rebaseReward) / priceEnd) * 10 ** ethDecimal;
+
             epochWithdrawl = 0;
             epochDeposit = 0;
         }
-        console.log("rebaseReward",rebaseReward);
+        console.log("rebaseReward", rebaseReward);
         // console.log("IERC20(_tokenAddress).balanceOf(address(this))",IERC20(_tokenAddress).balanceOf(address(this)));
     }
 
@@ -388,25 +393,15 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
      * @return totalReturn The total return, which is the change in asset balance.
      */
     function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
-        console.log(
-            "epochWithdrawl - epochDeposit - balanceLastEpoch;",
-            epochWithdrawl,
-            epochDeposit,
-            balanceLastEpoch
-        );
-        if ((epochDeposit + balanceLastEpoch) > (IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl)) {
-            totalReturn = 0;
-        } else {
-            totalReturn =
-                IERC20(_stEthAddress).balanceOf(address(this)) +
-                epochWithdrawl -
-                epochDeposit -
-                balanceLastEpoch;
-        }
+        console.log(IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl, epochDeposit, "mmmmmmmmm");
+        console.log(balanceLastEpoch, "balanceLastEpoch");
+
+        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl - epochDeposit - balanceLastEpoch;
+        console.log(totalReturn, "totalReturn");
     }
 
     /**
-     * @dev Calculates the deposit return based on the total return and available funds.
+     * @dev Calculates the deposit return ba sed on the total return and available funds.
      * @param _stEthAddress The address of the asset (e.g., stETH token).
      * @return depositReturn The deposit return as a fraction of available funds.
      */
@@ -421,7 +416,10 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
                 fundsInfo[_stEthAddress].depositFunds,
                 balanceLastEpoch
             );
-            depositReturn = totalReturn * (fundsInfo[_stEthAddress].depositFunds / balanceLastEpoch);
+            //here we have to multiply 100000and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
+            depositReturn =
+                (totalReturn * ((fundsInfo[_stEthAddress].depositFunds * 100000) / balanceLastEpoch)) /
+                100000;
         }
     }
 
