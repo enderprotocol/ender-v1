@@ -413,7 +413,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
 
     function calculateDepositReturn(address _stEthAddress) public view returns (uint256 depositReturn) {
         uint256 totalReturn = calculateTotalReturn(_stEthAddress);
-        if (totalReturn == 0) {
+        if (totalReturn == 0 || balanceLastEpoch == 0) {
             depositReturn = 0;
         } else {
             console.log(
