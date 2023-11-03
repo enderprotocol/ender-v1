@@ -181,9 +181,11 @@ describe("EnderBond", function () {
 
             //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
             await enderBond.epochBondYieldShareIndex();
-            await increaseTime(24 * 3400);
+            // await increaseTime(24 * 3400);
 
-            // deposit 1 eth in strategy
+            // // deposit 1 eth in strategy
+
+            console.log("balanceOf address(this)",await stEth.balanceOf(enderTreasuryAddress));
 
             await enderTreasury.depositInStrategy(
                 stEthAddress,
@@ -191,17 +193,26 @@ describe("EnderBond", function () {
                 expandTo18Decimals(1),
             );
 
-            await increaseTime(24 * 3400);
+            await increaseTime(24 * 3400000000);
 
             await enderTreasury.withdrawFromStrategy(
                 stEthAddress,
                 instadappLiteAddress,
-                expandTo18Decimals(0.3),
+                expandTo18Decimals(1),
             );
 
-            // hit the rebasing reward epoch
+            // // hit the rebasing reward epoch
 
             await enderStaking.epochStakingReward(stEthAddress);
+
+            // await increaseTime(24 * 3400);
+
+            // withdrawAndSetup(signer1,tokenId);
+
+            // await enderStaking.epochStakingReward(stEthAddress);
+
+            
+
 
             /////////////////////////////////////////////////////////////////////////////////////////
 

@@ -238,10 +238,12 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
     }
 
     function stakeRebasingReward(address _tokenAddress) public returns (uint256 rebaseReward) {
-        balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
         uint256 bondReturn = IEnderBond(enderBond).endMint();
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
+        balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
         if(depositReturn==0){
+            epochWithdrawl = 0;
+            epochDeposit = 0;
             rebaseReward=0;
         }else{
             //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 18decimal
@@ -252,12 +254,14 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
 
             bondReturn = (priceEnd * bondReturn) / 10 ** endDecimal;
 
+            console.log();
             rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
 
             rebaseReward = ((rebaseReward * 1e10) / priceEnd);
             epochWithdrawl = 0;
             epochDeposit = 0;
         }
+        console.log("rebaseReward",rebaseReward);
         // console.log("IERC20(_tokenAddress).balanceOf(address(this))",IERC20(_tokenAddress).balanceOf(address(this)));
     }
 
