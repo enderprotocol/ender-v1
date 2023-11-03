@@ -241,17 +241,23 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
         uint256 bondReturn = IEnderBond(enderBond).endMint();
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
-        //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 18decimal
-        (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
-        (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
+        if(depositReturn==0){
+            rebaseReward=0;
+        }else{
+            //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 18decimal
+            (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
+            (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
 
-        depositReturn = (ethPrice * depositReturn) / 10 ** ethDecimal;
+            depositReturn = (ethPrice * depositReturn) / 10 ** ethDecimal;
 
-        bondReturn = (priceEnd * bondReturn) / 10 ** endDecimal;
+            bondReturn = (priceEnd * bondReturn) / 10 ** endDecimal;
 
-        rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
+            rebaseReward = depositReturn - bondReturn + depositReturn * nominalYield;
 
-        rebaseReward = ((rebaseReward * 1e10) / priceEnd);
+            rebaseReward = ((rebaseReward * 1e10) / priceEnd);
+            epochWithdrawl = 0;
+            epochDeposit = 0;
+        }
         // console.log("IERC20(_tokenAddress).balanceOf(address(this))",IERC20(_tokenAddress).balanceOf(address(this)));
     }
 
@@ -378,7 +384,21 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
      * @return totalReturn The total return, which is the change in asset balance.
      */
     function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
-        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl - epochDeposit - balanceLastEpoch;
+        console.log(
+            "epochWithdrawl - epochDeposit - balanceLastEpoch;",
+            epochWithdrawl,
+            epochDeposit,
+            balanceLastEpoch
+        );
+        if ((epochDeposit + balanceLastEpoch) > (IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl)) {
+            totalReturn = 0;
+        } else {
+            totalReturn =
+                IERC20(_stEthAddress).balanceOf(address(this)) +
+                epochWithdrawl -
+                epochDeposit -
+                balanceLastEpoch;
+        }
     }
 
     /**
@@ -389,8 +409,16 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
 
     function calculateDepositReturn(address _stEthAddress) public view returns (uint256 depositReturn) {
         uint256 totalReturn = calculateTotalReturn(_stEthAddress);
-        console.log("fundsInfo[_stEthAddress].depositFunds / balanceLastEpoch",fundsInfo[_stEthAddress].depositFunds,balanceLastEpoch);
-        depositReturn = totalReturn * (fundsInfo[_stEthAddress].depositFunds / balanceLastEpoch);
+        if (totalReturn == 0) {
+            depositReturn = 0;
+        } else {
+            console.log(
+                "fundsInfo[_stEthAddress].depositFunds / balanceLastEpoch",
+                fundsInfo[_stEthAddress].depositFunds,
+                balanceLastEpoch
+            );
+            depositReturn = totalReturn * (fundsInfo[_stEthAddress].depositFunds / balanceLastEpoch);
+        }
     }
 
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
