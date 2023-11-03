@@ -112,7 +112,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         userItem.amount += amount;
         userItem.stakedAt = block.timestamp;
 
-        
         ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
         emit Stake(msg.sender, amount);
     }
