@@ -66,7 +66,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public bondYieldBaseRate;
     uint256 public txFees;
     uint256 public minDepositAmount;
-    uint256 public SECONDS_IN_DAY = 86400;
+    uint256 public SECONDS_IN_DAY;
     uint256 public lastDay;
 
     /// @notice An array containing all maturities.
