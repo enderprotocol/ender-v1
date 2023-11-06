@@ -346,7 +346,8 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       console.log(
         await endToken.balanceOf(signer1.address),
         "balance before the withdraw before"
-      );MINTER_ROLE
+      );
+      MINTER_ROLE;
       await withdrawAndSetup(signer1, tokenId);
 
       await withdrawAndSetup(signer1, tokenId2);
@@ -360,6 +361,19 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         "balance after the withdraw after--------------"
       );
     });
+
+
+    // it("should set and get addresses correctly", async function () {
+    //   // Test the setAddress function
+    //   await enderBond.setAddress(enderTreasuryAddress, 1);
+    //   await enderBond.setAddress(endTokenAddress, 2);
+    //   await enderBond.setAddress(bondNFTAddress, 3);
+
+    //   expect(await enderBond.getAddress(1)).to.equal(enderTreasuryAddress);
+    //   expect(await enderBond.getAddress(2)).to.equal(endTokenAddress);
+    //   expect(await enderBond.getAddress(3)).to.equal(bondNFTAddress);
+    // });
+
   });
 
   async function depositAndSetup(signer, depositAmount, maturity, bondFee) {
