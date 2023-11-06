@@ -142,6 +142,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         //     }
         // }
         userSEndToken[msg.sender] -= amount;
+        // console.log(userSEndToken[msg.sender],"userSEndToken[msg.sender]");
         // transfer token
         console.log("pending", reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
