@@ -237,7 +237,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         enderBond.connect(signer1).claimRefractionRewards(tokenId)
       ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
 
-      expect(await enderBond.bondYeildShareIndex()).to.be.greaterThan(
+      expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
         await enderBond.userBondYieldShareIndex(tokenId)
       );
 
@@ -287,7 +287,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       await enderBond.epochBondYieldShareIndex();
 
-      expect(await enderBond.bondYeildShareIndex()).to.be.greaterThan(
+      expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
         await enderBond.userBondYieldShareIndex(tokenId2)
       );
 
