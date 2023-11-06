@@ -54,6 +54,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     mapping(uint256 => uint256) public userBondPrincipalAmount;
     mapping(uint256 => uint256) public userBondYieldShareIndex; //s0
     mapping(uint256 => uint256) public availableFundsAtMaturity;
+    mapping(uint256 => uint256) public dayToRewardShareIndex;
+    mapping(uint256 => uint256) public dayRewardShareIndexForSend;
 
     uint256 public rewardShareIndex;
     uint256 public rewardShareIndexSend;
@@ -363,8 +365,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
         IERC20(endToken).transferFrom(endToken, address(this), _reward);
+        uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
 
-        rewardShareIndex = (rewardShareIndex) + ((_reward * 10 ** 18) / totalRewardPriciple);
+        rewardShareIndex =
+            (rewardShareIndex) +
+            ((_reward * 10 ** 18) / (totalRewardPriciple - availableFundsAtMaturity[timeNow + 4]));
+        dayToRewardShareIndex[timeNow] = rewardShareIndex;
         console.log(rewardShareIndex, "rewardShareIndex first time");
     }
 
@@ -375,7 +381,24 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      */
     function epochRewardShareIndexForSend(uint256 _reward, uint256 _totalPrinciple) public {
         rewardShareIndexSend = rewardShareIndexSend + ((_reward * 10 ** 18) / _totalPrinciple);
+        uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+        dayRewardShareIndexForSend[timeNow] = rewardShareIndexSend;
         console.log(rewardShareIndexSend, "rewardShareIndexSend");
+    }
+
+    /**
+     * @dev Gets and sets the ETH price and updates the bond yield share.
+     */
+    function epochBondYieldShareIndex() external onlyOwner {
+        (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
+        (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
+        uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+        uint256 finalRewardPrincipal = (totalRewardPriciple - availableFundsAtMaturity[timeNow + 4]);
+        console.log(totalBondPrincipalAmount, "totalBondPrincipalAmount");
+        uint256 _endMint = (priceEth * priceEnd * finalRewardPrincipal) / (10 ** ethDecimal);
+        endMint += _endMint * 100;
+        console.log(endMint, "endMint");
+        bondYieldShareIndex = bondYieldShareIndex + ((endMint) / finalRewardPrincipal);
     }
 
     /**
@@ -383,7 +406,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _principle The principle amount of the bond.
      * @param _maturity The maturity of the bond.
      * @param _tokenId The unique identifier of the bond.
-=    * @return avgRefractionIndex The average refraction index for the bond.
+     * @return avgRefractionIndex The average refraction index for the bond.
      * @return rewardPrinciple The principle amount used in reward calculations.
      */
     function calculateRefractionData(
@@ -461,20 +484,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         );
 
         rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
-    }
-
-    /**
-     * @dev Gets and sets the ETH price and updates the bond yield share.
-     */
-    function epochBondYieldShareIndex() external onlyOwner {
-        (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
-        (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
-        console.log(totalBondPrincipalAmount, "totalBondPrincipalAmount");
-        uint256 _endMint = (priceEth * priceEnd * totalBondPrincipalAmount) / (10 ** ethDecimal);
-        endMint += _endMint * 100;
-        console.log(endMint, "endMint");
-
-        bondYieldShareIndex = bondYieldShareIndex + ((endMint) / totalBondPrincipalAmount);
     }
 
     /**
