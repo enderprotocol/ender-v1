@@ -12,9 +12,9 @@ import "hardhat/console.sol";
 
 error ZeroAddress();
 error InvalidAmount();
+error NotKeeper();
 
 contract EnderStaking is Initializable, OwnableUpgradeable {
-
     uint public bondRewardPercentage;
     uint public rebasingIndex;
 
@@ -22,6 +22,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     address public sEndToken;
     address public enderTreasury;
     address public enderBond;
+    address public keeper;
 
     event PercentUpdated(uint256 percent);
     event AddressUpdated(address indexed addr, uint256 addrType);
@@ -44,6 +45,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         else if (_type == 2) enderTreasury = _addr;
         else if (_type == 3) endToken = _addr;
         else if (_type == 4) sEndToken = _addr;
+        else if (_type == 5) keeper = _addr;
 
         emit AddressUpdated(_addr, _type);
     }
@@ -89,9 +91,9 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         emit Withdraw(msg.sender, amount);
     }
 
-
     //Todo: add access control
     function epochStakingReward(address _asset) external {
+        if (msg.sender != keeper) revert NotKeeper();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
         console.log(rw2, "rw2---");
@@ -119,6 +121,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
             rebasingIndex = (endBalStaking * 10 ** 18) / sEndTotalSupply;
         }
     }
+
 
     function claimRebaseValue(uint256 _sendAMount) internal view returns (uint256 reward) {
         reward = (_sendAMount * rebasingIndex) / 10 ** 18;

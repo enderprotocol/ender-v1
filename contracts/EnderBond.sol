@@ -7,13 +7,13 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
 
 // Interfaces
 import "./interfaces/IBondNFT.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/IEnderOracle.sol";
 import "./interfaces/ISEndToken.sol";
-import "./interfaces/ILido.sol";
 
 import "hardhat/console.sol";
 
@@ -32,31 +32,36 @@ error NotBondNFT();
 error WaitForFirstDeposit();
 error NoRewardCollected();
 error NotTreasury();
+error NotKeeper();
 
 /**
  * @title EnderBond contract
  * @dev Implements bonding functionality with multiple tokens
  */
-contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712Upgradeable {
+contract EnderBond is
+    Initializable,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    EIP712Upgradeable,
+    KeeperCompatibleInterface
+{
     /// @notice A mapping that indicates whether a token is bondable.
     mapping(address => bool) public bondableTokens;
 
     /// @notice A mapping of bonds by token ID.
     mapping(uint256 => Bond) public bonds;
 
-    mapping(address => uint256) public userNonces;
-
-    mapping(uint256 => uint256) public pendingRefractionReward;
     mapping(uint256 => uint256) public rewardSharePerUserIndex;
     mapping(uint256 => uint256) public rewardSharePerUserIndexSend;
-    mapping(uint256 => uint256) public userDeposit;
 
     mapping(uint256 => uint256) public userBondPrincipalAmount;
     mapping(uint256 => uint256) public userBondYieldShareIndex; //s0
     mapping(uint256 => uint256) public availableFundsAtMaturity;
 
     mapping(uint256 => uint256) public dayToRewardShareIndex;
+
     mapping(uint256 => uint256) public dayRewardShareIndexForSend;
+
     mapping(uint256 => uint256) public dayBondYieldShareIndex;
 
     uint256 public rewardShareIndex;
@@ -72,6 +77,9 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public minDepositAmount;
     uint256 public SECONDS_IN_DAY;
     uint256 public lastDay;
+    uint256 private amountRequired;
+    uint public interval;
+    uint public lastTimeStamp;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
@@ -81,6 +89,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     address private sEndToken;
     address public lido;
     address public stEth;
+    address public keeper;
+
     IBondNFT private bondNFT;
     IEnderTreasury private endTreasury;
     IEnderOracle private enderOracle;
@@ -95,6 +105,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 maturity; // The maturity date of the bond
         address token; // The token used for the bond
         uint256 bondFee; // bond fee self-set
+        uint256 depositPrincipal;
+        uint256 rewardPrincipal;
     }
 
     event AddressUpdated(address indexed addr, uint256 addrType);
@@ -118,8 +130,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         enderOracle = IEnderOracle(_oracle);
         bondYieldBaseRate = 400;
         SECONDS_IN_DAY = 86400;
+        interval = 14 * 60 * 60;
+        lastTimeStamp = block.timestamp;
         lastDay = block.timestamp / SECONDS_IN_DAY;
         setBondFeeEnabled(true);
+    }
+
+    function setInterval(uint256 _interval) public onlyOwner {
+        interval = _interval;
     }
 
     /**
@@ -136,6 +154,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         else if (_type == 4) endSignature = _addr;
         else if (_type == 5) lido = _addr;
         else if (_type == 6) stEth = _addr;
+        else if (_type == 7) keeper = _addr;
 
         emit AddressUpdated(_addr, _type);
     }
@@ -187,7 +206,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     function getInterest(uint256 maturity) public view returns (uint256 rate) {
         uint256 maturityModifier;
-        //make it dynamic in phase 2
+        //Todo make it dynamic in phase 2
         unchecked {
             if (maturity >= 360) maturityModifier = 150;
             if (maturity >= 320 && maturity < 360) maturityModifier = 140;
@@ -246,21 +265,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 maturity,
         address token,
         uint256 bondFee
-    )
-        private
-        returns (
-            // bool _rebond
-            uint256 tokenId
-        )
-    {
-        IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
+    ) private returns (uint256 tokenId) {
+        endTreasury.depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal), getLoopCount());
         principal = (principal * (100 - bondFee)) / 100;
         console.log(principal, "principal");
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
         availableFundsAtMaturity[(block.timestamp + ((maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
-        userDeposit[tokenId] += principal;
         (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
 
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
@@ -283,7 +295,16 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalBondPrincipalAmount += depositPrincipal;
 
         // save bond info
-        bonds[tokenId] = Bond(false, principal, block.timestamp, maturity, token, bondFee);
+        bonds[tokenId] = Bond(
+            false,
+            principal,
+            block.timestamp,
+            maturity,
+            token,
+            bondFee,
+            depositPrincipal,
+            rewardPrinciple
+        );
         console.log("===============end=====================");
     }
 
@@ -315,7 +336,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // update current bond
         bond.withdrawn = true;
 
-        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal));
+        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal), getLoopCount());
         uint256 reward = calculateBondRewardAmount(_tokenId);
         dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId];
 
@@ -328,17 +349,20 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         userBondPrincipalAmount[_tokenId] == 0;
         delete userBondYieldShareIndex[_tokenId];
+        amountRequired -= bond.principal;
         //have to add status for reedem
         // delete bonds[_tokenId];
     }
 
-    function getLoopCount() public returns (uint256 amountRequired) {
+    function getLoopCount() public returns (uint256) {
         if (msg.sender != address(endTreasury)) revert NotTreasury();
         uint256 currentDay = block.timestamp / SECONDS_IN_DAY;
-        for (uint256 i = lastDay; i <= currentDay; i++) {
+        if (currentDay == lastDay) return amountRequired;
+        for (uint256 i = lastDay + 1; i <= currentDay; i++) {
             amountRequired += availableFundsAtMaturity[i];
         }
         lastDay = currentDay;
+        return amountRequired;
     }
 
     function deductFeesFromTransfer(uint256 _tokenId) public {
@@ -356,6 +380,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _reward The reward to be added to the reward share.
      */
     function epochRewardShareIndex(uint256 _reward) external {
+        if (msg.sender != keeper) revert NotKeeper();
         if (totalRewardPriciple == 0) revert WaitForFirstDeposit();
 
         console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
@@ -372,11 +397,15 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     /**
      * @dev Sets the reward share for sending, based on `_reward` and `_totalPrinciple`.
      * @param _reward The reward to be added to the reward share.
-     * @param _totalPrinciple The total principle used for calculating the reward share.
      */
-    function epochRewardShareIndexForSend(uint256 _reward, uint256 _totalPrinciple) public {
-        rewardShareIndexSend = rewardShareIndexSend + ((_reward * 10 ** 18) / _totalPrinciple);
+
+    //Todo use refractionReward variables instead of total supply
+    function epochRewardShareIndexForSend(uint256 _reward) public {
+        if (msg.sender != keeper) revert NotKeeper();
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+        rewardShareIndexSend =
+            rewardShareIndexSend +
+            ((_reward * 10 ** 18) / totalRewardPriciple - availableFundsAtMaturity[timeNow + 4]);
         dayRewardShareIndexForSend[timeNow] = rewardShareIndexSend;
         console.log(rewardShareIndexSend, "rewardShareIndexSend");
     }
@@ -384,7 +413,9 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */
-    function epochBondYieldShareIndex() external onlyOwner {
+    function epochBondYieldShareIndex() external {
+        if (msg.sender != keeper) revert NotKeeper();
+
         (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
@@ -409,7 +440,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 _principle,
         uint256 _maturity,
         uint256 _tokenId
-    ) public view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
+    ) internal view returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
         console.log(avgRefractionIndex, "avgRefractionIndex");
@@ -430,7 +461,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint _principle,
         uint256 _maturity,
         uint256 _tokenId
-    ) public view returns (uint256 pendingRewardSend, uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
+    ) internal view returns (uint256 pendingRewardSend, uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
         rewardPrincipleSend = _principle * avgRefractionIndex;
@@ -441,30 +472,39 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @dev Claims rewards for staking based on a given `_tokenId`.
      * @param _tokenId The unique identifier of the bond.
      */
+
+    //todo make a check for the maturity period and remove pending from all the rewards
     function claimStakingReward(uint256 _tokenId) public {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         Bond memory temp = bonds[_tokenId];
 
-        (uint256 pendingReward, , uint rewardPrinciple) = calculateStakingPendingReward(
-            temp.principal,
-            temp.maturity,
-            _tokenId
-        );
+        (, , uint rewardPrinciple) = calculateStakingPendingReward(temp.principal, temp.maturity, _tokenId);
 
-        uint sEndTokenReward = pendingReward +
-            ((rewardPrinciple * (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
+        if (dayRewardShareIndexForSend[bonds[_tokenId].maturity] == 0) {
+            uint sEndTokenReward = ((rewardPrinciple * (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) /
+                1e18);
 
-        if (sEndTokenReward > 0) {
-            // IERC20(endToken).transfer(msg.sender, sEndTokenReward);
-            ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
+            if (sEndTokenReward > 0) {
+                ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
+            }
+        } else {
+            uint sEndTokenReward = ((rewardPrinciple *
+                (dayRewardShareIndexForSend[bonds[_tokenId].maturity] - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
+
+            if (sEndTokenReward > 0) {
+                ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
+            }
         }
         rewardSharePerUserIndexSend[_tokenId] = rewardShareIndexSend;
+        dayRewardShareIndexForSend[_tokenId] = rewardShareIndexSend;
     }
 
     /**
      * @dev Claims rewards for a bond based on a given `_tokenId`.
      * @param _tokenId The unique identifier of the bond.
      */
+
+    //Todo make a check of maturity period for calculating reward
     function claimRefractionRewards(uint256 _tokenId) public {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         if (userBondPrincipalAmount[_tokenId] == 0) revert NotBondUser();
@@ -473,12 +513,17 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         Bond memory temp = bonds[_tokenId];
 
         (, uint rewardPrinciple) = calculateRefractionData(temp.principal, temp.maturity, _tokenId);
-
-        IERC20(endToken).transfer(
-            msg.sender,
-            ((rewardPrinciple * (dayToRewardShareIndex[bonds[_tokenId].maturity] - rewardSharePerUserIndex[_tokenId])) /
-                1e18)
-        );
+        if (dayToRewardShareIndex[bonds[_tokenId].maturity] == 0) {
+            IERC20(endToken).transfer(
+                msg.sender,
+                ((rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
+            );
+        } else {
+            IERC20(endToken).transfer(
+                msg.sender,
+                ((rewardPrinciple * (dayToRewardShareIndex[temp.maturity] - rewardSharePerUserIndex[_tokenId])) / 1e18)
+            );
+        }
 
         rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
         dayToRewardShareIndex[bonds[_tokenId].maturity] = rewardShareIndex;
@@ -489,10 +534,28 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _tokenId The unique identifier of the bond.
      * @return _reward The reward amount for the bond.
      */
-    function calculateBondRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
-        _reward = (userBondPrincipalAmount[_tokenId] *
-            (dayBondYieldShareIndex[bonds[_tokenId].maturity] - userBondYieldShareIndex[_tokenId]));
+    //todo make a check if tokenId is exist or not, apply on each function
+    function calculateBondRewardAmount(uint256 _tokenId) internal view returns (uint256 _reward) {
+        if (dayBondYieldShareIndex[bonds[_tokenId].maturity] == 0) {
+            _reward = (userBondPrincipalAmount[_tokenId] * (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
+        } else {
+            _reward = (userBondPrincipalAmount[_tokenId] *
+                (dayBondYieldShareIndex[bonds[_tokenId].maturity] - userBondYieldShareIndex[_tokenId]));
+        }
         console.log(_reward, "_reward in end");
+    }
+
+    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
+        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+        // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
+    }
+
+    function performUpkeep(bytes calldata /* performData */) external override {
+        //We highly recommend revalidating the upkeep in the performUpkeep function
+        if ((block.timestamp - lastTimeStamp) > interval) {
+            lastTimeStamp = block.timestamp;
+        }
+        // We don't use the performData in this example. The performData is generated by the Keeper's call to your checkUpkeep function
     }
 
     receive() external payable {}
