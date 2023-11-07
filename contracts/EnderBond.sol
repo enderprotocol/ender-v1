@@ -259,7 +259,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
             uint256 tokenId
         )
     {
-        IEnderTreasury(endTreasury).depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal));
+        endTreasury.depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal),getLoopCount());
         principal = (principal * (100 - bondFee)) / 100;
         console.log(principal, "principal");
 
@@ -321,7 +321,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // update current bond
         bond.withdrawn = true;
 
-        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal));
+        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal),getLoopCount());
         uint256 reward = calculateBondRewardAmount(_tokenId);
 
         endTreasury.mintEndToUser(msg.sender, reward);
@@ -337,11 +337,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // delete bonds[_tokenId];
     }
 
+    //Todo need to create a global variable that will be subtract with each withdrawal
     function getLoopCount() public returns (uint256 amountRequired) {
         if (msg.sender != address(endTreasury)) revert NotTreasury();
         uint256 currentDay = block.timestamp / SECONDS_IN_DAY;
-        for (uint256 i = lastDay; i <= currentDay; i++) {
-            amountRequired += availableFundsAtMaturity[i];
+        for (uint256 i = lastDay; i <= currentDay+1; i++) {
+            amountRequired += availableFundsAtMaturity[i-1];
         }
         lastDay = currentDay;
     }
