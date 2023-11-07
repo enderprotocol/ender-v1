@@ -72,6 +72,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public minDepositAmount;
     uint256 public SECONDS_IN_DAY;
     uint256 public lastDay;
+    uint256 private amountRequired;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
@@ -336,18 +337,20 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         userBondPrincipalAmount[_tokenId] == 0;
         delete userBondYieldShareIndex[_tokenId];
+        amountRequired -= bond.principal;
         //have to add status for reedem
         // delete bonds[_tokenId];
     }
 
-    //Todo need to create a global variable that will be subtract with each withdrawal
-    function getLoopCount() public returns (uint256 amountRequired) {
+    function getLoopCount() public returns (uint256) {
         if (msg.sender != address(endTreasury)) revert NotTreasury();
         uint256 currentDay = block.timestamp / SECONDS_IN_DAY;
-        for (uint256 i = lastDay; i <= currentDay+1; i++) {
-            amountRequired += availableFundsAtMaturity[i-1];
+        if(currentDay == lastDay) return amountRequired;
+        for (uint256 i = lastDay+1; i <= currentDay; i++) {
+            amountRequired += availableFundsAtMaturity[i];
         }
         lastDay = currentDay;
+        return amountRequired;
     }
 
     function deductFeesFromTransfer(uint256 _tokenId) public {
