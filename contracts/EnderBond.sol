@@ -54,8 +54,10 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     mapping(uint256 => uint256) public userBondPrincipalAmount;
     mapping(uint256 => uint256) public userBondYieldShareIndex; //s0
     mapping(uint256 => uint256) public availableFundsAtMaturity;
+
     mapping(uint256 => uint256) public dayToRewardShareIndex;
     mapping(uint256 => uint256) public dayRewardShareIndexForSend;
+    mapping(uint256 => uint256) public dayBondYieldShareIndex;
 
     uint256 public rewardShareIndex;
     uint256 public rewardShareIndexSend;
@@ -315,6 +317,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal));
         uint256 reward = calculateBondRewardAmount(_tokenId);
+        dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId];
 
         endTreasury.mintEndToUser(msg.sender, reward);
         if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId);
@@ -391,6 +394,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         endMint += _endMint * 100;
         console.log(endMint, "endMint");
         bondYieldShareIndex = bondYieldShareIndex + ((endMint) / finalRewardPrincipal);
+        dayBondYieldShareIndex[timeNow] = bondYieldShareIndex;
     }
 
     /**
@@ -472,10 +476,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         IERC20(endToken).transfer(
             msg.sender,
-            ((rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
+            ((rewardPrinciple * (dayToRewardShareIndex[bonds[_tokenId].maturity] - rewardSharePerUserIndex[_tokenId])) /
+                1e18)
         );
 
         rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
+        dayToRewardShareIndex[bonds[_tokenId].maturity] = rewardShareIndex;
     }
 
     /**
@@ -484,8 +490,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @return _reward The reward amount for the bond.
      */
     function calculateBondRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
-        _reward = (userBondPrincipalAmount[_tokenId] * (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
-
+        _reward = (userBondPrincipalAmount[_tokenId] *
+            (dayBondYieldShareIndex[bonds[_tokenId].maturity] - userBondYieldShareIndex[_tokenId]));
         console.log(_reward, "_reward in end");
     }
 
