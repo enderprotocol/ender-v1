@@ -85,13 +85,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
     bool public bondFeeEnabled; // status of bond-fee feature (enabled/disabled)
 
-    // enum AddressType {
-    //     TREASURY,
-    //     ENDTOKEN,
-    //     BONDNFT,
-    //     SIGNATURE
-    // }
-
     struct Bond {
         bool withdrawn; // The withdrawn status of the bond
         uint256 principal; // The principal amount of the bond
@@ -191,7 +184,6 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     }
 
     function getInterest(uint256 maturity) public view returns (uint256 rate) {
-        console.log(maturity, "maturity");
         uint256 maturityModifier;
         //make it dynamic in phase 2
         unchecked {

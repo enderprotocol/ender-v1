@@ -284,7 +284,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         bondFee
       );
 
-      //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
+      //this function will set the bondYeildShareIndex where it is used to calculate the user S0
       await enderBond.epochBondYieldShareIndex();
 
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
