@@ -15,7 +15,6 @@ import "./interfaces/IEnderOracle.sol";
 import "./interfaces/IInstadappLite.sol";
 import "./interfaces/ILybraFinance.sol";
 import "./interfaces/IEnderBond.sol";
-
 import "hardhat/console.sol";
 
 error NotAllowed();
@@ -28,19 +27,13 @@ error ZeroAmount();
 error InvalidRatio();
 error NotEnoughAvailableFunds();
 
-contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, KeeperCompatibleInterface {
+contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
-    mapping(address => FundInfo) public fundsInfo;
+    mapping(address => uint256) public fundsInfo;
     mapping(address => uint256) public totalAssetStakedInStrategy;
     mapping(address => uint256) public totalRewardsFromStrategy;
 
-    //Todo need to remove all the unused fields from this struct
-    struct FundInfo {
-        uint256 availableFunds;
-        uint256 reserveFunds;
-        uint256 depositFunds;
-        uint256 shares;
-    }
+    mapping(address => address) public strategyToReceiptToken;
 
     address private endToken;
     address private enderBond;
@@ -60,8 +53,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
     uint256 public epochDeposit;
     uint256 public epochWithdrawl;
     /* Use an interval in seconds and a timestamp to slow execution of Upkeep */
-    uint public interval;
-    uint public lastTimeStamp;
 
     // uint256 public stEthBalBeforeStDep;
     // uint256 public totalEthStakedInStrategy;
@@ -85,10 +76,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         uint256 _availableFundsPercentage,
         uint256 _reserveFundsPercentage,
         address _oracle
-    )
-        external
-        initializer
-    {
+    ) external initializer {
         if (_availableFundsPercentage != 70 && _reserveFundsPercentage != 30) revert InvalidRatio();
         __Ownable_init();
         enderStaking = _enderStaking;
@@ -99,8 +87,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         strategies[instadapp] = true;
         strategies[lybraFinance] = true;
         strategies[eigenLayer] = true;
-        interval = 14 * 60 * 60;
-        lastTimeStamp = block.timestamp;
         setAddress(_endToken, 1);
         setAddress(_bond, 2);
         setBondYieldBaseRate(300);
@@ -131,12 +117,15 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         else if (_type == 3) enderDepositor = _addr;
         else if (_type == 4) enderOracle = IEnderOracle(_addr);
 
+        else if (_type == 5) strategyToReceiptToken[instadapp] = _addr;
+        else if (_type == 6) strategyToReceiptToken[lybraFinance] = _addr;
+        else if (_type == 7) strategyToReceiptToken[eigenLayer] = _addr;
+        
+
+
         emit AddressUpdated(_addr, _type);
     }
 
-    function setInterval(uint256 _interval) public onlyOwner {
-        interval = _interval;
-    }
 
     /**
      * @notice Update bond yield base rate (by default, 3%)
@@ -201,10 +190,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
                 withdrawFromStrategy(param.stakingToken, instadapp, amountRequired);
             }
             epochDeposit += param.tokenAmt;
-            fundsInfo[param.stakingToken].depositFunds += param.tokenAmt;
-
-            console.log(fundsInfo[param.stakingToken].availableFunds, "fundsInfo[param.stakingToken].availableFunds");
-            console.log(fundsInfo[param.stakingToken].reserveFunds, "fundsInfo[param.stakingToken].reserveFunds");
+            fundsInfo[param.stakingToken] += param.tokenAmt;
         }
     }
 
@@ -255,7 +241,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
      */
 
     function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
-
         // stEthBalBeforeStDep = IERC20(_asset).balanceOf(address(this));
         if (_depositAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
@@ -286,19 +271,17 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         console.log("block.timestamp", block.timestamp);
         if (_withdrawAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
-        // uint256 balBef = totalAssetStakedInStrategy[_asset];
+        address receiptToken = strategyToReceiptToken[_strategy];
         if (_strategy == instadapp) {
             //Todo set the asset as recipt tokens and need to check the assets ratio while depolying on mainnet
-            IERC20(_asset).approve(instadapp, _withdrawAmt);
+            IERC20(receiptToken).approve(instadapp, _withdrawAmt);
             _returnAmount = IInstadappLite(instadapp).withdraw(_withdrawAmt, address(this), address(this));
         } else if (_strategy == lybraFinance) {
-            IERC20(_asset).approve(lybraFinance, _withdrawAmt);
+            IERC20(receiptToken).approve(lybraFinance, _withdrawAmt);
             _returnAmount = ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
         }
-        // uint256 balAfter = IERC20(_asset).balanceOf(address(this));
         totalAssetStakedInStrategy[_asset] -= _withdrawAmt;
         if (_returnAmount > 0) {
-            // console.log("balAfter - balBef",_withdrawAmt,_returnAmount);
             totalRewardsFromStrategy[_asset] += _returnAmount;
         }
     }
@@ -312,7 +295,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
             withdrawFromStrategy(param.stakingToken, instadapp, amountRequired);
         }
         epochWithdrawl += param.tokenAmt;
-        fundsInfo[param.stakingToken].depositFunds -= param.tokenAmt;
+        fundsInfo[param.stakingToken] -= param.tokenAmt;
 
         // bond token transfer
         _transferFunds(param.account, param.stakingToken, param.tokenAmt);
@@ -323,7 +306,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
      * @param account Address of user's wallet
      * @param amount Collect amount
      */
-     
+
     function collect(address account, uint256 amount) external onlyBond {
         IERC20(endToken).transfer(account, amount);
     }
@@ -359,28 +342,12 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy, Ke
         } else {
             console.log(
                 "fundsInfo[_stEthAddress].depositFunds / balanceLastEpoch",
-                fundsInfo[_stEthAddress].depositFunds,
+                fundsInfo[_stEthAddress],
                 balanceLastEpoch
             );
             //here we have to multiply 100000and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
-            depositReturn =
-                (totalReturn * ((fundsInfo[_stEthAddress].depositFunds * 100000) / balanceLastEpoch)) /
-                100000;
+            depositReturn = (totalReturn * ((fundsInfo[_stEthAddress] * 100000) / balanceLastEpoch)) / 100000;
         }
-    }
-
-    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
-        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
-        // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
-    }
-
-    function performUpkeep(bytes calldata /* performData */) external override {
-        //We highly recommend revalidating the upkeep in the performUpkeep function
-        if ((block.timestamp - lastTimeStamp) > interval) {
-            lastTimeStamp = block.timestamp;
-            // Todo call the epoch functions
-        }
-        // We don't use the performData in this example. The performData is generated by the Keeper's call to your checkUpkeep function
     }
 
     receive() external payable virtual override {}

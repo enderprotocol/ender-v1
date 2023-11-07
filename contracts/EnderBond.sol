@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
 
 // Interfaces
 import "./interfaces/IBondNFT.sol";
@@ -36,7 +37,7 @@ error NotTreasury();
  * @title EnderBond contract
  * @dev Implements bonding functionality with multiple tokens
  */
-contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712Upgradeable {
+contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712Upgradeable,KeeperCompatibleInterface {
     /// @notice A mapping that indicates whether a token is bondable.
     mapping(address => bool) public bondableTokens;
 
@@ -68,6 +69,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     uint256 public SECONDS_IN_DAY;
     uint256 public lastDay;
     uint256 private amountRequired;
+    uint public interval;
+    uint public lastTimeStamp;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
@@ -116,8 +119,14 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         enderOracle = IEnderOracle(_oracle);
         bondYieldBaseRate = 400;
         SECONDS_IN_DAY = 86400;
+        interval = 14 * 60 * 60;
+        lastTimeStamp = block.timestamp;
         lastDay = block.timestamp / SECONDS_IN_DAY;
         setBondFeeEnabled(true);
+    }
+
+    function setInterval(uint256 _interval) public onlyOwner {
+        interval = _interval;
     }
 
     /**
@@ -245,13 +254,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         uint256 maturity,
         address token,
         uint256 bondFee
-    )
-        private
-        returns (
-            uint256 tokenId
-        )
-    {
-        endTreasury.depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal),getLoopCount());
+    ) private returns (uint256 tokenId) {
+        endTreasury.depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal), getLoopCount());
         principal = (principal * (100 - bondFee)) / 100;
         console.log(principal, "principal");
 
@@ -280,7 +284,16 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         totalBondPrincipalAmount += depositPrincipal;
 
         // save bond info
-        bonds[tokenId] = Bond(false, principal, block.timestamp, maturity, token, bondFee, depositPrincipal, rewardPrinciple);
+        bonds[tokenId] = Bond(
+            false,
+            principal,
+            block.timestamp,
+            maturity,
+            token,
+            bondFee,
+            depositPrincipal,
+            rewardPrinciple
+        );
         console.log("===============end=====================");
     }
 
@@ -312,7 +325,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         // update current bond
         bond.withdrawn = true;
 
-        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal),getLoopCount());
+        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal), getLoopCount());
         uint256 reward = calculateBondRewardAmount(_tokenId);
         dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId];
 
@@ -333,8 +346,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     function getLoopCount() public returns (uint256) {
         if (msg.sender != address(endTreasury)) revert NotTreasury();
         uint256 currentDay = block.timestamp / SECONDS_IN_DAY;
-        if(currentDay == lastDay) return amountRequired;
-        for (uint256 i = lastDay+1; i <= currentDay; i++) {
+        if (currentDay == lastDay) return amountRequired;
+        for (uint256 i = lastDay + 1; i <= currentDay; i++) {
             amountRequired += availableFundsAtMaturity[i];
         }
         lastDay = currentDay;
@@ -375,7 +388,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _totalPrinciple The total principle used for calculating the reward share.
      */
 
-     //Todo use refractionReward variables instead of total supply
+    //Todo use refractionReward variables instead of total supply
     function epochRewardShareIndexForSend(uint256 _reward, uint256 _totalPrinciple) public {
         rewardShareIndexSend = rewardShareIndexSend + ((_reward * 10 ** 18) / _totalPrinciple);
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
@@ -444,7 +457,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _tokenId The unique identifier of the bond.
      */
 
-     //todo make a check for the maturity period and remove pending from all the rewards
+    //todo make a check for the maturity period and remove pending from all the rewards
     function claimStakingReward(uint256 _tokenId) public {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         Bond memory temp = bonds[_tokenId];
@@ -482,8 +495,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
 
         IERC20(endToken).transfer(
             msg.sender,
-            ((rewardPrinciple * (dayToRewardShareIndex[temp.maturity] - rewardSharePerUserIndex[_tokenId])) /
-                1e18)
+            ((rewardPrinciple * (dayToRewardShareIndex[temp.maturity] - rewardSharePerUserIndex[_tokenId])) / 1e18)
         );
 
         rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
@@ -495,16 +507,29 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _tokenId The unique identifier of the bond.
      * @return _reward The reward amount for the bond.
      */
-     //todo make a check if tokenId is exist or not, apply on each function
+    //todo make a check if tokenId is exist or not, apply on each function
     function calculateBondRewardAmount(uint256 _tokenId) public view returns (uint256 _reward) {
-        if(dayBondYieldShareIndex[bonds[_tokenId].maturity] == 0){
-            _reward = (userBondPrincipalAmount[_tokenId] *
-                (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
-        }else{
+        if (dayBondYieldShareIndex[bonds[_tokenId].maturity] == 0) {
+            _reward = (userBondPrincipalAmount[_tokenId] * (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
+        } else {
             _reward = (userBondPrincipalAmount[_tokenId] *
                 (dayBondYieldShareIndex[bonds[_tokenId].maturity] - userBondYieldShareIndex[_tokenId]));
         }
         console.log(_reward, "_reward in end");
+    }
+
+    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
+        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+        // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
+    }
+
+    function performUpkeep(bytes calldata /* performData */) external override {
+        //We highly recommend revalidating the upkeep in the performUpkeep function
+        if ((block.timestamp - lastTimeStamp) > interval) {
+            lastTimeStamp = block.timestamp;
+            // Todo call the epoch functions
+        }
+        // We don't use the performData in this example. The performData is generated by the Keeper's call to your checkUpkeep function
     }
 
     receive() external payable {}
