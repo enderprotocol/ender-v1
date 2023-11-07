@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// import "@openzeppelin/contracts/token/ERC20/ISEndToken.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-import "./interfaces/IEndToken.sol";
 import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/ISEndToken.sol";
@@ -16,18 +14,10 @@ error ZeroAddress();
 error InvalidAmount();
 
 contract EnderStaking is Initializable, OwnableUpgradeable {
-    mapping(address => UserInfo) public userInfo;
-    mapping(address => uint256) public userSEndToken;
 
-    struct UserInfo {
-        uint256 amount;
-        uint256 stakedAt;
-    }
-
-    uint256 public percentPerBlock;
     uint public bondRewardPercentage;
+    uint public rebasingIndex;
 
-    uint256 public stakingApy;
     address public endToken;
     address public sEndToken;
     address public enderTreasury;
@@ -35,9 +25,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
 
     event PercentUpdated(uint256 percent);
     event AddressUpdated(address indexed addr, uint256 addrType);
-    event StakingApyUpdated(uint256 stakingApy);
     event Stake(address indexed account, uint256 stakeAmt);
-    event Harvest(address indexed account, uint256 harvestAmt);
     event Withdraw(address indexed account, uint256 withdrawAmt);
 
     function initialize(address _end, address _sEnd) external initializer {
@@ -60,18 +48,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         emit AddressUpdated(_addr, _type);
     }
 
-    /**
-     * @notice Update reward per block
-     * @param percent New reward percent per block
-     */
-    function setReward(uint256 percent) external onlyOwner {
-        if (percent == 0) revert InvalidAmount();
-
-        percentPerBlock = percent;
-
-        emit PercentUpdated(percentPerBlock);
-    }
-
     function setBondRewardPercentage(uint256 percent) external onlyOwner {
         if (percent == 0) revert InvalidAmount();
 
@@ -81,41 +57,14 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     }
 
     /**
-     * @notice Update staking APY
-     * @param _stakingApy Staking APY which is set manually for now
-     */
-    function setStakingApy(uint256 _stakingApy) external onlyOwner {
-        if (_stakingApy == 0) revert InvalidAmount();
-
-        stakingApy = _stakingApy;
-
-        emit StakingApyUpdated(_stakingApy);
-    }
-
-    /**
-     * @notice View function to get pending reward
-     * @param account  user wallet address
-     */
-    // function pendingReward(address account) public view returns (uint256 pending) {
-    //     UserInfo storage userItem = userInfo[account];
-
-    //     pending = userItem.pending + ((block.number - userItem.lastBlock) * percentPerBlock * userItem.amount) / 1e9;
-    // }
-
-    /**
      * @notice Users do stake
      * @param amount  stake amount
      */
     function stake(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
 
-        UserInfo storage userItem = userInfo[msg.sender];
         uint256 sEndAmount = calculateSEndTokens(amount);
         console.log("sEndAmount", sEndAmount);
-
-        userSEndToken[msg.sender] += sEndAmount;
-        userItem.amount += amount;
-        userItem.stakedAt = block.timestamp;
 
         ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
         emit Stake(msg.sender, amount);
@@ -128,21 +77,10 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     function withdraw(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
         if (ISEndToken(sEndToken).balanceOf(msg.sender) < amount) revert InvalidAmount();
-        UserInfo storage userItem = userInfo[msg.sender];
 
         // add reward
-        uint256 reward = claimRebaseRewards(amount);
+        uint256 reward = claimRebaseValue(amount);
 
-        // update userinfo
-        // unchecked {
-        //     if (amount == userItem.amount) delete userInfo[msg.sender];
-        //     else {
-        //         // userItem.pending = 0;
-        //         userItem.amount -= amount;
-        //     }
-        // }
-        userSEndToken[msg.sender] -= amount;
-        // console.log(userSEndToken[msg.sender],"userSEndToken[msg.sender]");
         // transfer token
         console.log("pending", reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
@@ -151,6 +89,8 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         emit Withdraw(msg.sender, amount);
     }
 
+
+    //Todo: add access control
     function epochStakingReward(address _asset) external {
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
@@ -160,16 +100,16 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         ISEndToken(sEndToken).mint(enderBond, sendTokens);
         ISEndToken(endToken).mint(address(this), totalReward - rw2);
         IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens, ISEndToken(sEndToken).totalSupply());
+        calculateRebaseIndex();
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
-        uint256 rebasingIndex = calculateRebaseIndex();
         console.log("rebasingIndex----------------", rebasingIndex);
         sEndTokens = (_endAmount / rebasingIndex) / 1e18;
         console.log("sEndTokens", sEndTokens);
     }
 
-    function calculateRebaseIndex() public view returns (uint256 rebasingIndex) {
+    function calculateRebaseIndex() internal {
         uint256 endBalStaking = ISEndToken(endToken).balanceOf(address(this));
         uint256 sEndTotalSupply = ISEndToken(sEndToken).totalSupply();
         console.log(endBalStaking, sEndTotalSupply);
@@ -180,9 +120,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         }
     }
 
-    function claimRebaseRewards(uint256 _sendAMount) internal view returns (uint256 reward) {
-        console.log("userSEndToken[msg.sender]", userSEndToken[msg.sender]);
-
-        reward = (_sendAMount * calculateRebaseIndex()) / 10 ** 18;
+    function claimRebaseValue(uint256 _sendAMount) internal view returns (uint256 reward) {
+        reward = (_sendAMount * rebasingIndex) / 10 ** 18;
     }
 }
