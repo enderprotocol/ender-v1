@@ -32,12 +32,19 @@ error NotBondNFT();
 error WaitForFirstDeposit();
 error NoRewardCollected();
 error NotTreasury();
+error NotKeeper();
 
 /**
  * @title EnderBond contract
  * @dev Implements bonding functionality with multiple tokens
  */
-contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712Upgradeable,KeeperCompatibleInterface {
+contract EnderBond is
+    Initializable,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    EIP712Upgradeable,
+    KeeperCompatibleInterface
+{
     /// @notice A mapping that indicates whether a token is bondable.
     mapping(address => bool) public bondableTokens;
 
@@ -80,6 +87,8 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     address private sEndToken;
     address public lido;
     address public stEth;
+    address public keeper;
+
     IBondNFT private bondNFT;
     IEnderTreasury private endTreasury;
     IEnderOracle private enderOracle;
@@ -143,6 +152,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         else if (_type == 4) endSignature = _addr;
         else if (_type == 5) lido = _addr;
         else if (_type == 6) stEth = _addr;
+        else if (_type == 7) keeper = _addr;
 
         emit AddressUpdated(_addr, _type);
     }
@@ -369,6 +379,7 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
      * @param _reward The reward to be added to the reward share.
      */
     function epochRewardShareIndex(uint256 _reward) external {
+        if (msg.sender != keeper) revert NotKeeper();
         if (totalRewardPriciple == 0) revert WaitForFirstDeposit();
 
         console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
@@ -385,13 +396,15 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     /**
      * @dev Sets the reward share for sending, based on `_reward` and `_totalPrinciple`.
      * @param _reward The reward to be added to the reward share.
-     * @param _totalPrinciple The total principle used for calculating the reward share.
      */
 
     //Todo use refractionReward variables instead of total supply
-    function epochRewardShareIndexForSend(uint256 _reward, uint256 _totalPrinciple) public {
-        rewardShareIndexSend = rewardShareIndexSend + ((_reward * 10 ** 18) / _totalPrinciple);
+    function epochRewardShareIndexForSend(uint256 _reward) public {
+        if (msg.sender != keeper) revert NotKeeper();
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+        rewardShareIndexSend =
+            rewardShareIndexSend +
+            ((_reward * 10 ** 18) / totalRewardPriciple - availableFundsAtMaturity[timeNow + 4]);
         dayRewardShareIndexForSend[timeNow] = rewardShareIndexSend;
         console.log(rewardShareIndexSend, "rewardShareIndexSend");
     }
@@ -399,7 +412,9 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */
-    function epochBondYieldShareIndex() external onlyOwner {
+    function epochBondYieldShareIndex() external {
+        if (msg.sender != keeper) revert NotKeeper();
+
         (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
@@ -462,17 +477,12 @@ contract EnderBond is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradea
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         Bond memory temp = bonds[_tokenId];
 
-        (uint256 pendingReward, , uint rewardPrinciple) = calculateStakingPendingReward(
-            temp.principal,
-            temp.maturity,
-            _tokenId
-        );
+        (, , uint rewardPrinciple) = calculateStakingPendingReward(temp.principal, temp.maturity, _tokenId);
 
-        uint sEndTokenReward = pendingReward +
-            ((rewardPrinciple * (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
+        uint sEndTokenReward = ((rewardPrinciple * (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) /
+            1e18);
 
         if (sEndTokenReward > 0) {
-            // IERC20(endToken).transfer(msg.sender, sEndTokenReward);
             ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
         }
         rewardSharePerUserIndexSend[_tokenId] = rewardShareIndexSend;
