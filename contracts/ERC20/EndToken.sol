@@ -207,16 +207,16 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     }
 
     function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
+        // if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
         uint256 feesToTransfer = refractionFeeTotal;
-        if (feesToTransfer == 0) revert ZeroFeeCollected();
-        refractionFeeTotal = 0;
-
-        lastEpoch = block.timestamp;
-        console.log("feesCollected", feesToTransfer);
-        _approve(address(this), enderBond, feesToTransfer);
-        IEnderBond(enderBond).epochRewardShareIndex(feesToTransfer);
-        // _transfer(address(this), enderBond, feesToTransfer);
-        emit RefractionFeesDistributed(enderBond, feesToTransfer);
+        if (feesToTransfer != 0) {
+            refractionFeeTotal = 0;
+            lastEpoch = block.timestamp;
+            console.log("feesCollected", feesToTransfer);
+            _approve(address(this), enderBond, feesToTransfer);
+            IEnderBond(enderBond).epochRewardShareIndex(feesToTransfer);
+            // _transfer(address(this), enderBond, feesToTransfer);
+            emit RefractionFeesDistributed(enderBond, feesToTransfer);
+        }
     }
 }
