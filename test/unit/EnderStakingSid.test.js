@@ -97,15 +97,6 @@ describe("EnderBond", function () {
     enderStakingAddress = await enderStaking.getAddress();
     await sEnd.setMinterRole();
     console.log("hhdd");
-    // console.log(
-    //     endTokenAddress,
-    //     enderStakingAddress,
-    //     enderBondAddress,
-    //     lidoStakingAddress,
-    //     ethers.ZeroAddress,
-    //     ethers.ZeroAddress,
-    // );
-    // console.log({EnderTreasury});
     enderTreasury = await upgrades.deployProxy(
       EnderTreasury,
       [
