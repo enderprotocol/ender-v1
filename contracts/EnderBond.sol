@@ -64,6 +64,10 @@ contract EnderBond is
 
     mapping(uint256 => uint256) public dayBondYieldShareIndex;
 
+    mapping(uint256 => uint256[]) public dayToSUpdation;
+
+    mapping(uint256 => uint256) public secondsBondYieldShareIndex;
+
     uint256 public rewardShareIndex;
     uint256 public rewardShareIndexSend;
     uint256 public totalRewardPriciple;
@@ -271,6 +275,8 @@ contract EnderBond is
         endTreasury.depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal), getLoopCount());
         principal = (principal * (100 - bondFee)) / 100;
         console.log(principal, "principal");
+        uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+        dayToSUpdation[timeNow].push(block.timestamp + (maturity * SECONDS_IN_DAY));
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
@@ -412,6 +418,33 @@ contract EnderBond is
         console.log(rewardShareIndexSend, "rewardShareIndexSend");
     }
 
+    function findClosestS(uint256 _totalMaturity) public view returns (uint256 _s) {
+        uint256[] memory arr = dayToSUpdation[_totalMaturity];
+        uint256 low = 0;
+        uint256 high = arr.length - 1;
+        uint256 mid;
+
+        while (low <= high) {
+            mid = (low + high) / 2;
+
+            if (arr[mid] == _totalMaturity) {
+                return arr[mid];
+            } else if (arr[mid] < _totalMaturity) {
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+
+        if (arr[low] > _totalMaturity) {
+            return arr[low];
+        } else if (arr[high] < _totalMaturity) {
+            return arr[high];
+        } else {
+            return 0;
+        }
+    }
+
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */
@@ -428,6 +461,7 @@ contract EnderBond is
         console.log(endMint, "endMint");
         bondYieldShareIndex = bondYieldShareIndex + ((endMint) / finalRewardPrincipal);
         dayBondYieldShareIndex[timeNow] = bondYieldShareIndex;
+        secondsBondYieldShareIndex[block.timestamp] = bondYieldShareIndex;
     }
 
     /**
@@ -541,8 +575,9 @@ contract EnderBond is
         if (dayBondYieldShareIndex[bonds[_tokenId].maturity] == 0) {
             _reward = (userBondPrincipalAmount[_tokenId] * (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
         } else {
-            _reward = (userBondPrincipalAmount[_tokenId] *
-                (dayBondYieldShareIndex[bonds[_tokenId].maturity] - userBondYieldShareIndex[_tokenId]));
+            uint256 sTime = findClosestS(bonds[_tokenId].maturity);
+            uint256 userS = secondsBondYieldShareIndex[sTime];
+            _reward = (userBondPrincipalAmount[_tokenId] * (userS - userBondYieldShareIndex[_tokenId]));
         }
         console.log(_reward, "_reward in end");
     }
