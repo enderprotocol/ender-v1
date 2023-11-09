@@ -257,6 +257,7 @@ contract EnderBond is
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
+        epochBondYieldShareIndex();
         tokenId = _deposit(principal, maturity, token, bondFee);
         emit Deposit(msg.sender, tokenId);
     }
@@ -414,7 +415,7 @@ contract EnderBond is
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */
-    function epochBondYieldShareIndex() external {
+    function epochBondYieldShareIndex() public {
         if (msg.sender != keeper) revert NotKeeper();
 
         (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
