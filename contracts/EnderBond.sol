@@ -256,6 +256,7 @@ contract EnderBond is
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
+        epochBondYieldShareIndex();
         tokenId = _deposit(principal, maturity, token, bondFee);
         emit Deposit(msg.sender, tokenId);
     }
@@ -380,7 +381,7 @@ contract EnderBond is
      * @param _reward The reward to be added to the reward share.
      */
     function epochRewardShareIndex(uint256 _reward) external {
-        if (msg.sender != keeper) revert NotKeeper();
+        // if (msg.sender != keeper) revert NotKeeper();
         if (totalRewardPriciple == 0) revert WaitForFirstDeposit();
 
         console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
@@ -401,7 +402,7 @@ contract EnderBond is
 
     //Todo use refractionReward variables instead of total supply
     function epochRewardShareIndexForSend(uint256 _reward) public {
-        if (msg.sender != keeper) revert NotKeeper();
+        // if (msg.sender != keeper) revert NotKeeper();
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         rewardShareIndexSend =
             rewardShareIndexSend +
@@ -413,8 +414,8 @@ contract EnderBond is
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */
-    function epochBondYieldShareIndex() external {
-        if (msg.sender != keeper) revert NotKeeper();
+    function epochBondYieldShareIndex() public {
+        // if (msg.sender != keeper) revert NotKeeper();
 
         (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
