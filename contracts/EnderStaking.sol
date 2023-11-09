@@ -23,6 +23,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     address public enderTreasury;
     address public enderBond;
     address public keeper;
+    address public stEth;
 
     event PercentUpdated(uint256 percent);
     event AddressUpdated(address indexed addr, uint256 addrType);
@@ -46,6 +47,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         else if (_type == 3) endToken = _addr;
         else if (_type == 4) sEndToken = _addr;
         else if (_type == 5) keeper = _addr;
+        else if (_type == 6) stEth = _addr;
 
         emit AddressUpdated(_addr, _type);
     }
@@ -69,6 +71,8 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         console.log("sEndAmount", sEndAmount);
 
         ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
+        epochStakingReward(stEth);
+        epochStakingReward(stEth);
         emit Stake(msg.sender, amount);
     }
 
@@ -92,8 +96,8 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     }
 
     //Todo: add access control
-    function epochStakingReward(address _asset) external {
-        if (msg.sender != keeper) revert NotKeeper();
+    function epochStakingReward(address _asset) public {
+        // if (msg.sender != keeper) revert NotKeeper();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
         console.log(rw2, "rw2---");
