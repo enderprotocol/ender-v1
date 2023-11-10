@@ -390,6 +390,7 @@ contract EnderBond is
             amountRequired += availableFundsAtMaturity[i];
         }
         lastDay = currentDay;
+        console.log("amountRequired", amountRequired);
         return amountRequired;
     }
 
@@ -409,18 +410,20 @@ contract EnderBond is
      */
     function epochRewardShareIndex(uint256 _reward) external {
         // if (msg.sender != keeper) revert NotKeeper();
-        if (totalRewardPriciple == 0) revert WaitForFirstDeposit();
+        // if (totalRewardPriciple == 0) revert WaitForFirstDeposit();
 
-        console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
-        IERC20(endToken).transferFrom(endToken, address(this), _reward);
-        uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+        if (totalRewardPriciple != 0) {
+            console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
+            IERC20(endToken).transferFrom(endToken, address(this), _reward);
+            uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
 
-        rewardShareIndex =
-            (rewardShareIndex) +
-            ((_reward * 10 ** 18) / (totalRewardPriciple - availableFundsAtMaturity[timeNow + 4]));
-        dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
-        dayToRewardShareIndex[timeNow] = rewardShareIndex;
-        console.log(rewardShareIndex, "rewardShareIndex first time");
+            rewardShareIndex =
+                (rewardShareIndex) +
+                ((_reward * 10 ** 18) / (totalRewardPriciple - availableFundsAtMaturity[timeNow + 4]));
+            dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
+            dayToRewardShareIndex[timeNow] = rewardShareIndex;
+            console.log(rewardShareIndex, "rewardShareIndex first time");
+        }
     }
 
     /**
