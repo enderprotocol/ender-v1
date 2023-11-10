@@ -540,7 +540,6 @@ contract EnderBond is
      * @param _tokenId The unique identifier of the bond.
      */
 
-    //todo make a check for the maturity period and remove pending from all the rewards
     function claimStakingReward(uint256 _tokenId, uint256 precalUsers) public {
         Bond memory temp = bonds[_tokenId];
         if (precalUsers != 0) {
@@ -586,7 +585,6 @@ contract EnderBond is
      * @param _tokenId The unique identifier of the bond.
      */
 
-    //Todo make a check of maturity period for calculating reward
     function claimRefractionRewards(uint256 _tokenId, uint256 precalUsers) public {
         Bond memory temp = bonds[_tokenId];
         if (precalUsers != 0) {
@@ -632,7 +630,6 @@ contract EnderBond is
      * @param _tokenId The unique identifier of the bond.
      * @return _reward The reward amount for the bond.
      */
-    //todo make a check if tokenId is exist or not, apply on each function
     function calculateBondRewardAmount(uint256 _tokenId, uint256 precalUsers) internal view returns (uint256 _reward) {
         if (precalUsers != 0) {
             _reward = (userBondPrincipalAmount[_tokenId] * (precalUsers - userBondYieldShareIndex[_tokenId]));
