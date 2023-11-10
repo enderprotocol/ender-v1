@@ -6,7 +6,7 @@ interface IEnderBond {
 
     function endMint() external returns (uint256 _endMint);
 
-    function epochRewardShareIndexForSend(uint256 _reward, uint256 _totalPrinciple) external;
+    function epochRewardShareIndexForSend(uint256 _reward) external;
 
     function epochRewardShareIndex(uint256 _reward) external;
 

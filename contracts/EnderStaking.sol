@@ -105,13 +105,17 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         uint256 sendTokens = calculateSEndTokens(rw2);
         ISEndToken(sEndToken).mint(enderBond, sendTokens);
         ISEndToken(endToken).mint(address(this), totalReward - rw2);
-        IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens, ISEndToken(sEndToken).totalSupply());
+        IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
         calculateRebaseIndex();
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
         console.log("rebasingIndex----------------", rebasingIndex);
-        sEndTokens = (_endAmount / rebasingIndex) / 1e18;
+        if (rebasingIndex == 0) {
+            sEndTokens = (_endAmount / 1) / 1e18;
+        }else{
+          sEndTokens = (_endAmount / rebasingIndex) / 1e18;  
+        }
         console.log("sEndTokens", sEndTokens);
     }
 
@@ -125,7 +129,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
             rebasingIndex = (endBalStaking * 10 ** 18) / sEndTotalSupply;
         }
     }
-
 
     function claimRebaseValue(uint256 _sendAMount) internal view returns (uint256 reward) {
         reward = (_sendAMount * rebasingIndex) / 10 ** 18;

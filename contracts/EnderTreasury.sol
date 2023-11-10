@@ -322,11 +322,11 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @return totalReturn The total return, which is the change in asset balance.
      */
     function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
-        console.log(IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl, epochDeposit, "mmmmmmmmm");
-        console.log(balanceLastEpoch, "balanceLastEpoch");
+        // console.log(IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl, epochDeposit, "mmmmmmmmm");
+        // console.log(_stEthAddress, "balanceLastEpoch3232");
 
         totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl - epochDeposit - balanceLastEpoch;
-        console.log(totalReturn, "totalReturn");
+        // console.log(totalReturn, "totalReturn");
     }
 
     /**
