@@ -355,8 +355,8 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
                 balanceLastEpoch
             );
             //here we have to multiply 100000and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
-            console.log(totalReturn,fundsInfo[_stEthAddress],balanceLastEpoch,"balanceLastEpoch");
-            depositReturn = (totalReturn * ((fundsInfo[_stEthAddress] * 100000) / balanceLastEpoch)) / 100000;
+            console.log(totalReturn,fundsInfo[_stEthAddress],IERC20(_stEthAddress).balanceOf(address(this))  - totalReturn,"balanceLastEpoch");
+            depositReturn = (totalReturn * ((fundsInfo[_stEthAddress] * 100000) / (IERC20(_stEthAddress).balanceOf(address(this))  - totalReturn))) / 100000;
         }
     }
 
