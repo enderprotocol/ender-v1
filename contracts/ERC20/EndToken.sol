@@ -137,18 +137,17 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 mintAmount = (totalSupply() * mintFee) / 10000;
 
         vestedAmounts[1] = mintAmount / 4;
-        vestedTime[1] = time + 180 days;
+        vestedTime[1] = time + 90 days + 180 days;
 
         vestedAmounts[2] = mintAmount / 4;
-        vestedTime[2] = time + 30 days + 180 days;
+        vestedTime[2] = time + 180 days + 180 days;
 
         vestedAmounts[3] = mintAmount / 4;
-        vestedTime[3] = time + 60 days + 180 days;
+        vestedTime[3] = time + 270 days + 180 days;
 
-        vestedAmounts[4] = mintAmount / 4;
-        vestedTime[4] = time + 90 days + 180 days;
-
-        mintFee -= 10;
+        if (mintFee != 100) {
+            mintFee -= 10;
+        }
 
         mint(address(this), mintAmount);
     }
@@ -168,10 +167,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
             withdrawAmount += vestedAmounts[3];
             vestedAmounts[3] = 0;
             vestedTime[3] = 0;
-        } else if (time > vestedTime[4]) {
-            withdrawAmount += vestedAmounts[4];
-            vestedAmounts[4] = 0;
-            vestedTime[4] = 0;
         }
 
         transfer(admin, withdrawAmount);
@@ -208,7 +203,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     // function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
     function distributeRefractionFees() external {
-
         // if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
         uint256 feesToTransfer = refractionFeeTotal;
         if (feesToTransfer != 0) {

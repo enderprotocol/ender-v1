@@ -375,6 +375,7 @@ contract EnderBond is
 
         userBondPrincipalAmount[_tokenId] == 0;
         delete userBondYieldShareIndex[_tokenId];
+        console.log(amountRequired,bond.principal,"=================");
         amountRequired -= bond.principal;
         //have to add status for reedem
         // delete bonds[_tokenId];
@@ -385,6 +386,7 @@ contract EnderBond is
         uint256 currentDay = block.timestamp / SECONDS_IN_DAY;
         if (currentDay == lastDay) return amountRequired;
         for (uint256 i = lastDay + 1; i <= currentDay; i++) {
+            console.log("availableFundsAtMaturity[i]",availableFundsAtMaturity[i]);
             amountRequired += availableFundsAtMaturity[i];
         }
         lastDay = currentDay;

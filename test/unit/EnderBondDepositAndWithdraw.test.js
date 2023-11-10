@@ -264,7 +264,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
       console.log("first");
       //as the distribution is done user now can withdraw the rewards
-      await enderBond.connect(signer1).claimRefractionRewards(tokenId);
+      await enderBond.connect(signer1).claimRefractionRewards(tokenId,0);
 
       //   as he claimed the rewards
       expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
@@ -305,7 +305,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
       //user cant collect the refraction rewards before the Distribution is done
       await expect(
-        enderBond.connect(signer1).claimRefractionRewards(tokenId2)
+        enderBond.connect(signer1).claimRefractionRewards(tokenId2,0)
       ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
 
       //increasing the time 1 day
