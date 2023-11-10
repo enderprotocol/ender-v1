@@ -42,6 +42,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     address public instadapp;
     address public lybraFinance;
     address public eigenLayer;
+    address public priorityStrategy;
     // address public stEthELS;
     IEnderOracle private enderOracle;
 
@@ -90,6 +91,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         setAddress(_endToken, 1);
         setAddress(_bond, 2);
         setBondYieldBaseRate(300);
+        priorityStrategy = instadapp;
     }
 
     modifier validStrategy(address str) {
@@ -160,6 +162,10 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         }
     }
 
+    function setPriorityStrategy(address _priorityStrategy) public onlyOwner {
+        priorityStrategy = _priorityStrategy;
+    }
+
     function setNominalYield(uint256 _nominalYield) public onlyOwner {
         nominalYield = _nominalYield;
     }
@@ -184,10 +190,9 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     }
 
     function depositTreasury(EndRequest memory param, uint256 amountRequired) external onlyBond {
-        //Todo need to set priority for Strategy withdrawal at the time of mainnet deployment
         unchecked {
             if (amountRequired > 0) {
-                withdrawFromStrategy(param.stakingToken, instadapp, amountRequired);
+                withdrawFromStrategy(param.stakingToken, priorityStrategy, amountRequired);
             }
             epochDeposit += param.tokenAmt;
             fundsInfo[param.stakingToken] += param.tokenAmt;
@@ -251,8 +256,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             IERC20(_asset).approve(lybraFinance, _depositAmt);
             ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);
         } else if (_strategy == eigenLayer) {
-            //Todo i guess you missed the instance
-            deposit(EndRequest(address(this), _asset, _depositAmt));
+            //Todo will add the instance while going on mainnet.
         }
         totalAssetStakedInStrategy[_asset] += _depositAmt;
     }
@@ -270,6 +274,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     ) public validStrategy(_strategy) returns (uint256 _returnAmount) {
         console.log("block.timestamp", block.timestamp);
         if (_withdrawAmt == 0) revert ZeroAmount();
+        console.log("_asset == address(0) || _strategy == address(0)",_asset , _strategy);
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         address receiptToken = strategyToReceiptToken[_strategy];
         if (_strategy == instadapp) {
@@ -292,7 +297,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      */
     function withdraw(EndRequest memory param, uint256 amountRequired) external onlyBond {
         if (amountRequired > IERC20(param.stakingToken).balanceOf(address(this))) {
-            withdrawFromStrategy(param.stakingToken, instadapp, amountRequired);
+            withdrawFromStrategy(param.stakingToken, priorityStrategy, amountRequired);
         }
         epochWithdrawl += param.tokenAmt;
         fundsInfo[param.stakingToken] -= param.tokenAmt;
@@ -322,11 +327,11 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @return totalReturn The total return, which is the change in asset balance.
      */
     function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
-        console.log(IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl, epochDeposit, "mmmmmmmmm");
-        console.log(balanceLastEpoch, "balanceLastEpoch");
+        // console.log(IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl, epochDeposit, "mmmmmmmmm");
+        // console.log(_stEthAddress, "balanceLastEpoch3232");
 
         totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl - epochDeposit - balanceLastEpoch;
-        console.log(totalReturn, "totalReturn");
+        // console.log(totalReturn, "totalReturn");
     }
 
     /**

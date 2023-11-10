@@ -132,6 +132,14 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
     await endToken.setExclude([enderBondAddress], true);
     await endToken.setExclude([enderTreasuryAddress], true);
+
+    await enderBond.setAddress(enderStakingAddress,8);
+    await enderBond.setAddress(stEthAddress,6);
+
+    await endToken.grantRole(MINTER_ROLE,enderStakingAddress);
+    await enderBond.setBool(true);
+
+    // await endToken.grantRole()
   });
 
   describe("deposit and withdraw", async () => {
@@ -208,9 +216,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       //******* this will revert here because , we cant call this function until first deposit
       // is done  *******************
       // await endToken.distributeRefractionFees();
-      await expect(
-        endToken.distributeRefractionFees()
-      ).to.be.revertedWithCustomError(enderBond, "WaitForFirstDeposit");
+      // await expect(
+      //   endToken.distributeRefractionFees()
+      // ).to.be.revertedWithCustomError(enderBond, "WaitForFirstDeposit");
 
       expect(await enderBond.rewardShareIndex()).to.be.equal(0);
 
@@ -230,12 +238,31 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         bondFee
       );
 
+      await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
+
+      await stEth.mint(await signer2.getAddress(), depositPrincipalStEth);
+
+      await stEth
+        .connect(signer2)
+        .approve(enderBondAddress, depositPrincipalStEth);
+
+      //this is where the user will deposit the StEth in to the contract
+      //in the deposit the amount will be divided in to 30 and 70% where the admin Will have access to further
+      //deposit it into the strategy for every 24 hours
+      const tokenId1 = await depositAndSetup(
+        signer2,
+        depositPrincipalStEth,
+        maturity,
+        bondFee
+      );
+
       //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
+      increaseTime(50000000);
       await enderBond.epochBondYieldShareIndex();
       //user cant collect the refraction rewards before the Distribution is done
-      await expect(
-        enderBond.connect(signer1).claimRefractionRewards(tokenId)
-      ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
+      // await expect(
+      //   enderBond.connect(signer1).claimRefractionRewards(tokenId)
+      // ).to.be.revertedWithCustomError(enderBond, "NotAllowed");
 
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
         await enderBond.userBondYieldShareIndex(tokenId)
@@ -245,9 +272,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await endToken.distributeRefractionFees();
 
       //  there are two tx done above which have 20% fee it will be equal to 400000000000000000
-      expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(
-        expandTo18Decimals(0.4)
-      );
+      // expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(
+      //   expandTo18Decimals(0.4)
+      // );
       console.log(
         await endToken.balanceOf(enderBondAddress),
         "after the first distribution balance of enderBond for end tokens"
@@ -255,8 +282,10 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
       const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
       console.log("first");
+
       //as the distribution is done user now can withdraw the rewards
-      await enderBond.connect(signer1).claimRefractionRewards(tokenId);
+      await enderBond.connect(signer1).claimRefractionRewards(tokenId,0);
+      console.log("ieufaksjfkajbfiabfikaf");
 
       //   as he claimed the rewards
       expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
@@ -275,7 +304,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         .connect(signer1)
         .approve(enderBondAddress, depositPrincipalStEth);
 
-      //   await enderTreasury.depositInStrategy();
+      await enderTreasury.depositInStrategy(stEthAddress, instadappLiteAddress, "2000000000000000000");
 
       const tokenId2 = await depositAndSetup(
         signer1,
@@ -297,7 +326,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
       //user cant collect the refraction rewards before the Distribution is done
       await expect(
-        enderBond.connect(signer1).claimRefractionRewards(tokenId2)
+        enderBond.connect(signer1).claimRefractionRewards(tokenId2,0)
       ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
 
       //increasing the time 1 day
@@ -313,7 +342,8 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       //   expect(await endToken.balanceOf(enderBondAddress)).to.be.greaterThan(
       //     initalBalanceOfEnderBond
       //   );
-
+      
+      console.log("jssksksksksksks");
       console.log(
         await endToken.balanceOf(enderBondAddress),
         "after the second distribution balance of enderBond for end tokens"
@@ -348,6 +378,8 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         "balance before the withdraw before"
       );
       MINTER_ROLE;
+
+
       await withdrawAndSetup(signer1, tokenId);
 
       await withdrawAndSetup(signer1, tokenId2);

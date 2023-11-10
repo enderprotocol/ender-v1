@@ -66,13 +66,12 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      */
     function stake(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
+        epochStakingReward(stEth);
 
         uint256 sEndAmount = calculateSEndTokens(amount);
         console.log("sEndAmount", sEndAmount);
 
         ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
-        epochStakingReward(stEth);
-        epochStakingReward(stEth);
         emit Stake(msg.sender, amount);
     }
 
@@ -83,7 +82,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     function withdraw(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
         if (ISEndToken(sEndToken).balanceOf(msg.sender) < amount) revert InvalidAmount();
-
+        epochStakingReward(stEth);
         // add reward
         uint256 reward = claimRebaseValue(amount);
 
@@ -95,7 +94,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         emit Withdraw(msg.sender, amount);
     }
 
-    //Todo: add access control
     function epochStakingReward(address _asset) public {
         // if (msg.sender != keeper) revert NotKeeper();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
@@ -105,13 +103,17 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         uint256 sendTokens = calculateSEndTokens(rw2);
         ISEndToken(sEndToken).mint(enderBond, sendTokens);
         ISEndToken(endToken).mint(address(this), totalReward - rw2);
-        IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens, ISEndToken(sEndToken).totalSupply());
+        IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
         calculateRebaseIndex();
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
         console.log("rebasingIndex----------------", rebasingIndex);
-        sEndTokens = (_endAmount / rebasingIndex) / 1e18;
+        if (rebasingIndex == 0) {
+            sEndTokens = (_endAmount / 1) / 1e18;
+        }else{
+          sEndTokens = (_endAmount / rebasingIndex) / 1e18;  
+        }
         console.log("sEndTokens", sEndTokens);
     }
 
@@ -125,7 +127,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
             rebasingIndex = (endBalStaking * 10 ** 18) / sEndTotalSupply;
         }
     }
-
 
     function claimRebaseValue(uint256 _sendAMount) internal view returns (uint256 reward) {
         reward = (_sendAMount * rebasingIndex) / 10 ** 18;
