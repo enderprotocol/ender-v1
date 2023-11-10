@@ -265,6 +265,7 @@ contract EnderBond is
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee < 0 || bondFee > 100) revert InvalidBondFee();
+        IEndToken(endToken).distributeRefractionFees();
 
         // token transfer
         if (token == address(0)) {
@@ -278,7 +279,6 @@ contract EnderBond is
         }
         tokenId = _deposit(principal, maturity, token, bondFee);
         epochBondYieldShareIndex();
-        IEndToken(endToken).distributeRefractionFees();
         console.log("stEth", stEth);
         IEnderStaking(endStaking).epochStakingReward(stEth);
         emit Deposit(msg.sender, tokenId);
@@ -358,24 +358,24 @@ contract EnderBond is
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         if (block.timestamp < bond.startTime + bond.maturity) revert BondNotMatured();
-
+        IEndToken(endToken).distributeRefractionFees();
         // update current bond
         bond.withdrawn = true;
 
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal), getLoopCount());
-        uint256 reward = calculateBondRewardAmount(_tokenId,0);
+        uint256 reward = calculateBondRewardAmount(_tokenId, 0);
         dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId];
 
         endTreasury.mintEndToUser(msg.sender, reward);
-        if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId,0);
-        if (rewardSharePerUserIndexSend[_tokenId] != rewardShareIndexSend) claimStakingReward(_tokenId,0);
+        if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, 0);
+        if (rewardSharePerUserIndexSend[_tokenId] != rewardShareIndexSend) claimStakingReward(_tokenId, 0);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
         // bondNFT.transferFrom(msg.sender, address(this), _tokenId);
         // bondNFT.burn(_tokenId)
 
         userBondPrincipalAmount[_tokenId] == 0;
         delete userBondYieldShareIndex[_tokenId];
-        console.log(amountRequired,bond.principal,"=================");
+        console.log(amountRequired, bond.principal, "amountRequired,bond.principal");
         amountRequired -= bond.principal;
         //have to add status for reedem
         // delete bonds[_tokenId];
@@ -386,7 +386,7 @@ contract EnderBond is
         uint256 currentDay = block.timestamp / SECONDS_IN_DAY;
         if (currentDay == lastDay) return amountRequired;
         for (uint256 i = lastDay + 1; i <= currentDay; i++) {
-            console.log("availableFundsAtMaturity[i]",availableFundsAtMaturity[i]);
+            // console.log("availableFundsAtMaturity[i]",availableFundsAtMaturity[i]);
             amountRequired += availableFundsAtMaturity[i];
         }
         lastDay = currentDay;
