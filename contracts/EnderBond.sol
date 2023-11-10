@@ -78,7 +78,7 @@ contract EnderBond is
 
     uint256 public rewardShareIndex;
     uint256 public rewardShareIndexSend;
-    uint256 public totalRewardPriciple;
+    uint256 public totalRewardPrincipal;
     uint256 public rateOfChange;
     uint256 public totalDeposit;
     uint256 public bondYieldShareIndex;
@@ -307,7 +307,7 @@ contract EnderBond is
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;
 
         totalDeposit += principal;
-        totalRewardPriciple += rewardPrinciple;
+        totalRewardPrincipal += rewardPrinciple;
 
         console.log(getInterest(maturity), "getInterest(maturity)");
         console.log(100 + (bondFee), ": 100 + (bondFee)");
@@ -410,16 +410,16 @@ contract EnderBond is
      */
     function epochRewardShareIndex(uint256 _reward) external {
         // if (msg.sender != keeper) revert NotKeeper();
-        // if (totalRewardPriciple == 0) revert WaitForFirstDeposit();
+        // if (totalRewardPrincipal == 0) revert WaitForFirstDeposit();
 
-        if (totalRewardPriciple != 0) {
-            console.log(_reward, totalRewardPriciple, "_reward ,  totalRewardPriciple");
+        if (totalRewardPrincipal != 0) {
+            console.log(_reward, totalRewardPrincipal, "_reward ,  totalRewardPrincipal");
             IERC20(endToken).transferFrom(endToken, address(this), _reward);
             uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
 
             rewardShareIndex =
                 (rewardShareIndex) +
-                ((_reward * 10 ** 18) / (totalRewardPriciple - availableFundsAtMaturity[timeNow + 4]));
+                ((_reward * 10 ** 18) / (totalRewardPrincipal - availableFundsAtMaturity[timeNow + 4]));
             dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
             dayToRewardShareIndex[timeNow] = rewardShareIndex;
             console.log(rewardShareIndex, "rewardShareIndex first time");
@@ -436,7 +436,7 @@ contract EnderBond is
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         rewardShareIndexSend =
             rewardShareIndexSend +
-            ((_reward * 10 ** 18) / totalRewardPriciple - availableFundsAtMaturity[timeNow + 4]);
+            ((_reward * 10 ** 18) / totalRewardPrincipal - availableFundsAtMaturity[timeNow + 4]);
         dayRewardShareIndexForSend[timeNow] = rewardShareIndexSend;
         dayToRefractionShareUpdation[timeNow].push(block.timestamp);
         secondsRefractionShareIndexSend[block.timestamp] = rewardShareIndexSend;
@@ -482,10 +482,10 @@ contract EnderBond is
         (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
-        uint256 finalRewardPrincipal = (totalRewardPriciple - availableFundsAtMaturity[timeNow + 4]);
+        uint256 finalRewardPrincipal = (totalRewardPrincipal - availableFundsAtMaturity[timeNow + 4]);
         console.log(totalBondPrincipalAmount, "totalBondPrincipalAmount");
-        uint256 _endMint = (priceEth * priceEnd * finalRewardPrincipal) / (10 ** ethDecimal);
-        endMint += _endMint * 100;
+        uint256 _endMint = (priceEth * finalRewardPrincipal)/priceEnd;
+        endMint += _endMint;
         console.log(endMint, "endMint");
         console.log("finalRewardPrincipal", bondYieldShareIndex);
         bondYieldShareIndex = bondYieldShareIndex + ((endMint) / finalRewardPrincipal);
