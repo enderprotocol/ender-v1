@@ -136,13 +136,13 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         if (vestedTime[1] + 365 days > time) revert WaitingTimeNotCompleted();
         uint256 mintAmount = (totalSupply() * mintFee) / 10000;
 
-        vestedAmounts[1] = mintAmount / 4;
+        vestedAmounts[1] = mintAmount / 3;
         vestedTime[1] = time + 90 days + 180 days;
 
-        vestedAmounts[2] = mintAmount / 4;
+        vestedAmounts[2] = mintAmount / 3;
         vestedTime[2] = time + 180 days + 180 days;
 
-        vestedAmounts[3] = mintAmount / 4;
+        vestedAmounts[3] = mintAmount / 3;
         vestedTime[3] = time + 270 days + 180 days;
 
         if (mintFee != 100) {
