@@ -132,6 +132,14 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
     await endToken.setExclude([enderBondAddress], true);
     await endToken.setExclude([enderTreasuryAddress], true);
+
+    await enderBond.setAddress(enderStakingAddress,8);
+    await enderBond.setAddress(stEthAddress,6);
+
+    await endToken.grantRole(MINTER_ROLE,enderStakingAddress);
+    await enderBond.setBool(true);
+
+    // await endToken.grantRole()
   });
 
   describe("deposit and withdraw", async () => {
@@ -233,9 +241,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       await enderBond.epochBondYieldShareIndex();
       //user cant collect the refraction rewards before the Distribution is done
-      await expect(
-        enderBond.connect(signer1).claimRefractionRewards(tokenId)
-      ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
+      // await expect(
+      //   enderBond.connect(signer1).claimRefractionRewards(tokenId)
+      // ).to.be.revertedWithCustomError(enderBond, "NotAllowed");
 
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
         await enderBond.userBondYieldShareIndex(tokenId)

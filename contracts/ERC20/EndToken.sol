@@ -206,7 +206,9 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         }
     }
 
-    function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
+    // function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function distributeRefractionFees() external {
+
         // if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
         uint256 feesToTransfer = refractionFeeTotal;
         if (feesToTransfer != 0) {
