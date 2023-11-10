@@ -449,9 +449,12 @@ contract EnderBond is
         while (low <= high) {
             mid = (low + high) / 2;
 
-            if (arr[mid] == _totalMaturity) {
+            if (arr[mid] == _totalMaturity || (arr[mid + 1] > _totalMaturity && arr[mid] < _totalMaturity)) {
                 return arr[mid];
-            } else if (arr[mid] < _totalMaturity) {
+            } else if((arr[mid - 1] < _totalMaturity && arr[mid] > _totalMaturity)){
+                return arr[mid - 1];
+            } 
+            else if (arr[mid] < _totalMaturity) {
                 low = mid + 1;
             } else {
                 high = mid - 1;
