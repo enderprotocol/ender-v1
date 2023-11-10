@@ -228,6 +228,8 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         .connect(signer1)
         .approve(enderBondAddress, depositPrincipalStEth);
 
+      await enderTreasury.setAddress(stEthAddress, 5);
+
       //this is where the user will deposit the StEth in to the contract
       //in the deposit the amount will be divided in to 30 and 70% where the admin Will have access to further
       //deposit it into the strategy for every 24 hours
@@ -305,7 +307,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         .approve(enderBondAddress, depositPrincipalStEth);
 
       await enderTreasury.depositInStrategy(stEthAddress, instadappLiteAddress, "2000000000000000000");
-
+        console.log("before deposit")
       const tokenId2 = await depositAndSetup(
         signer1,
         depositPrincipalStEth,
@@ -313,7 +315,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         bondFee
       );
 
-      //this function will set the bondYeildShareIndex where it is used to calculate the user S0
+      //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       await enderBond.epochBondYieldShareIndex();
 
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(

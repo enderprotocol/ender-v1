@@ -92,6 +92,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         setAddress(_bond, 2);
         setBondYieldBaseRate(300);
         priorityStrategy = instadapp;
+        nominalYield = 500;
     }
 
     modifier validStrategy(address str) {
@@ -220,15 +221,17 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
             (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
 
-            depositReturn = (ethPrice * depositReturn) / 10 ** ethDecimal;
+            console.log(priceEnd,ethPrice,depositReturn,bondReturn);
+            depositReturn = (ethPrice * depositReturn) / (10 ** ethDecimal);
 
             console.log(depositReturn, "depositReturn ");
 
-            bondReturn = (priceEnd * bondReturn) / 10 ** ethDecimal;
+            bondReturn = (priceEnd * bondReturn) / (10 ** endDecimal);
 
             console.log(bondReturn, " bond return after");
-
-            rebaseReward = depositReturn - bondReturn + (depositReturn * nominalYield);
+            console.log("rebaseReward = depositReturn - bondReturn + (depositReturn * nominalYield);");
+            console.log(depositReturn , bondReturn , nominalYield);
+            rebaseReward = depositReturn - bondReturn + ((depositReturn * nominalYield )/ 10000);
 
             rebaseReward = ((rebaseReward) / priceEnd) * 10 ** ethDecimal;
 
@@ -277,6 +280,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         console.log("_asset == address(0) || _strategy == address(0)",_asset , _strategy);
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         address receiptToken = strategyToReceiptToken[_strategy];
+        console.log("receiptToken",receiptToken);
         if (_strategy == instadapp) {
             //Todo set the asset as recipt tokens and need to check the assets ratio while depolying on mainnet
             IERC20(receiptToken).approve(instadapp, _withdrawAmt);
@@ -351,6 +355,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
                 balanceLastEpoch
             );
             //here we have to multiply 100000and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
+            console.log(totalReturn,fundsInfo[_stEthAddress],balanceLastEpoch,"balanceLastEpoch");
             depositReturn = (totalReturn * ((fundsInfo[_stEthAddress] * 100000) / balanceLastEpoch)) / 100000;
         }
     }
