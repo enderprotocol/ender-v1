@@ -426,7 +426,6 @@ contract EnderBond is
      * @param _reward The reward to be added to the reward share.
      */
 
-    //Todo use refractionReward variables instead of total supply
     function epochRewardShareIndexForSend(uint256 _reward) public {
         // if (msg.sender != keeper) revert NotKeeper();
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
