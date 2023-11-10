@@ -91,6 +91,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         setAddress(_endToken, 1);
         setAddress(_bond, 2);
         setBondYieldBaseRate(300);
+        priorityStrategy = instadapp;
     }
 
     modifier validStrategy(address str) {
@@ -273,6 +274,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     ) public validStrategy(_strategy) returns (uint256 _returnAmount) {
         console.log("block.timestamp", block.timestamp);
         if (_withdrawAmt == 0) revert ZeroAmount();
+        console.log("_asset == address(0) || _strategy == address(0)",_asset , _strategy);
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         address receiptToken = strategyToReceiptToken[_strategy];
         if (_strategy == instadapp) {

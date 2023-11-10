@@ -331,7 +331,7 @@ contract EnderBond is
             depositPrincipal,
             rewardPrinciple
         );
-        console.log("===============end=====================");
+        console.log("===============end=====================",rewardShareIndex, rewardSharePerUserIndex[tokenId]);
     }
 
     /**
