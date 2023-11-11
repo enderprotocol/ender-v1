@@ -3,9 +3,9 @@
  ## Overview
 
 The EnderBond contract is a Solidity smart contract designed to implement bonding functionality for multiple tokens on the Ethereum blockchain. The contract allows users to deposit their assets into a bond, which locks the funds for a specified period and provides potential rewards. 
-Contract Structure
+### Contract Structure
 
-### The EnderBond contract is structured as follows:
+The EnderBond contract is structured as follows:
 
 - Initialization: The contract is initialized with parameters like the END token address, Lido contract address, and Oracle contract address. The owner of the contract can set other parameters like the minimum deposit amount, transaction fees, and bond yield base rate.
 
