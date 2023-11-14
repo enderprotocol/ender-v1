@@ -138,15 +138,15 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 baseAmount = mintAmount / 3;
 
         uint256 remainder = mintAmount - (baseAmount * 3);
-        vestedAmounts[1] =( baseAmount + remainder / 3) - 2;
+        vestedAmounts[1] = (baseAmount / 3);
         vestedTime[1] = time + 90 days + 180 days;
-        mint(address(this), vestedTime[1]);
+        mint(address(this), vestedTime[1] + remainder);
 
-        vestedAmounts[2] = baseAmount + remainder / 3;
+        vestedAmounts[2] = baseAmount / 3;
         vestedTime[2] = time + 180 days + 180 days;
         mint(address(this), vestedTime[2]);
 
-        vestedAmounts[3] = baseAmount + remainder / 3;
+        vestedAmounts[3] = baseAmount / 3;
         vestedTime[3] = time + 270 days + 180 days;
         mint(address(this), vestedTime[3]);
 
