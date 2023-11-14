@@ -135,14 +135,16 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 time = block.timestamp;
         if (vestedTime[1] + 365 days > time) revert WaitingTimeNotCompleted();
         uint256 mintAmount = (totalSupply() * mintFee) / 10000;
+        uint256 baseAmount = mintAmount / 3;
 
-        vestedAmounts[1] = mintAmount / 3;
+        uint256 remainder = mintAmount - (baseAmount * 3);
+        vestedAmounts[1] =baseAmount+ remainder/ 3;
         vestedTime[1] = time + 90 days + 180 days;
 
-        vestedAmounts[2] = mintAmount / 3;
+        vestedAmounts[2] = baseAmount+ remainder / 3;
         vestedTime[2] = time + 180 days + 180 days;
 
-        vestedAmounts[3] = mintAmount / 3;
+        vestedAmounts[3] = baseAmount+ remainder / 3;
         vestedTime[3] = time + 270 days + 180 days;
 
         if (mintFee != 100) {
@@ -209,13 +211,12 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
             refractionFeeTotal = 0;
             lastEpoch = block.timestamp;
             console.log("feesCollected", feesToTransfer);
-            if(feesToTransfer != 0) {
+            if (feesToTransfer != 0) {
                 _approve(address(this), enderBond, feesToTransfer);
                 IEnderBond(enderBond).epochRewardShareIndex(feesToTransfer);
                 // _transfer(address(this), enderBond, feesToTransfer);
                 emit RefractionFeesDistributed(enderBond, feesToTransfer);
             }
-
-            }
+        }
     }
 }
