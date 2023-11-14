@@ -110,9 +110,9 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
         console.log("rebasingIndex----------------", rebasingIndex);
         if (rebasingIndex == 0) {
-            sEndTokens = (_endAmount / 1) / 1e18;
+            sEndTokens = _endAmount;
         }else{
-          sEndTokens = (_endAmount / rebasingIndex) / 1e18;  
+          sEndTokens = (_endAmount * 1e18 / rebasingIndex);  
         }
         console.log("sEndTokens", sEndTokens);
     }

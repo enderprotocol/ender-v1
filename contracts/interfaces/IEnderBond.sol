@@ -14,4 +14,6 @@ interface IEnderBond {
 
     function getLoopCount() external returns (uint256 amountRequired);
 
+    function resetEndMint() external;
+
 }

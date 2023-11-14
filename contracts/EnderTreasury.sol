@@ -233,10 +233,11 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             console.log(depositReturn , bondReturn , nominalYield);
             rebaseReward = depositReturn - bondReturn + ((depositReturn * nominalYield )/ 10000);
 
-            rebaseReward = ((rebaseReward) / priceEnd) * 10 ** ethDecimal;
+            rebaseReward = ((rebaseReward * 10 ** ethDecimal) / priceEnd);
 
             epochWithdrawl = 0;
             epochDeposit = 0;
+            IEnderBond(enderBond).resetEndMint();
         }
         console.log("rebaseReward", rebaseReward);
     }

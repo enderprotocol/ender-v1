@@ -133,7 +133,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     function mintAndVest() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 time = block.timestamp;
-        if (vestedTime[1] + 365 days > time) revert WaitingTimeNotCompleted();
+        if (vestedTime[1] + 95 days > time) revert WaitingTimeNotCompleted();
         uint256 mintAmount = (totalSupply() * mintFee) / 10000;
         uint256 baseAmount = mintAmount / 3;
 
