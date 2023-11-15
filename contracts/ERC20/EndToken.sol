@@ -146,17 +146,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 time = block.timestamp;
         if ((lastYear * 31536000) + 365 days < time) revert WaitingTimeNotCompleted();
         uint256 mintAmount = (totalSupply() * mintFee) / 10000;
-        // uint256 baseAmount = mintAmount / 3;
-
-        // uint256 remainder = mintAmount - (baseAmount * 3);
-        // vestedTime[1] = time + 90 days + 180 days;
-        // vestedAmounts[1] = mintAmount / 3 + remainder;
-
-        // vestedTime[2] = time + 180 days + 180 days;
-        // vestedAmounts[2] = mintAmount / 3;
-
-        // vestedTime[3] = time + 270 days + 180 days;
-        // vestedAmounts[3] = mintAmount / 3;
 
         yearlyVestAmount[time / 31536000] = VestAmount(mintAmount, false, false, false);
         mint(address(this), mintAmount);
@@ -164,56 +153,70 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         if (mintFee != 100) {
             mintFee -= 10;
         }
-        if(lastYear == 0) lastYear = time / 31536000;
+        if (lastYear == 0) lastYear = time / 31536000;
     }
+
+    // function getMintedEndtemp() external onlyRole(DEFAULT_ADMIN_ROLE) {
+    //     uint256 time = block.timestamp;
+    //     uint256 withdrawAmount = 0;
+
+    //     // VestAmount temp  =
+
+    //     if (lastYear < time / 31536000) {
+    //         if (!yearlyVestAmount[lastYear].nineMonths && (lastYear * 31536000) + 270 days < time)
+    //             withdrawAmount += yearlyVestAmount[lastYear].totalAmount / 3;
+    //         if (!yearlyVestAmount[lastYear].twelveMonths && (lastYear * 31536000) + 360 days < time)
+    //             withdrawAmount += yearlyVestAmount[lastYear].totalAmount / 3;
+    //         if (!yearlyVestAmount[lastYear].fifteenMonths && (lastYear * 31536000) + 450 days < time)
+    //             withdrawAmount += (yearlyVestAmount[lastYear].totalAmount -
+    //                 ((2 * yearlyVestAmount[lastYear].totalAmount) / 3));
+    //     }
+
+    //     if (!yearlyVestAmount[time / 31536000].nineMonths && ((time / 31536000) * 31536000) + 270 days < time)
+    //         withdrawAmount += yearlyVestAmount[time / 31536000].totalAmount / 3;
+    //     if (!yearlyVestAmount[time / 31536000].twelveMonths && ((time / 31536000) * 31536000) + 360 days < time)
+    //         withdrawAmount += yearlyVestAmount[time / 31536000].totalAmount / 3;
+
+    //     if (lastYear != time / 31536000) lastYear = time / 31536000;
+    //     transfer(admin, withdrawAmount);
+
+    //     lastYear = time / 31536000;
+    // }
 
     function getMintedEnd() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 time = block.timestamp;
         uint256 withdrawAmount = 0;
+        uint256 secondsInYear = 31536000;
+        uint256 lastYearStart = lastYear * secondsInYear;
 
-        if(lastYear < time/31536000){
-            if(!yearlyVestAmount[lastYear].nineMonths && (lastYear * 31536000) + 270 days < time) withdrawAmount += yearlyVestAmount[lastYear].totalAmount/3;
-            if(!yearlyVestAmount[lastYear].twelveMonths && (lastYear * 31536000) + 360 days < time) withdrawAmount += yearlyVestAmount[lastYear].totalAmount/3;
-            if(!yearlyVestAmount[lastYear].fifteenMonths && (lastYear * 31536000) + 450 days < time) withdrawAmount += (yearlyVestAmount[lastYear].totalAmount - ((2 * yearlyVestAmount[lastYear].totalAmount)/3));
+        VestAmount memory lastYearVest = yearlyVestAmount[lastYear];
+
+        if (lastYear < time / secondsInYear) {
+            uint256 nineMonths = lastYearStart + 270 days;
+            uint256 twelveMonths = lastYearStart + 360 days;
+            uint256 fifteenMonths = lastYearStart + 450 days;
+
+            if (!lastYearVest.nineMonths && nineMonths < time) withdrawAmount += lastYearVest.totalAmount / 3;
+            if (!lastYearVest.twelveMonths && twelveMonths < time) withdrawAmount += lastYearVest.totalAmount / 3;
+            if (!lastYearVest.fifteenMonths && fifteenMonths < time)
+                withdrawAmount += (lastYearVest.totalAmount - (2 * lastYearVest.totalAmount) / 3);
         }
 
-        if(!yearlyVestAmount[time/31536000].nineMonths && ((time/31536000) * 31536000) + 270 days < time) withdrawAmount += yearlyVestAmount[time/31536000].totalAmount/3;
-        if(!yearlyVestAmount[time/31536000].twelveMonths && ((time/31536000 )* 31536000) + 360 days < time) withdrawAmount += yearlyVestAmount[time/31536000].totalAmount/3;
+        uint256 currentYearStart = (time / secondsInYear) * secondsInYear;
+        VestAmount memory currentYearVest = yearlyVestAmount[time / secondsInYear];
 
-        if(lastYear != time / 31536000) lastYear = time / 31536000;
-        transfer(admin, withdrawAmount);
+        if (!currentYearVest.nineMonths && currentYearStart + 270 days < time)
+            withdrawAmount += currentYearVest.totalAmount / 3;
+        if (!currentYearVest.twelveMonths && currentYearStart + 360 days < time)
+            withdrawAmount += currentYearVest.totalAmount / 3;
 
-        // uint256 vestedTime1 = 270 days;
-        // uint256 vestedTime2 = 360 days;
-        // uint256 vestedTime3 = 450 days;
+        if (lastYear != time / secondsInYear) {
+            lastYear = time / secondsInYear;
+        }
 
-        // VestAmount memory vestAmount = yearlyVestAmount[lastYear];
-
-
-
-
-
-
-        // uint totalAmoutn = yearlyVestAmount[lastYear].totalAmount;
-
-        // if (time > vestedTime[1]) {
-        //     yearlyVestAmount[lastYear].totalAmount -= vestedAmounts[1];
-        //     withdrawAmount += vestedAmounts[1];
-        //     vestedAmounts[1] = 0;
-        //     vestedTime[1] = 0;
-        //     yearlyVestAmount[lastYear].vaested1 = true;
-        // } else if (time > vestedTime[2]) {
-        //     withdrawAmount += vestedAmounts[2];
-        //     vestedAmounts[2] = 0;
-        //     vestedTime[2] = 0;
-        // } else if (time > vestedTime[3]) {
-        //     withdrawAmount += vestedAmounts[3];
-        //     vestedAmounts[3] = 0;
-        //     vestedTime[3] = 0;
-        // }
-
-        transfer(admin, withdrawAmount);
-        lastYear = time / 31536000;
+        if (withdrawAmount > 0) {
+            transfer(address(this), withdrawAmount);
+        }
     }
 
     /**
