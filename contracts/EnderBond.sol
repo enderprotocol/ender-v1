@@ -122,6 +122,9 @@ contract EnderBond is
         uint256 bondFee; // bond fee self-set
         uint256 depositPrincipal;
         uint256 rewardPrincipal;
+        uint256 refractionSIndex;
+        uint256 stakingSendIndex;
+        uint256 YieldIndex;
     }
 
     event AddressUpdated(address indexed addr, uint256 addrType);
@@ -330,7 +333,10 @@ contract EnderBond is
             token,
             bondFee,
             depositPrincipal,
-            rewardPrinciple
+            rewardPrinciple,
+            0,
+            0,
+            0
         );
         console.log("===============end=====================",rewardShareIndex, rewardSharePerUserIndex[tokenId]);
     }
@@ -364,12 +370,12 @@ contract EnderBond is
         bond.withdrawn = true;
 
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal), getLoopCount());
-        uint256 reward = calculateBondRewardAmount(_tokenId, 0);
+        uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
         dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId];
 
         endTreasury.mintEndToUser(msg.sender, reward);
-        if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, 0);
-        if (rewardSharePerUserIndexSend[_tokenId] != rewardShareIndexSend) claimStakingReward(_tokenId, 0);
+        if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
+        if (rewardSharePerUserIndexSend[_tokenId] != rewardShareIndexSend) claimStakingReward(_tokenId, bond.stakingSendIndex);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
         // bondNFT.transferFrom(msg.sender, address(this), _tokenId);
         // bondNFT.burn(_tokenId)
@@ -421,7 +427,7 @@ contract EnderBond is
             rewardShareIndex =
                 (rewardShareIndex) +
                 ((_reward * 10 ** 18) / (totalRewardPrincipal - availableFundsAtMaturity[timeNow + 4]));
-            dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
+            dayToRefractionShareUpdation[timeNow].push(block.timestamp);
             dayToRewardShareIndex[timeNow] = rewardShareIndex;
             console.log(rewardShareIndex, "rewardShareIndex first time");
         }
@@ -439,7 +445,7 @@ contract EnderBond is
             rewardShareIndexSend +
             ((_reward * 10 ** 18) / totalRewardPrincipal - availableFundsAtMaturity[timeNow + 4]);
         dayRewardShareIndexForSend[timeNow] = rewardShareIndexSend;
-        dayToRefractionShareUpdation[timeNow].push(block.timestamp);
+        dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
         secondsRefractionShareIndexSend[block.timestamp] = rewardShareIndexSend;
         console.log(rewardShareIndexSend, "rewardShareIndexSend");
     }
@@ -483,13 +489,13 @@ contract EnderBond is
         (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
-        uint256 finalRewardPrincipal = (totalRewardPrincipal - availableFundsAtMaturity[timeNow + 4]);
+        uint256 finalRewardPrincipal = (totalBondPrincipalAmount - availableFundsAtMaturity[timeNow + 4]);
         console.log(totalBondPrincipalAmount, "totalBondPrincipalAmount");
         uint256 _endMint = (priceEth * finalRewardPrincipal)/priceEnd;
         endMint += _endMint;
         console.log(endMint, "endMint");
         console.log("finalRewardPrincipal", bondYieldShareIndex);
-        bondYieldShareIndex = bondYieldShareIndex + ((endMint) / finalRewardPrincipal);
+        bondYieldShareIndex = bondYieldShareIndex + ((_endMint) / finalRewardPrincipal);
         dayBondYieldShareIndex[timeNow] = bondYieldShareIndex;
         secondsBondYieldShareIndex[block.timestamp] = bondYieldShareIndex;
     }
@@ -521,7 +527,6 @@ contract EnderBond is
      * @param _principle The principle amount of the bond.
      * @param _maturity The maturity of the bond.
      * @param _tokenId The unique identifier of the bond.
-     * @return pendingRewardSend The pending reward for staking.
      * @return avgRefractionIndex The average refraction index for the bond.
      * @return rewardPrincipleSend The principle amount used in reward calculations for staking.
      */
@@ -529,11 +534,10 @@ contract EnderBond is
         uint _principle,
         uint256 _maturity,
         uint256 _tokenId
-    ) internal view returns (uint256 pendingRewardSend, uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
+    ) internal view returns (uint256 avgRefractionIndex, uint256 rewardPrincipleSend) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
         rewardPrincipleSend = _principle * avgRefractionIndex;
-        pendingRewardSend = rewardPrincipleSend * (rewardPrincipleSend - rewardSharePerUserIndexSend[_tokenId]);
     }
 
     /**
@@ -544,7 +548,7 @@ contract EnderBond is
     function claimStakingReward(uint256 _tokenId, uint256 precalUsers) public nonReentrant {
         Bond memory temp = bonds[_tokenId];
         if (precalUsers != 0) {
-            (, , uint rewardPrinciple) = calculateStakingPendingReward(temp.principal, temp.maturity, _tokenId);
+            (, uint rewardPrinciple) = calculateStakingPendingReward(temp.principal, temp.maturity, _tokenId);
             uint sEndTokenReward = ((rewardPrinciple * (precalUsers - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
             if (sEndTokenReward > 0) {
                 ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
@@ -552,7 +556,7 @@ contract EnderBond is
         } else {
             if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
             if (isSet) {
-                (, , uint rewardPrinciple) = calculateStakingPendingReward(temp.principal, temp.maturity, _tokenId);
+                (, uint rewardPrinciple) = calculateStakingPendingReward(temp.principal, temp.maturity, _tokenId);
 
                 if (dayRewardShareIndexForSend[bonds[_tokenId].maturity] == 0) {
                     uint sEndTokenReward = ((rewardPrinciple *
@@ -665,6 +669,17 @@ contract EnderBond is
             lastTimeStamp = block.timestamp;
         }
         // We don't use the performData in this example. The performData is generated by the Keeper's call to your checkUpkeep function
+    }
+
+    function setIndexesOfUser(uint256 tokenId,uint256 refractionSIndex,uint256 stakingSendIndex,uint256 YieldIndex) external{
+        bonds[tokenId].refractionSIndex = refractionSIndex;
+        bonds[tokenId].stakingSendIndex = stakingSendIndex;
+        bonds[tokenId].YieldIndex = YieldIndex;
+    }
+
+    function resetEndMint() external{
+        require(msg.sender == address(endTreasury));
+        endMint = 0;
     }
 
     receive() external payable {}
