@@ -144,7 +144,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     function mintAndVest() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 time = block.timestamp;
-        if (vestedTime[1] + 95 days > time) revert WaitingTimeNotCompleted();
+        if ((lastYear * 31536000) + 365 days < time) revert WaitingTimeNotCompleted();
         uint256 mintAmount = (totalSupply() * mintFee) / 10000;
         // uint256 baseAmount = mintAmount / 3;
 
@@ -164,19 +164,30 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         if (mintFee != 100) {
             mintFee -= 10;
         }
-
-        lastYear = time / 31536000;
+        if(lastYear == 0) lastYear = time / 31536000;
     }
 
     function getMintedEnd() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 time = block.timestamp;
-        uint256 withdrawAmount;
+        uint256 withdrawAmount = 0;
 
-        uint256 vestedTime1 = 270 days;
-        uint256 vestedTime2 = 360 days;
-        uint256 vestedTime3 = 450 days;
+        if(lastYear < time/31536000){
+            if(!yearlyVestAmount[lastYear].nineMonths && (lastYear * 31536000) + 270 days < time) withdrawAmount += yearlyVestAmount[lastYear].totalAmount/3;
+            if(!yearlyVestAmount[lastYear].twelveMonths && (lastYear * 31536000) + 360 days < time) withdrawAmount += yearlyVestAmount[lastYear].totalAmount/3;
+            if(!yearlyVestAmount[lastYear].fifteenMonths && (lastYear * 31536000) + 450 days < time) withdrawAmount += (yearlyVestAmount[lastYear].totalAmount - ((2 * yearlyVestAmount[lastYear].totalAmount)/3));
+        }
 
-        VestAmount memory vestAmount = yearlyVestAmount[lastYear];
+        if(!yearlyVestAmount[time/31536000].nineMonths && ((time/31536000) * 31536000) + 270 days < time) withdrawAmount += yearlyVestAmount[time/31536000].totalAmount/3;
+        if(!yearlyVestAmount[time/31536000].twelveMonths && ((time/31536000 )* 31536000) + 360 days < time) withdrawAmount += yearlyVestAmount[time/31536000].totalAmount/3;
+
+        if(lastYear != time / 31536000) lastYear = time / 31536000;
+        transfer(admin, withdrawAmount);
+
+        // uint256 vestedTime1 = 270 days;
+        // uint256 vestedTime2 = 360 days;
+        // uint256 vestedTime3 = 450 days;
+
+        // VestAmount memory vestAmount = yearlyVestAmount[lastYear];
 
 
 
