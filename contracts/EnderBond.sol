@@ -148,6 +148,8 @@ contract EnderBond is
         interval = 14 * 60 * 60;
         lastTimeStamp = block.timestamp;
         lastDay = block.timestamp / SECONDS_IN_DAY;
+
+        //this function is not used
         setBondFeeEnabled(true);
     }
 
@@ -539,7 +541,7 @@ contract EnderBond is
      * @param _tokenId The unique identifier of the bond.
      */
 
-    function claimStakingReward(uint256 _tokenId, uint256 precalUsers) public {
+    function claimStakingReward(uint256 _tokenId, uint256 precalUsers) public nonReentrant {
         Bond memory temp = bonds[_tokenId];
         if (precalUsers != 0) {
             (, , uint rewardPrinciple) = calculateStakingPendingReward(temp.principal, temp.maturity, _tokenId);
@@ -584,7 +586,7 @@ contract EnderBond is
      * @param _tokenId The unique identifier of the bond.
      */
 
-    function claimRefractionRewards(uint256 _tokenId, uint256 precalUsers) public {
+    function claimRefractionRewards(uint256 _tokenId, uint256 precalUsers) public nonReentrant {
         Bond memory temp = bonds[_tokenId];
         if (precalUsers != 0) {
             (, uint rewardPrinciple) = calculateRefractionData(temp.principal, temp.maturity, _tokenId);

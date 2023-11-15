@@ -41,6 +41,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     uint256 public mintPrec;
 
     uint256 public currentMintCount;
+    uint lastYear;
 
     //Mint
     uint256 public mintFee;
@@ -49,8 +50,16 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     address public enderBond;
 
+    struct VestAmount {
+        uint256 totalAmount;
+        bool nineMonths;
+        bool twelveMonths;
+        bool fifteenMonths;
+    }
+
     // minter role hash
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant ENDERBOND_ROLE = keccak256("ENDERBOND_ROLE");
 
     mapping(address => bool) public excludeWallets;
 
@@ -58,6 +67,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     mapping(uint256 => uint256) public vestedAmounts; // count => amount
     mapping(uint256 => uint256) public vestedTime; // count => time
+    mapping(uint256 => VestAmount) public yearlyVestAmount;
 
     event TreasuryContractChanged(address indexed newTreasury);
     event FeeUpdated(uint256 fee);
@@ -71,6 +81,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         __ERC20_init("End Token", "END");
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ENDERBOND_ROLE, enderBond);
 
         // add exclude wallets
         excludeWallets[address(this)] = true;
@@ -133,46 +144,65 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     function mintAndVest() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 time = block.timestamp;
-        if (vestedTime[1] + 365 days > time) revert WaitingTimeNotCompleted();
+        if (vestedTime[1] + 95 days > time) revert WaitingTimeNotCompleted();
         uint256 mintAmount = (totalSupply() * mintFee) / 10000;
-        uint256 baseAmount = mintAmount / 3;
+        // uint256 baseAmount = mintAmount / 3;
 
-        uint256 remainder = mintAmount - (baseAmount * 3);
-        vestedAmounts[1] = (mintAmount / 3) + remainder;
-        vestedTime[1] = time + 90 days + 180 days;
-        mint(address(this), vestedAmounts[1] );
+        // uint256 remainder = mintAmount - (baseAmount * 3);
+        // vestedTime[1] = time + 90 days + 180 days;
+        // vestedAmounts[1] = mintAmount / 3 + remainder;
 
-        vestedAmounts[2] = mintAmount / 3;
-        vestedTime[2] = time + 180 days + 180 days;
-        mint(address(this), vestedAmounts[2]);
+        // vestedTime[2] = time + 180 days + 180 days;
+        // vestedAmounts[2] = mintAmount / 3;
 
-        vestedAmounts[3] = mintAmount / 3;
-        vestedTime[3] = time + 270 days + 180 days;
-        mint(address(this), vestedAmounts[3]);
+        // vestedTime[3] = time + 270 days + 180 days;
+        // vestedAmounts[3] = mintAmount / 3;
+
+        yearlyVestAmount[time / 31536000] = VestAmount(mintAmount, false, false, false);
+        mint(address(this), mintAmount);
 
         if (mintFee != 100) {
             mintFee -= 10;
         }
+
+        lastYear = time / 31536000;
     }
 
     function getMintedEnd() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 time = block.timestamp;
         uint256 withdrawAmount;
-        if (time > vestedTime[1]) {
-            withdrawAmount += vestedAmounts[1];
-            vestedAmounts[1] = 0;
-            vestedTime[1] = 0;
-        } else if (time > vestedTime[2]) {
-            withdrawAmount += vestedAmounts[2];
-            vestedAmounts[2] = 0;
-            vestedTime[2] = 0;
-        } else if (time > vestedTime[3]) {
-            withdrawAmount += vestedAmounts[3];
-            vestedAmounts[3] = 0;
-            vestedTime[3] = 0;
-        }
+
+        uint256 vestedTime1 = 270 days;
+        uint256 vestedTime2 = 360 days;
+        uint256 vestedTime3 = 450 days;
+
+        VestAmount memory vestAmount = yearlyVestAmount[lastYear];
+
+
+
+
+
+
+        // uint totalAmoutn = yearlyVestAmount[lastYear].totalAmount;
+
+        // if (time > vestedTime[1]) {
+        //     yearlyVestAmount[lastYear].totalAmount -= vestedAmounts[1];
+        //     withdrawAmount += vestedAmounts[1];
+        //     vestedAmounts[1] = 0;
+        //     vestedTime[1] = 0;
+        //     yearlyVestAmount[lastYear].vaested1 = true;
+        // } else if (time > vestedTime[2]) {
+        //     withdrawAmount += vestedAmounts[2];
+        //     vestedAmounts[2] = 0;
+        //     vestedTime[2] = 0;
+        // } else if (time > vestedTime[3]) {
+        //     withdrawAmount += vestedAmounts[3];
+        //     vestedAmounts[3] = 0;
+        //     vestedTime[3] = 0;
+        // }
 
         transfer(admin, withdrawAmount);
+        lastYear = time / 31536000;
     }
 
     /**
@@ -205,7 +235,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     }
 
     // function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
-    function distributeRefractionFees() external {
+    function distributeRefractionFees() external onlyRole(ENDERBOND_ROLE) {
         // if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
         uint256 feesToTransfer = refractionFeeTotal;
         if (feesToTransfer != 0) {

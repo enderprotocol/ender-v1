@@ -94,7 +94,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         emit Withdraw(msg.sender, amount);
     }
 
-    function epochStakingReward(address _asset) public {
+    function epochStakingReward(address _asset) public  {
         // if (msg.sender != keeper) revert NotKeeper();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         uint256 rw2 = (totalReward * bondRewardPercentage) / 100;

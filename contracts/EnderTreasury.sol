@@ -105,6 +105,11 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         _;
     }
 
+    modifier onlyStaking() {
+        if (msg.sender != enderStaking) revert NotAllowed();
+        _;
+    }
+
     /**
      * @notice Update the address
      * @param _addr The new address
@@ -171,24 +176,24 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         nominalYield = _nominalYield;
     }
 
-    function getInterest(uint256 maturity) public view returns (uint256 rate) {
-        unchecked {
-            if (maturity > 180) rate = ((maturity - 180) * 15) / 180 + (bondYieldBaseRate + 30);
-            else if (maturity > 90) rate = ((maturity - 90) * 15) / 90 + (bondYieldBaseRate + 15);
-            else if (maturity > 60) rate = ((maturity - 60) * 15) / 30 + bondYieldBaseRate;
-            else if (maturity > 30) rate = ((maturity - 30) * 30) / 30 + (bondYieldBaseRate - 30);
-            else if (maturity > 15) rate = ((maturity - 15) * 15) / 15 + (bondYieldBaseRate - 45);
-            else if (maturity > 7) rate = ((maturity - 7) * 15) / 8 + (bondYieldBaseRate - 60);
-            else rate = ((maturity - 7) * 30) / 6 + (bondYieldBaseRate - 90);
-        }
-    }
+    // function getInterest(uint256 maturity) public view returns (uint256 rate) {
+    //     unchecked {
+    //         if (maturity > 180) rate = ((maturity - 180) * 15) / 180 + (bondYieldBaseRate + 30);
+    //         else if (maturity > 90) rate = ((maturity - 90) * 15) / 90 + (bondYieldBaseRate + 15);
+    //         else if (maturity > 60) rate = ((maturity - 60) * 15) / 30 + bondYieldBaseRate;
+    //         else if (maturity > 30) rate = ((maturity - 30) * 30) / 30 + (bondYieldBaseRate - 30);
+    //         else if (maturity > 15) rate = ((maturity - 15) * 15) / 15 + (bondYieldBaseRate - 45);
+    //         else if (maturity > 7) rate = ((maturity - 7) * 15) / 8 + (bondYieldBaseRate - 60);
+    //         else rate = ((maturity - 7) * 30) / 6 + (bondYieldBaseRate - 90);
+    //     }
+    // }
 
-    function getYieldMultiplier(uint256 bondFee) public pure returns (uint256 yieldMultiplier) {
-        unchecked {
-            if (bondFee > 100 || bondFee < 1) yieldMultiplier = 100;
-            else yieldMultiplier = 100 + bondFee;
-        }
-    }
+    // function getYieldMultiplier(uint256 bondFee) public pure returns (uint256 yieldMultiplier) {
+    //     unchecked {
+    //         if (bondFee > 100 || bondFee < 1) yieldMultiplier = 100;
+    //         else yieldMultiplier = 100 + bondFee;
+    //     }
+    // }
 
     function depositTreasury(EndRequest memory param, uint256 amountRequired) external onlyBond {
         unchecked {
@@ -207,7 +212,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         } else IERC20(_token).transfer(_account, _amount);
     }
 
-    function stakeRebasingReward(address _tokenAddress) public returns (uint256 rebaseReward) {
+    function stakeRebasingReward(address _tokenAddress) public onlyStaking returns (uint256 rebaseReward) {
         uint256 bondReturn = IEnderBond(enderBond).endMint();
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
         console.log(depositReturn, "depositReturn");
