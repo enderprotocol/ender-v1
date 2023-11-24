@@ -26,20 +26,30 @@ async function main() {
         bondNFT;
 
 
-    stEth = await StEth.deploy();
-    stEthAddress = await stEth.getAddress();
+    // stEth = await StEth.deploy();
+    // await sleep(10000);
+    // stEthAddress = await stEth.getAddress();
 
     sEnd = await upgrades.deployProxy(SEndToken, [], {
         initializer: "initialize",
     });
+    console.log("init5");
+    await sleep(10000);
     sEndTokenAddress = await sEnd.getAddress();
+    console.log(`sEndTokenAddress`, sEndTokenAddress);
 
     endToken = await upgrades.deployProxy(EndToken, [], {
         initializer: "initialize",
     });
-    await endToken.waitForDeployment();
-    endTokenAddress = await endToken.getAddress();
+    console.log("init4");
+    await sleep(10000);
 
+    await endToken.waitForDeployment();
+    console.log("waitForDeployment");
+    await sleep(10000);
+
+    endTokenAddress = await endToken.getAddress();
+    console.log(`endTokenAddress`, endTokenAddress);
 
     enderBond = await upgrades.deployProxy(
         EnderBond,
@@ -48,14 +58,20 @@ async function main() {
             initializer: "initialize",
         },
     );
-   enderBondAddress = await enderBond.getAddress();
+    console.log("init3");
+    await sleep(10000);
 
+   enderBondAddress = await enderBond.getAddress();
+    console.log(`enderBondAddress`, enderBondAddress);
    
    bondNFT = await upgrades.deployProxy(BondNFT, [enderBondAddress, baseURI], {
     initializer: "initialize",
 });
-bondNFTAddress = await bondNFT.getAddress();
+console.log("init2");
+await sleep(10000);
 
+bondNFTAddress = await bondNFT.getAddress();
+console.log(`bondNftAddress`, bondNftAddress);
    enderTreasury = await upgrades.deployProxy(
     EnderTreasury,
     [
@@ -73,15 +89,25 @@ bondNFTAddress = await bondNFT.getAddress();
         initializer: "initializeTreasury",
     },
 );
-enderTreasuryAddress = await enderTreasury.getAddress();
+console.log("deployTreasury");
+await sleep(10000);
 
+enderTreasuryAddress = await enderTreasury.getAddress();
+console.log(`enderTreasuryAddress`, enderTreasuryAddress);
 
 enderStaking = await upgrades.deployProxy(EnderStaking, [endTokenAddress, sEndTokenAddress], {
     initializer: "initialize",
 });
-enderStakingAddress = await enderStaking.getAddress();
+console.log(`init1`);
+await sleep(10000);
 
+enderStakingAddress = await enderStaking.getAddress();
+console.log("enderStakingAddress",enderStakingAddress);
 }
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
 main().catch((error) => {
     console.error(error);
