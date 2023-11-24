@@ -11,7 +11,7 @@
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.9.2",
-    "@openzeppelin/hardhat-upgrades": "^2.1.1",
+    "@openzeppelin/hardhat-upgrades": "^2.4.1",
     "@typechain/ethers-v5": "^11.1.1",
     "@typechain/hardhat": "^8.0.3",
     "@types/chai": "^4.2.22",
@@ -73,6 +73,7 @@
   "dependencies": {
     "@chainlink/contracts": "^0.8.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^1.0.0",
     "@openzeppelin/test-helpers": "^0.5.16"
   }
