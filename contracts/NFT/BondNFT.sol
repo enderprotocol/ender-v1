@@ -32,7 +32,9 @@ contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     /**
      * @dev Emitted when the Bond contract address is changed.
      */
-    event BondContractChanged(address indexed newBond);
+ event BondContractChanged(address indexed newBond);
+event NFTMinted(address indexed to, uint256 tokenId);
+event BaseURIChanged(string newURI);
 
     modifier onlyBond() {
         if (msg.sender != bond) {
@@ -66,6 +68,7 @@ contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         newTokenId = _tokenIdsCounter.current();
 
         _mint(to, newTokenId);
+         emit NFTMinted(to, newTokenId);
     }
 
     function _transfer(address from, address to, uint256 tokenId) internal override {
@@ -87,6 +90,7 @@ contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
      */
     function setBaseURI(string memory newURI_) public onlyOwner {
         uri = newURI_;
+         emit BaseURIChanged(newURI_);
     }
 
     /**

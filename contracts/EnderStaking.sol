@@ -25,11 +25,13 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     address public keeper;
     address public stEth;
 
+        event AddressUpdated(address indexed addr, uint256 indexed addrType);
     event PercentUpdated(uint256 percent);
-    event AddressUpdated(address indexed addr, uint256 addrType);
-    event Stake(address indexed account, uint256 stakeAmt);
-    event Withdraw(address indexed account, uint256 withdrawAmt);
+    event Stake(address indexed staker, uint256 amount);
+    event Withdraw(address indexed withdrawer, uint256 amount);
+    event EpochStakingReward(address indexed asset, uint256 totalReward, uint256 rw2, uint256 sendTokens);
 
+  
     function initialize(address _end, address _sEnd) external initializer {
         __Ownable_init();
         // setAddress(_enderBond, 1);
@@ -49,15 +51,18 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         else if (_type == 5) keeper = _addr;
         else if (_type == 6) stEth = _addr;
 
-        emit AddressUpdated(_addr, _type);
+         emit AddressUpdated(_addr, _type);
+
+       
     }
 
     function setBondRewardPercentage(uint256 percent) external onlyOwner {
         if (percent == 0) revert InvalidAmount();
 
         bondRewardPercentage = percent;
+          emit PercentUpdated(bondRewardPercentage);
 
-        emit PercentUpdated(bondRewardPercentage);
+        
     }
 
     /**
@@ -72,6 +77,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         console.log("sEndAmount", sEndAmount);
 
         ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
+        
         emit Stake(msg.sender, amount);
     }
 
@@ -90,8 +96,9 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         console.log("pending", reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
         ISEndToken(endToken).transfer(msg.sender, reward);
-
         emit Withdraw(msg.sender, amount);
+
+     
     }
 
     function epochStakingReward(address _asset) public  {
@@ -105,6 +112,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         ISEndToken(endToken).mint(address(this), totalReward - rw2);
         IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
         calculateRebaseIndex();
+         emit EpochStakingReward(_asset, totalReward, rw2, sendTokens);  
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {

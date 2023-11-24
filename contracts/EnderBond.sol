@@ -127,13 +127,23 @@ contract EnderBond is
         uint256 YieldIndex;
     }
 
-    event AddressUpdated(address indexed addr, uint256 addrType);
-    event Deposit(address indexed user, uint256 tokenId);
-    event Withdraw(address indexed user, uint256 tokenId);
-    event Collect(address indexed user, uint256 tokenId, uint256 refraction, uint256 nonce);
-    event Rebond(address indexed user, uint256 tokenId, uint256 bondId);
-    event BondableTokensUpdated(address[] indexed token, bool enabled);
-    event BondFeeEnableDisabled(bool enabled);
+event IntervalSet(uint256 indexed newInterval);
+event BoolSet(bool indexed newValue);
+event AddressSet(uint256 indexed addrType, address indexed newAddress);
+event MinDepAmountSet(uint256 indexed newAmount);
+event TxFeesSet(uint256 indexed newTxFees);
+event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
+event BondFeeEnabledSet(bool indexed isEnabled);
+event BondableTokensSet(address indexed token, bool indexed isEnabled);
+event Deposit(address indexed sender, uint256 indexed tokenId, uint256 principal, uint256 maturity, address token);
+event Withdrawal(address indexed sender, uint256 indexed tokenId);
+event RefractionRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
+event StakingRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
+event RewardShareIndexUpdated(uint256 indexed newRewardShareIndex);
+event BondYieldShareIndexUpdated(uint256 indexed newBondYieldShareIndex);
+event EndMintReset();
+event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRewardSharePerUserIndex);
+    
 
     /**
      * @dev Initializes the contract
@@ -158,10 +168,12 @@ contract EnderBond is
 
     function setInterval(uint256 _interval) public onlyOwner {
         interval = _interval;
+        emit IntervalSet(_interval);
     }
 
     function setBool(bool _bool) public onlyOwner {
         isSet = _bool;
+        emit BoolSet(_bool);
     }
 
     /**
@@ -181,19 +193,22 @@ contract EnderBond is
         else if (_type == 7) keeper = _addr;
         else if (_type == 8) endStaking = _addr;
 
-        emit AddressUpdated(_addr, _type);
+        emit AddressSet(_type, _addr);
     }
 
     function setMinDepAmount(uint256 _amt) public onlyOwner {
         minDepositAmount = _amt;
+        emit MinDepAmountSet(_amt);
     }
 
     function setTxFees(uint256 _txFees) public onlyOwner {
         txFees = _txFees;
+        emit TxFeesSet(_txFees);
     }
 
     function setBondYieldBaseRate(uint256 _bondYieldBaseRate) public onlyOwner {
         bondYieldBaseRate = _bondYieldBaseRate;
+        emit BondYieldBaseRateSet(_bondYieldBaseRate);
     }
 
     function getAddress(uint256 _type) external view returns (address addr) {
@@ -210,8 +225,7 @@ contract EnderBond is
      */
     function setBondFeeEnabled(bool _enabled) public onlyOwner {
         bondFeeEnabled = _enabled;
-
-        emit BondFeeEnableDisabled(_enabled);
+        emit BondFeeEnabledSet(_enabled);
     }
 
     /**
@@ -224,9 +238,8 @@ contract EnderBond is
         uint256 length = tokens.length;
         for (uint256 i; i < length; ++i) {
             bondableTokens[tokens[i]] = enabled;
+        emit BondableTokensSet(tokens[i], enabled);
         }
-
-        emit BondableTokensUpdated(tokens, enabled);
     }
 
     function getInterest(uint256 maturity) public view returns (uint256 rate) {
@@ -285,7 +298,7 @@ contract EnderBond is
         epochBondYieldShareIndex();
         console.log("stEth", stEth);
         IEnderStaking(endStaking).epochStakingReward(stEth);
-        emit Deposit(msg.sender, tokenId);
+        emit Deposit(msg.sender, tokenId, principal, maturity, token);
     }
 
     function _deposit(
@@ -351,8 +364,7 @@ contract EnderBond is
      */
     function withdraw(uint256 tokenId) external nonReentrant {
         _withdraw(tokenId);
-
-        emit Withdraw(msg.sender, tokenId);
+        emit Withdrawal(msg.sender, tokenId);
     }
 
     /**
@@ -431,6 +443,7 @@ contract EnderBond is
             dayToRewardShareIndex[timeNow] = rewardShareIndex;
             console.log(rewardShareIndex, "rewardShareIndex first time");
         }
+        emit RewardShareIndexUpdated(rewardShareIndex);
     }
 
     /**
@@ -498,6 +511,7 @@ contract EnderBond is
         bondYieldShareIndex = bondYieldShareIndex + ((_endMint) / finalRewardPrincipal);
         dayBondYieldShareIndex[timeNow] = bondYieldShareIndex;
         secondsBondYieldShareIndex[block.timestamp] = bondYieldShareIndex;
+        emit BondYieldShareIndexUpdated(bondYieldShareIndex);
     }
 
     /**
@@ -675,6 +689,7 @@ contract EnderBond is
         bonds[tokenId].refractionSIndex = refractionSIndex;
         bonds[tokenId].stakingSendIndex = stakingSendIndex;
         bonds[tokenId].YieldIndex = YieldIndex;
+        emit RewardSharePerUserIndexSet(tokenId, rewardShareIndex);
     }
 
     function resetEndMint() external{

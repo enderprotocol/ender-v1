@@ -69,10 +69,12 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     mapping(uint256 => uint256) public vestedTime; // count => time
     mapping(uint256 => VestAmount) public yearlyVestAmount;
 
-    event TreasuryContractChanged(address indexed newTreasury);
+     event TreasuryContractChanged(address indexed newTreasury);
     event FeeUpdated(uint256 fee);
     event DayfeeUpdated(uint256 amount, uint256 updateTime);
     event RefractionFeesDistributed(address indexed to, uint256 indexed amount);
+    event MintAndVest(uint256 time, uint256 mintAmount);
+    event GetMintedEnd(uint256 time, uint256 withdrawAmount);
 
     /**
      * @notice Initializes the EndToken contract
@@ -154,6 +156,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
             mintFee -= 10;
         }
         if (lastYear == 0) lastYear = time / 31536000;
+        emit MintAndVest(block.timestamp, mintAmount);
     }
 
     // function getMintedEndtemp() external onlyRole(DEFAULT_ADMIN_ROLE) {

@@ -59,8 +59,16 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     // uint256 public totalEthStakedInStrategy;
     // uint256 public totalDeposit
 
-    event AddressUpdated(address indexed newAddr, uint256 addrType);
-    event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
+  event StrategyUpdated(address indexed strategy, bool isActive);
+event PriorityStrategyUpdated(address indexed priorityStrategy);
+event NominalYieldUpdated(uint256 nominalYield);
+event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
+event TreasuryDeposit(address indexed asset, uint256 amount);
+event TreasuryWithdraw(address indexed asset, uint256 amount);
+event StrategyDeposit(address indexed asset, address indexed strategy, uint256 amount);
+event StrategyWithdraw(address indexed asset, address indexed strategy, uint256 amount);
+event Collect(address indexed account, uint256 amount);
+event MintEndToUser(address indexed to, uint256 amount);
 
     /**
      * @notice Initialize the contract and set the END token address
@@ -131,7 +139,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         
 
 
-        emit AddressUpdated(_addr, _type);
+       
     }
 
 
@@ -143,8 +151,9 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         if (_newBaseRate == 0) revert InvalidBaseRate();
 
         bondYieldBaseRate = _newBaseRate;
+         emit BondYieldBaseRateUpdated(_newBaseRate);
 
-        emit BondYieldBaseRateUpdated(_newBaseRate);
+     
     }
 
     function getAddress(uint256 _type) external view returns (address addr) {
@@ -164,16 +173,19 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         unchecked {
             for (uint8 i; i < _strs.length; ++i) {
                 strategies[_strs[i]] = _flag;
+                 emit StrategyUpdated(_strs[i], _flag);
             }
         }
     }
 
     function setPriorityStrategy(address _priorityStrategy) public onlyOwner {
         priorityStrategy = _priorityStrategy;
+         emit PriorityStrategyUpdated(_priorityStrategy);
     }
 
     function setNominalYield(uint256 _nominalYield) public onlyOwner {
         nominalYield = _nominalYield;
+         emit NominalYieldUpdated(_nominalYield);
     }
 
     // function getInterest(uint256 maturity) public view returns (uint256 rate) {
@@ -268,6 +280,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             //Todo will add the instance while going on mainnet.
         }
         totalAssetStakedInStrategy[_asset] += _depositAmt;
+         emit StrategyDeposit(_asset, _strategy, _depositAmt);
     }
 
     /**
@@ -299,6 +312,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         if (_returnAmount > 0) {
             totalRewardsFromStrategy[_asset] += _returnAmount;
         }
+         emit StrategyWithdraw(_asset, _strategy, _returnAmount);
     }
 
     /**
@@ -314,6 +328,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
         // bond token transfer
         _transferFunds(param.account, param.stakingToken, param.tokenAmt);
+        emit TreasuryWithdraw(param.stakingToken, param.tokenAmt);
     }
 
     /**
@@ -324,11 +339,13 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
     function collect(address account, uint256 amount) external onlyBond {
         IERC20(endToken).transfer(account, amount);
+        emit Collect(account, amount);
     }
 
     function mintEndToUser(address _to, uint256 _amount) external onlyBond {
         ///just return for temp  should changethe
         IEndToken(endToken).mint(_to, _amount);
+         emit MintEndToUser(_to, _amount);
     }
 
     /**
