@@ -47,6 +47,9 @@ async function main() {
     endToken = await upgrades.deployProxy(EndToken, [], {
         initializer: "initialize",
     });
+    console.log("init4");
+    await sleep(10000);
+
     await endToken.waitForDeployment();
     await sleep(6000);
     endTokenAddress = await endToken.getAddress();
@@ -70,6 +73,8 @@ async function main() {
    enderBondAddress = await enderBond.getAddress();
    console.log("enderBondAddress", enderBondAddress);
 
+   enderBondAddress = await enderBond.getAddress();
+    console.log(`enderBondAddress`, enderBondAddress);
    
    bondNFT = await upgrades.deployProxy(BondNFT, [enderBondAddress, baseURI], {
     initializer: "initialize",
@@ -85,6 +90,8 @@ enderStakingAddress = await enderStaking.getAddress();
 console.log("enderStakingAddress", enderStakingAddress);
 
 
+bondNFTAddress = await bondNFT.getAddress();
+console.log(`bondNftAddress`, bondNftAddress);
    enderTreasury = await upgrades.deployProxy(
     EnderTreasury,
     [
@@ -106,8 +113,12 @@ await sleep(6000);
 enderTreasuryAddress = await enderTreasury.getAddress();
 console.log("enderTreasuryAddress", enderTreasuryAddress);
 
+enderTreasuryAddress = await enderTreasury.getAddress();
+console.log(`enderTreasuryAddress`, enderTreasuryAddress);
 
 
+enderStakingAddress = await enderStaking.getAddress();
+console.log("enderStakingAddress",enderStakingAddress);
 }
 
 
