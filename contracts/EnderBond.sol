@@ -60,6 +60,7 @@ contract EnderBond is
     mapping(uint256 => uint256) public userBondPrincipalAmount;
     mapping(uint256 => uint256) public userBondYieldShareIndex; //s0
     mapping(uint256 => uint256) public availableFundsAtMaturity;
+    mapping(uint256 => uint256) public rewardPrincipalAtMaturity;
 
     mapping(uint256 => uint256) public dayToRewardShareIndex;
 
@@ -90,6 +91,7 @@ contract EnderBond is
     uint256 public SECONDS_IN_DAY;
     uint256 public lastDay;
     uint256 private amountRequired;
+    uint256 private rewardAmountRequired;
     uint public interval;
     uint public lastTimeStamp;
 
@@ -335,6 +337,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         console.log(principal, "principal");
 
         uint256 depositPrincipal = (getInterest(maturity) * ((100 + (bondFee))) * principal) / (365 * 1e8);
+        rewardPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += depositPrincipal;
 
         console.log(depositPrincipal, "depositPrincipal");
 
@@ -393,15 +396,14 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
         if (rewardSharePerUserIndexSend[_tokenId] != rewardShareIndexSend) claimStakingReward(_tokenId, bond.stakingSendIndex);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
-        // bondNFT.transferFrom(msg.sender, address(this), _tokenId);
-        // bondNFT.burn(_tokenId)
 
         userBondPrincipalAmount[_tokenId] == 0;
         delete userBondYieldShareIndex[_tokenId];
         console.log(amountRequired, bond.principal, "amountRequired,bond.principal");
-        amountRequired -= bond.principal;
-        //have to add status for reedem
-        // delete bonds[_tokenId];
+        amountRequired -= bond.principal; 
+
+        totalRewardPrincipal -= bond.depositPrincipal;
+        rewardAmountRequired -= bond.depositPrincipal;
     }
 
     function getLoopCount() public returns (uint256) {
@@ -411,8 +413,8 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (currentDay == lastDay) return amountRequired;
         for (uint256 i = lastDay + 1; i <= currentDay; i++) {
             console.log("11111111111111111111");
-            // console.log("availableFundsAtMaturity[i]",availableFundsAtMaturity[i]);
             amountRequired += availableFundsAtMaturity[i];
+            rewardAmountRequired += rewardPrincipalAtMaturity[i];
         }
         lastDay = currentDay;
         console.log("amountRequired", amountRequired);
@@ -444,7 +446,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
 
             rewardShareIndex =
                 (rewardShareIndex) +
-                ((_reward * 10 ** 18) / (totalRewardPrincipal - availableFundsAtMaturity[timeNow + 4]));
+                ((_reward * 10 ** 18) / (totalRewardPrincipal - rewardAmountRequired));
             dayToRefractionShareUpdation[timeNow].push(block.timestamp);
             dayToRewardShareIndex[timeNow] = rewardShareIndex;
             console.log(rewardShareIndex, "rewardShareIndex first time");
@@ -462,14 +464,14 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         rewardShareIndexSend =
             rewardShareIndexSend +
-            ((_reward * 10 ** 18) / totalRewardPrincipal - availableFundsAtMaturity[timeNow + 4]);
+            ((_reward * 10 ** 18) / totalRewardPrincipal - rewardAmountRequired);
         dayRewardShareIndexForSend[timeNow] = rewardShareIndexSend;
         dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
         secondsRefractionShareIndexSend[block.timestamp] = rewardShareIndexSend;
         console.log(rewardShareIndexSend, "rewardShareIndexSend");
     }
 
-    function findClosestS(uint256[] memory arr, uint256 _totalMaturity) public pure returns (uint256 _s) {
+    function findClosestS(uint256[] memory arr, uint256 _totalMaturity) internal pure returns (uint256 _s) {
         // uint256[] memory arr = dayToBondYieldShareUpdation[_totalMaturity];
         uint256 low = 0;
         uint256 high = arr.length - 1;
@@ -508,7 +510,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
-        uint256 finalRewardPrincipal = (totalBondPrincipalAmount - availableFundsAtMaturity[timeNow + 4]);
+        uint256 finalRewardPrincipal = (totalBondPrincipalAmount - rewardAmountRequired);
         console.log(totalBondPrincipalAmount, "totalBondPrincipalAmount");
         uint256 _endMint = (priceEth * finalRewardPrincipal)/priceEnd;
         endMint += _endMint;

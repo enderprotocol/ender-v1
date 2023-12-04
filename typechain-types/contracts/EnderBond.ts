@@ -49,7 +49,6 @@ export interface EnderBondInterface extends Interface {
       | "epochBondYieldShareIndex"
       | "epochRewardShareIndex"
       | "epochRewardShareIndexForSend"
-      | "findClosestS"
       | "getAddress"
       | "getInterest"
       | "getLoopCount"
@@ -67,6 +66,7 @@ export interface EnderBondInterface extends Interface {
       | "rateOfChange"
       | "renounceOwnership"
       | "resetEndMint"
+      | "rewardPrincipalAtMaturity"
       | "rewardShareIndex"
       | "rewardShareIndexSend"
       | "rewardSharePerUserIndex"
@@ -204,10 +204,6 @@ export interface EnderBondInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "findClosestS",
-    values: [BigNumberish[], BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getAddress",
     values: [BigNumberish]
   ): string;
@@ -256,6 +252,10 @@ export interface EnderBondInterface extends Interface {
   encodeFunctionData(
     functionFragment: "resetEndMint",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "rewardPrincipalAtMaturity",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "rewardShareIndex",
@@ -432,10 +432,6 @@ export interface EnderBondInterface extends Interface {
     functionFragment: "epochRewardShareIndexForSend",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "findClosestS",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "getAddress", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getInterest",
@@ -475,6 +471,10 @@ export interface EnderBondInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "resetEndMint",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "rewardPrincipalAtMaturity",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -1026,12 +1026,6 @@ export interface EnderBond extends BaseContract {
     "nonpayable"
   >;
 
-  findClosestS: TypedContractMethod<
-    [arr: BigNumberish[], _totalMaturity: BigNumberish],
-    [bigint],
-    "view"
-  >;
-
   getAddress: TypedContractMethod<[_type: BigNumberish], [string], "view">;
 
   getInterest: TypedContractMethod<[maturity: BigNumberish], [bigint], "view">;
@@ -1069,6 +1063,12 @@ export interface EnderBond extends BaseContract {
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
   resetEndMint: TypedContractMethod<[], [void], "nonpayable">;
+
+  rewardPrincipalAtMaturity: TypedContractMethod<
+    [arg0: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
   rewardShareIndex: TypedContractMethod<[], [bigint], "view">;
 
@@ -1336,13 +1336,6 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "epochRewardShareIndexForSend"
   ): TypedContractMethod<[_reward: BigNumberish], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "findClosestS"
-  ): TypedContractMethod<
-    [arr: BigNumberish[], _totalMaturity: BigNumberish],
-    [bigint],
-    "view"
-  >;
-  getFunction(
     nameOrSignature: "getAddress"
   ): TypedContractMethod<[_type: BigNumberish], [string], "view">;
   getFunction(
@@ -1397,6 +1390,9 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "resetEndMint"
   ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "rewardPrincipalAtMaturity"
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "rewardShareIndex"
   ): TypedContractMethod<[], [bigint], "view">;
