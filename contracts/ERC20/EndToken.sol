@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -89,7 +89,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         excludeWallets[address(this)] = true;
         excludeWallets[msg.sender] = true;
         mintCount = 4;
-
+        setFee(500);
         unchecked {
             lastTransfer = block.timestamp - (block.timestamp % 1 days);
         }

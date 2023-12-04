@@ -16,11 +16,6 @@ const _abi = [
         name: "_amount",
         type: "uint256",
       },
-      {
-        internalType: "address",
-        name: "_user",
-        type: "address",
-      },
     ],
     name: "deposit",
     outputs: [],
@@ -33,16 +28,6 @@ const _abi = [
         internalType: "uint256",
         name: "assets_",
         type: "uint256",
-      },
-      {
-        internalType: "address",
-        name: "receiver_",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "owner_",
-        type: "address",
       },
     ],
     name: "withdraw",

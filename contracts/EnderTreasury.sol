@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.18;
 
 // Openzeppelin
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -272,16 +272,16 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
             IERC20(_asset).approve(_strategy, _depositAmt);
-            IInstadappLite(instadapp).deposit(_depositAmt, address(this));
-        } else if (_strategy == lybraFinance) {
-            IERC20(_asset).approve(lybraFinance, _depositAmt);
-            ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);
-        } else if (_strategy == eigenLayer) {
-            //Todo will add the instance while going on mainnet.
-        }
-        totalAssetStakedInStrategy[_asset] += _depositAmt;
-         emit StrategyDeposit(_asset, _strategy, _depositAmt);
-    }
+            IInstadappLite(instadapp).deposit(_depositAmt);  // note for testing we changed the function sig.                         
+        } else if (_strategy == lybraFinance) {                                                   
+            IERC20(_asset).approve(lybraFinance, _depositAmt);                                          
+            ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);                                  
+        } else if (_strategy == eigenLayer) {                                                                 
+            //Todo will add the instance while going on mainnet.                                                 
+        }                                                                                 
+        totalAssetStakedInStrategy[_asset] += _depositAmt;                                                    
+         emit StrategyDeposit(_asset, _strategy, _depositAmt);                                            
+    }                                                                                                       
 
     /**
      * @notice function to deposit available funds to strategies.
@@ -289,9 +289,9 @@ event MintEndToUser(address indexed to, uint256 amount);
      * @param _strategy address of the strategy from which admin wish to withdraw,
      * @param _withdrawAmt amount of stETH admin wants to withdraw from the strategy.
      */
-    function withdrawFromStrategy(
-        address _asset,
-        address _strategy,
+    function withdrawFromStrategy(                                                                     
+        address _asset,                                                                        
+        address _strategy,                                                         
         uint256 _withdrawAmt
     ) public validStrategy(_strategy) returns (uint256 _returnAmount) {
         console.log("block.timestamp", block.timestamp);
@@ -300,10 +300,10 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         address receiptToken = strategyToReceiptToken[_strategy];
         console.log("receiptToken",receiptToken);
-        if (_strategy == instadapp) {
+        if (_strategy == instadapp) {                                                               
             //Todo set the asset as recipt tokens and need to check the assets ratio while depolying on mainnet
             IERC20(receiptToken).approve(instadapp, _withdrawAmt);
-            _returnAmount = IInstadappLite(instadapp).withdraw(_withdrawAmt, address(this), address(this));
+            _returnAmount = IInstadappLite(instadapp).withdraw(_withdrawAmt);
         } else if (_strategy == lybraFinance) {
             IERC20(receiptToken).approve(lybraFinance, _withdrawAmt);
             _returnAmount = ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
@@ -322,7 +322,7 @@ event MintEndToUser(address indexed to, uint256 amount);
     function withdraw(EndRequest memory param, uint256 amountRequired) external onlyBond {
         if (amountRequired > IERC20(param.stakingToken).balanceOf(address(this))) {
             withdrawFromStrategy(param.stakingToken, priorityStrategy, amountRequired);
-        }
+        }   
         epochWithdrawl += param.tokenAmt;
         fundsInfo[param.stakingToken] -= param.tokenAmt;
 

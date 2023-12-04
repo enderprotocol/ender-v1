@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.18;
 
 interface ILybraFinance{
     function depositAssetToMint(uint256 assetAmount,uint256 mintAmount) external;

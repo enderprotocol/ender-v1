@@ -46,7 +46,6 @@ export interface EnderBondInterface extends Interface {
       | "deposit"
       | "eip712Domain"
       | "endMint"
-      | "endStaking"
       | "epochBondYieldShareIndex"
       | "epochRewardShareIndex"
       | "epochRewardShareIndexForSend"
@@ -192,10 +191,6 @@ export interface EnderBondInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "endMint", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "endStaking",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "epochBondYieldShareIndex",
     values?: undefined
@@ -425,7 +420,6 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "endMint", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "endStaking", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "epochBondYieldShareIndex",
     data: BytesLike
@@ -1018,8 +1012,6 @@ export interface EnderBond extends BaseContract {
 
   endMint: TypedContractMethod<[], [bigint], "view">;
 
-  endStaking: TypedContractMethod<[], [string], "view">;
-
   epochBondYieldShareIndex: TypedContractMethod<[], [void], "nonpayable">;
 
   epochRewardShareIndex: TypedContractMethod<
@@ -1334,9 +1326,6 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "endMint"
   ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "endStaking"
-  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "epochBondYieldShareIndex"
   ): TypedContractMethod<[], [void], "nonpayable">;

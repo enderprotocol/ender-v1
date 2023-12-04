@@ -31,9 +31,9 @@ async function main() {
         bondNFT;
 
 
-    stEth = await StEth.deploy();
-    stEthAddress = await stEth.getAddress();
-    console.log(stEthAddress, "stEthAddress")
+    // stEth = await StEth.deploy();
+    // stEthAddress = await stEth.getAddress();
+    // console.log(stEthAddress, "stEthAddress")
     await sleep(6000);
     console.log("AA");
     sEnd = await upgrades.deployProxy(SEndToken, [], {

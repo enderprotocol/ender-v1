@@ -143,7 +143,7 @@ export interface SEndTokenInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setMinterRole",
-    values?: undefined
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setStatus",
@@ -522,7 +522,11 @@ export interface SEndToken extends BaseContract {
     "nonpayable"
   >;
 
-  setMinterRole: TypedContractMethod<[], [void], "nonpayable">;
+  setMinterRole: TypedContractMethod<
+    [_staking: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   setStatus: TypedContractMethod<[_status: BigNumberish], [void], "nonpayable">;
 
@@ -665,7 +669,7 @@ export interface SEndToken extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "setMinterRole"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+  ): TypedContractMethod<[_staking: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setStatus"
   ): TypedContractMethod<[_status: BigNumberish], [void], "nonpayable">;

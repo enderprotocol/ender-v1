@@ -30,6 +30,7 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
     function initialize() external initializer {
         __ERC20_init("End Token", "END");
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        setStatus(1);
         status = 1;
         enableOrDisableTX = false;
         console.log("im here");
@@ -40,9 +41,6 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
         if (_addr == address(0)) revert ZeroAddress();
 
         if (_type == 1) staking = _addr;
-        // else if (_type == 2) enderTreasury = _addr;
-        // else if (_type == 3) endToken = _addr;
-        // else if (_type == 4) sEndToken = _addr;
 
         emit AddressUpdated(_addr, _type);
     }
@@ -57,8 +55,8 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
         }
     }
 
-    function setMinterRole() public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _grantRole(MINTER_ROLE, staking);
+    function setMinterRole(address _staking) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(MINTER_ROLE, _staking);
     }
 
     /**
@@ -83,7 +81,7 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
         super._transfer(from, address(0xdead), value);
     }
 
-    function whitelist(address _whitelistingAddress, bool _action) external {
+    function whitelist(address _whitelistingAddress, bool _action) external onlyRole(DEFAULT_ADMIN_ROLE){
         isWhitelisted[_whitelistingAddress] = _action;
         emit WhiteListChanged(_whitelistingAddress, _action);
     }

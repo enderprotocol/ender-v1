@@ -70,7 +70,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
     enderBond = await upgrades.deployProxy(
       EnderBond,
-      [endTokenAddress, instadappLiteAddress, oracleAddress],
+      [endTokenAddress, ethers.ZeroAddress, oracleAddress],
       {
         initializer: "initialize",
       }
@@ -95,7 +95,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         endTokenAddress,
         enderStakingAddress,
         enderBondAddress,
-        instadappLiteAddress,
+        ethers.ZeroAddress,
         ethers.ZeroAddress,
         ethers.ZeroAddress,
         70,
@@ -137,8 +137,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     await enderBond.setAddress(stEthAddress,6);
 
     await endToken.grantRole(MINTER_ROLE,enderStakingAddress);
+    await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953",enderBondAddress);
+    console.log("role chechking-------->",enderBondAddress,  await endToken.hasRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953", enderBondAddress));
     await enderBond.setBool(true);
-
     // await endToken.grantRole()
   });
 
@@ -233,6 +234,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       //this is where the user will deposit the StEth in to the contract
       //in the deposit the amount will be divided in to 30 and 70% where the admin Will have access to further
       //deposit it into the strategy for every 24 hours
+      await sleep(18000);
       const tokenId = await depositAndSetup(
         signer1,
         depositPrincipalStEth,
@@ -257,7 +259,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         maturity,
         bondFee
       );
-
+        console.log("-------------------------------------------------------------------")
       //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       increaseTime(50000000);
       await enderBond.epochBondYieldShareIndex();
@@ -306,7 +308,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         .connect(signer1)
         .approve(enderBondAddress, depositPrincipalStEth);
 
-      await enderTreasury.depositInStrategy(stEthAddress, instadappLiteAddress, "2000000000000000000");
+      await enderTreasury.depositInStrategy(stEthAddress, "0x0000000000000000000000000000000000000000", "2000000000000000000");
         console.log("before deposit")
       const tokenId2 = await depositAndSetup(
         signer1,
@@ -435,3 +437,8 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     await ethers.provider.send("evm_mine");
   }
 });
+
+function sleep(ms)
+ {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

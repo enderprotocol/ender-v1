@@ -8,7 +8,6 @@ import type {
   FunctionFragment,
   Result,
   Interface,
-  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -26,11 +25,11 @@ export interface IInstadappLiteInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "deposit",
-    values: [BigNumberish, AddressLike]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "withdraw",
-    values: [BigNumberish, AddressLike, AddressLike]
+    values: [BigNumberish]
   ): string;
 
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
@@ -80,14 +79,10 @@ export interface IInstadappLite extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  deposit: TypedContractMethod<
-    [_amount: BigNumberish, _user: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  deposit: TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
 
   withdraw: TypedContractMethod<
-    [assets_: BigNumberish, receiver_: AddressLike, owner_: AddressLike],
+    [assets_: BigNumberish],
     [bigint],
     "nonpayable"
   >;
@@ -98,18 +93,10 @@ export interface IInstadappLite extends BaseContract {
 
   getFunction(
     nameOrSignature: "deposit"
-  ): TypedContractMethod<
-    [_amount: BigNumberish, _user: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  ): TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "withdraw"
-  ): TypedContractMethod<
-    [assets_: BigNumberish, receiver_: AddressLike, owner_: AddressLike],
-    [bigint],
-    "nonpayable"
-  >;
+  ): TypedContractMethod<[assets_: BigNumberish], [bigint], "nonpayable">;
 
   filters: {};
 }
