@@ -204,7 +204,7 @@ describe("EnderBond", function () {
 
             expect(await bondNFT.ownerOf(args1.tokenId)).to.be.equal(signer1.address);
         });
-        it.only("Should decuct fees on each transfer of NFT", async function () {
+        it("Should decuct fees on each transfer of NFT", async function () {
             const depositPrincipal = 100000000000000;
             const maturity = 90;
             const bondFee = 5;

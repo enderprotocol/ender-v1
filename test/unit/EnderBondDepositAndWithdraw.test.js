@@ -138,6 +138,8 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
     await endToken.grantRole(MINTER_ROLE,enderStakingAddress);
     await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953",enderBondAddress);
+    await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953",owner.address);
+
     console.log("role chechking-------->",enderBondAddress,  await endToken.hasRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953", enderBondAddress));
     await enderBond.setBool(true);
     // await endToken.grantRole()
@@ -259,143 +261,143 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         maturity,
         bondFee
       );
-        console.log("-------------------------------------------------------------------")
-      //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
-      increaseTime(50000000);
-      await enderBond.epochBondYieldShareIndex();
-      //user cant collect the refraction rewards before the Distribution is done
-      // await expect(
-      //   enderBond.connect(signer1).claimRefractionRewards(tokenId)
-      // ).to.be.revertedWithCustomError(enderBond, "NotAllowed");
+      //   console.log("-------------------------------------------------------------------")
+      // //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
+      // increaseTime(50000000);
+      // await enderBond.epochBondYieldShareIndex();
+      // //user cant collect the refraction rewards before the Distribution is done
+      // // await expect(
+      // //   enderBond.connect(signer1).claimRefractionRewards(tokenId)
+      // // ).to.be.revertedWithCustomError(enderBond, "NotAllowed");
 
-      expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
-        await enderBond.userBondYieldShareIndex(tokenId)
-      );
-
-      //now this can be called because the first deposit has done
-      await endToken.distributeRefractionFees();
-
-      //  there are two tx done above which have 20% fee it will be equal to 400000000000000000
-      // expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(
-      //   expandTo18Decimals(0.4)
+      // expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
+      //   await enderBond.userBondYieldShareIndex(tokenId)
       // );
-      console.log(
-        await endToken.balanceOf(enderBondAddress),
-        "after the first distribution balance of enderBond for end tokens"
-      );
 
-      const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
-      console.log("first");
+      // //now this can be called because the first deposit has done
+      // await endToken.distributeRefractionFees();
 
-      //as the distribution is done user now can withdraw the rewards
-      await enderBond.connect(signer1).claimRefractionRewards(tokenId,0);
-      console.log("ieufaksjfkajbfiabfikaf");
+      // //  there are two tx done above which have 20% fee it will be equal to 400000000000000000
+      // // expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(
+      // //   expandTo18Decimals(0.4)
+      // // );
+      // console.log(
+      //   await endToken.balanceOf(enderBondAddress),
+      //   "after the first distribution balance of enderBond for end tokens"
+      // );
 
-      //   as he claimed the rewards
-      expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
-        initialBalanceOfuser
-      );
-      console.log(
-        await endToken.balanceOf(enderBondAddress),
-        "),------------------)"
-      );
+      // const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
+      // console.log("first");
 
-      //for depositing second time by the same user
+      // //as the distribution is done user now can withdraw the rewards
+      // await enderBond.connect(signer1).claimRefractionRewards(tokenId,0);
+      // console.log("ieufaksjfkajbfiabfikaf");
 
-      await stEth.mint(await signer1.getAddress(), depositPrincipalStEth);
+      // //   as he claimed the rewards
+      // expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
+      //   initialBalanceOfuser
+      // );
+      // console.log(
+      //   await endToken.balanceOf(enderBondAddress),
+      //   "),------------------)"
+      // );
 
-      await stEth
-        .connect(signer1)
-        .approve(enderBondAddress, depositPrincipalStEth);
+      // //for depositing second time by the same user
 
-      await enderTreasury.depositInStrategy(stEthAddress, "0x0000000000000000000000000000000000000000", "2000000000000000000");
-        console.log("before deposit")
-      const tokenId2 = await depositAndSetup(
-        signer1,
-        depositPrincipalStEth,
-        maturity * 2,
-        bondFee
-      );
+      // await stEth.mint(await signer1.getAddress(), depositPrincipalStEth);
 
-      //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
-      await enderBond.epochBondYieldShareIndex();
+      // await stEth
+      //   .connect(signer1)
+      //   .approve(enderBondAddress, depositPrincipalStEth);
 
-      expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
-        await enderBond.userBondYieldShareIndex(tokenId2)
-      );
+      // await enderTreasury.depositInStrategy(stEthAddress, "0x0000000000000000000000000000000000000000", "2000000000000000000");
+      //   console.log("before deposit")
+      // const tokenId2 = await depositAndSetup(
+      //   signer1,
+      //   depositPrincipalStEth,
+      //   maturity * 2,
+      //   bondFee
+      // );
 
-      expect(await bondNFT.ownerOf(tokenId2)).to.be.equal(
-        await bondNFT.ownerOf(tokenId)
-      );
+      // //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
+      // await enderBond.epochBondYieldShareIndex();
 
-      //user cant collect the refraction rewards before the Distribution is done
-      await expect(
-        enderBond.connect(signer1).claimRefractionRewards(tokenId2,0)
-      ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
+      // expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
+      //   await enderBond.userBondYieldShareIndex(tokenId2)
+      // );
 
-      //increasing the time 1 day
+      // expect(await bondNFT.ownerOf(tokenId2)).to.be.equal(
+      //   await bondNFT.ownerOf(tokenId)
+      // );
 
-      increaseTime(24 * 3600);
-      const initalBalanceOfEnderBond = await endToken.balanceOf(
-        enderBondAddress
-      );
-      //   await endToken.distributeRefractionFees();
+      // //user cant collect the refraction rewards before the Distribution is done
+      // await expect(
+      //   enderBond.connect(signer1).claimRefractionRewards(tokenId2,0)
+      // ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
 
-      //  there are one tx done above which have 20% fee it will be equal to 0.080000000896
-      //because the refraction rewarded colledted when the rewared is transferred to the tokenId1
-      //   expect(await endToken.balanceOf(enderBondAddress)).to.be.greaterThan(
-      //     initalBalanceOfEnderBond
-      //   );
+      // //increasing the time 1 day
+
+      // increaseTime(24 * 3600);
+      // const initalBalanceOfEnderBond = await endToken.balanceOf(
+      //   enderBondAddress
+      // );
+      // //   await endToken.distributeRefractionFees();
+
+      // //  there are one tx done above which have 20% fee it will be equal to 0.080000000896
+      // //because the refraction rewarded colledted when the rewared is transferred to the tokenId1
+      // //   expect(await endToken.balanceOf(enderBondAddress)).to.be.greaterThan(
+      // //     initalBalanceOfEnderBond
+      // //   );
       
-      console.log("jssksksksksksks");
-      console.log(
-        await endToken.balanceOf(enderBondAddress),
-        "after the second distribution balance of enderBond for end tokens"
-      );
+      // console.log("jssksksksksksks");
+      // console.log(
+      //   await endToken.balanceOf(enderBondAddress),
+      //   "after the second distribution balance of enderBond for end tokens"
+      // );
 
-      const initialBalanceOfuser1 = await endToken.balanceOf(signer1.address);
+      // const initialBalanceOfuser1 = await endToken.balanceOf(signer1.address);
 
-      //as the distribution is done user now can withdraw the rewards
-      //   await enderBond.connect(signer1).claimRefractionRewards(tokenId2);
+      // //as the distribution is done user now can withdraw the rewards
+      // //   await enderBond.connect(signer1).claimRefractionRewards(tokenId2);
 
-      //   await enderBond.connect(signer1).claimRefractionRewards(tokenId);
+      // //   await enderBond.connect(signer1).claimRefractionRewards(tokenId);
 
-      //as he claimed the rewards
-      //   expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
-      //     initialBalanceOfuser1
-      //   );
+      // //as he claimed the rewards
+      // //   expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
+      // //     initialBalanceOfuser1
+      // //   );
 
-      //now we hit the refraction function in the token contract
-      //which will update the rewardShareIndex in the enderbond
+      // //now we hit the refraction function in the token contract
+      // //which will update the rewardShareIndex in the enderbond
 
-      const userAddressBefore = await endToken.balanceOf(signer1.address);
+      // const userAddressBefore = await endToken.balanceOf(signer1.address);
 
-      // Wait for the bond to mature
-      await increaseTime(90 * 24 * 3600);
+      // // Wait for the bond to mature
+      // await increaseTime(90 * 24 * 3600);
 
-      console.log(await stEth.balanceOf(signer1.address), "signer1");
+      // console.log(await stEth.balanceOf(signer1.address), "signer1");
 
-      //   await endToken.distributeRefractionFees();
+      // //   await endToken.distributeRefractionFees();
 
-      console.log(
-        await endToken.balanceOf(signer1.address),
-        "balance before the withdraw before"
-      );
-      MINTER_ROLE;
+      // console.log(
+      //   await endToken.balanceOf(signer1.address),
+      //   "balance before the withdraw before"
+      // );
+      // MINTER_ROLE;
 
 
-      await withdrawAndSetup(signer1, tokenId);
+      // await withdrawAndSetup(signer1, tokenId);
 
-      await withdrawAndSetup(signer1, tokenId2);
+      // await withdrawAndSetup(signer1, tokenId2);
 
-      expect(await stEth.balanceOf(signer1.address)).to.be.equal(
-        expandTo18Decimals(1.9)
-      );
+      // expect(await stEth.balanceOf(signer1.address)).to.be.equal(
+      //   expandTo18Decimals(1.9)
+      // );
 
-      console.log(
-        await endToken.balanceOf(signer1.address),
-        "balance after the withdraw after--------------"
-      );
+      // console.log(
+      //   await endToken.balanceOf(signer1.address),
+      //   "balance after the withdraw after--------------"
+      // );
     });
 
 

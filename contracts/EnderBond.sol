@@ -385,7 +385,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         if (block.timestamp < bond.startTime + bond.maturity) revert BondNotMatured();
         IEndToken(endToken).distributeRefractionFees();
-        // update current bond
+        // update current bond 
         bond.withdrawn = true;
 
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal), getLoopCount());
