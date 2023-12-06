@@ -323,6 +323,7 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (amountRequired > IERC20(param.stakingToken).balanceOf(address(this))) {
             withdrawFromStrategy(param.stakingToken, priorityStrategy, amountRequired);
         }   
+        console.log("-----------------In treasury withdraw--------------------------", amountRequired, IERC20(param.stakingToken).balanceOf(address(this)));
         epochWithdrawl += param.tokenAmt;
         fundsInfo[param.stakingToken] -= param.tokenAmt;
 
