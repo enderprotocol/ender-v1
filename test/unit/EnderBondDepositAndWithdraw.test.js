@@ -4,6 +4,7 @@ const { BigNumber } = require("ethers");
 
 const { EigenLayerStrategyManagerAddress } = require("../utils/common");
 const exp = require("constants");
+const { sign } = require("crypto");
 // const { describe } = require("node:test");
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
 const baseURI =
@@ -23,6 +24,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     enderBondAddress,
     enderTreasuryAddress,
     enderStakingAddress,
+    mockWETHAddress,
     instadappLiteAddress;
 
   let endToken,
@@ -33,28 +35,32 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     sEnd,
     sEndTokenAddress,
     instadappLitelidoStaking,
+    WETH,
     stEth,
     bondNFT,
     oracle,
     oracleAddress;
 
   before(async function () {
-    const StEth = await ethers.getContractFactory("StEth");
-    const InstadappLite = await ethers.getContractFactory("instadappLite");
+    const wETH = await ethers.getContractFactory("mockWETH");
+    const StEth = await ethers.getContractFactory("MockStEth");
+    const InstadappLite = await ethers.getContractFactory("StinstaToken");
     const EndToken = await ethers.getContractFactory("EndToken");
     const EnderBond = await ethers.getContractFactory("EnderBond");
     const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
     const EnderStaking = await ethers.getContractFactory("EnderStaking");
     const SEnd = await ethers.getContractFactory("SEndToken");
     const Oracle = await ethers.getContractFactory("EnderOracle");
-
-    stEth = await StEth.deploy();
+    [owner, wallet1, signer1, signer2, signer3] = await ethers.getSigners();
+    WETH = await wETH.connect(owner).deploy("wrappedETH", "weth", owner.address);
+    mockWETHAddress = await WETH.getAddress();
+    stEth = await StEth.deploy(mockWETHAddress ,owner.address);
     stEthAddress = await stEth.getAddress();
-
+    console.log("I'm heeeeeeeeeeeeeeeeeeeeeeeeerrrrrrrrrrreeeeeeeeeeee");
     sEnd = await SEnd.deploy();
     sEndTokenAddress = await sEnd.getAddress();
 
-    instadappLitelidoStaking = await InstadappLite.deploy(stEthAddress);
+    instadappLitelidoStaking = await InstadappLite.deploy("InstaToken", "Inst", owner.address, stEthAddress);
     instadappLiteAddress = await instadappLitelidoStaking.getAddress();
 
     endToken = await upgrades.deployProxy(EndToken, [], {
@@ -125,7 +131,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     await enderBond.setAddress(enderTreasuryAddress, 1);
     await enderBond.setAddress(bondNFTAddress, 3);
 
-    [owner, wallet1, signer1, signer2, signer3] = await ethers.getSigners();
 
     await endToken.grantRole(MINTER_ROLE, owner.address);
     await endToken.setFee(20);
@@ -224,15 +229,16 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       // ).to.be.revertedWithCustomError(enderBond, "WaitForFirstDeposit");
 
       expect(await enderBond.rewardShareIndex()).to.be.equal(0);
-
-      await stEth.mint(await signer1.getAddress(), depositPrincipalStEth);
-
+      await WETH.mint(signer1.address, depositPrincipalStEth);
+      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      await stEth.connect(signer1).mintShare(depositPrincipalStEth);
+      
       await stEth
-        .connect(signer1)
-        .approve(enderBondAddress, depositPrincipalStEth);
-
+      .connect(signer1)
+      .approve(enderBondAddress, depositPrincipalStEth);
+      
       await enderTreasury.setAddress(stEthAddress, 5);
-
+      
       //this is where the user will deposit the StEth in to the contract
       //in the deposit the amount will be divided in to 30 and 70% where the admin Will have access to further
       //deposit it into the strategy for every 24 hours
@@ -242,8 +248,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee
-      );
-
+        );
+        
+      console.log("I'm hheeeeeerrrrrreeeeeeeeee-----------------------")
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
 
       await stEth.mint(await signer2.getAddress(), depositPrincipalStEth);

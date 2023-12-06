@@ -287,7 +287,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee < 0 || bondFee > 100) revert InvalidBondFee();
+        if (bondFee <= 0 || bondFee > 100) revert InvalidBondFee();
         IEndToken(endToken).distributeRefractionFees();
 
         // token transfer
