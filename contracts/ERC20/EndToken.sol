@@ -218,7 +218,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         }
 
         if (withdrawAmount > 0) {
-            transfer(address(this), withdrawAmount);
+            transfer(msg.sender, withdrawAmount);
         }
     }
 
