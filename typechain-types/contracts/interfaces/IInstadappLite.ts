@@ -21,19 +21,44 @@ import type {
 } from "../../common";
 
 export interface IInstadappLiteInterface extends Interface {
-  getFunction(nameOrSignature: "deposit" | "withdraw"): FunctionFragment;
+  getFunction(
+    nameOrSignature:
+      | "deposit"
+      | "viewStinstaTokens"
+      | "viewStinstaTokensValue"
+      | "withdrawStinstaTokens"
+  ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "deposit",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "withdraw",
+    functionFragment: "viewStinstaTokens",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "viewStinstaTokensValue",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "withdrawStinstaTokens",
     values: [BigNumberish]
   ): string;
 
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "viewStinstaTokens",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "viewStinstaTokensValue",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawStinstaTokens",
+    data: BytesLike
+  ): Result;
 }
 
 export interface IInstadappLite extends BaseContract {
@@ -81,7 +106,19 @@ export interface IInstadappLite extends BaseContract {
 
   deposit: TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
 
-  withdraw: TypedContractMethod<
+  viewStinstaTokens: TypedContractMethod<
+    [stinstaAmount: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  viewStinstaTokensValue: TypedContractMethod<
+    [mstValue: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  withdrawStinstaTokens: TypedContractMethod<
     [assets_: BigNumberish],
     [bigint],
     "nonpayable"
@@ -95,7 +132,13 @@ export interface IInstadappLite extends BaseContract {
     nameOrSignature: "deposit"
   ): TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "withdraw"
+    nameOrSignature: "viewStinstaTokens"
+  ): TypedContractMethod<[stinstaAmount: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "viewStinstaTokensValue"
+  ): TypedContractMethod<[mstValue: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "withdrawStinstaTokens"
   ): TypedContractMethod<[assets_: BigNumberish], [bigint], "nonpayable">;
 
   filters: {};

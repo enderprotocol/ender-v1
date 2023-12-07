@@ -53,6 +53,9 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public reserveFundsPercentage;
     uint256 public epochDeposit;
     uint256 public epochWithdrawl;
+    uint256 public instaDappLastValuation;
+    uint256 public instaDappWithdrawlValuations;
+    uint256 public instaDappDepositValuations;
     /* Use an interval in seconds and a timestamp to slow execution of Upkeep */
 
     // uint256 public stEthBalBeforeStDep;
@@ -255,6 +258,10 @@ event MintEndToUser(address indexed to, uint256 amount);
             epochWithdrawl = 0;
             epochDeposit = 0;
             IEnderBond(enderBond).resetEndMint();
+            address receiptToken = strategyToReceiptToken[instadapp];
+            instaDappLastValuation = IInstadappLite(instadapp).viewStinstaTokensValue(IERC20(receiptToken).balanceOf(address(this)));
+            instaDappWithdrawlValuations = 0;
+            instaDappDepositValuations = 0;
         }
         console.log("rebaseReward", rebaseReward);
     }
@@ -273,9 +280,10 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_strategy == instadapp) {
             IERC20(_asset).approve(_strategy, _depositAmt);
             IInstadappLite(instadapp).deposit(_depositAmt);  // note for testing we changed the function sig.                         
+            instaDappDepositValuations += _depositAmt;
         } else if (_strategy == lybraFinance) {                                                   
             IERC20(_asset).approve(lybraFinance, _depositAmt);                                          
-            ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);                                  
+            ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);  
         } else if (_strategy == eigenLayer) {                                                                 
             //Todo will add the instance while going on mainnet.                                                 
         }                                                                                 
@@ -300,10 +308,11 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         address receiptToken = strategyToReceiptToken[_strategy];
         console.log("receiptToken",receiptToken);
-        if (_strategy == instadapp) {                                                               
+        if (_strategy == instadapp) { 
             //Todo set the asset as recipt tokens and need to check the assets ratio while depolying on mainnet
             IERC20(receiptToken).approve(instadapp, _withdrawAmt);
-            _returnAmount = IInstadappLite(instadapp).withdraw(_withdrawAmt);
+            _returnAmount = IInstadappLite(instadapp).withdrawStinstaTokens(_withdrawAmt);
+            instaDappWithdrawlValuations += _returnAmount;
         } else if (_strategy == lybraFinance) {
             IERC20(receiptToken).approve(lybraFinance, _withdrawAmt);
             _returnAmount = ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
@@ -357,9 +366,14 @@ event MintEndToUser(address indexed to, uint256 amount);
     function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
         // console.log(IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl, epochDeposit, "mmmmmmmmm");
         // console.log(_stEthAddress, "balanceLastEpoch3232");
-
-        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl - epochDeposit - balanceLastEpoch;
+        
+        address receiptToken = strategyToReceiptToken[instadapp];
+        uint256  stReturn = IInstadappLite(instadapp).viewStinstaTokensValue(IERC20(receiptToken).balanceOf(address(this))) +  instaDappWithdrawlValuations
+                            - instaDappDepositValuations - instaDappLastValuation;
+        //todo add stlogic
+        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl - epochDeposit - balanceLastEpoch + stReturn;
         // console.log(totalReturn, "totalReturn");
+        
     }
 
     /**

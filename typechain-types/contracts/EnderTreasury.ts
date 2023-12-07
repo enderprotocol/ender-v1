@@ -59,6 +59,9 @@ export interface EnderTreasuryInterface extends Interface {
       | "hasRequest"
       | "initialize"
       | "initializeTreasury"
+      | "instaDappDepositValuations"
+      | "instaDappLastValuation"
+      | "instaDappWithdrawlValuations"
       | "instadapp"
       | "lybraFinance"
       | "mintEndToUser"
@@ -191,6 +194,18 @@ export interface EnderTreasuryInterface extends Interface {
       BigNumberish,
       AddressLike
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "instaDappDepositValuations",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "instaDappLastValuation",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "instaDappWithdrawlValuations",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "instadapp", values?: undefined): string;
   encodeFunctionData(
@@ -346,6 +361,18 @@ export interface EnderTreasuryInterface extends Interface {
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "initializeTreasury",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "instaDappDepositValuations",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "instaDappLastValuation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "instaDappWithdrawlValuations",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "instadapp", data: BytesLike): Result;
@@ -739,6 +766,12 @@ export interface EnderTreasury extends BaseContract {
     "nonpayable"
   >;
 
+  instaDappDepositValuations: TypedContractMethod<[], [bigint], "view">;
+
+  instaDappLastValuation: TypedContractMethod<[], [bigint], "view">;
+
+  instaDappWithdrawlValuations: TypedContractMethod<[], [bigint], "view">;
+
   instadapp: TypedContractMethod<[], [string], "view">;
 
   lybraFinance: TypedContractMethod<[], [string], "view">;
@@ -962,6 +995,15 @@ export interface EnderTreasury extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "instaDappDepositValuations"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "instaDappLastValuation"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "instaDappWithdrawlValuations"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "instadapp"
   ): TypedContractMethod<[], [string], "view">;

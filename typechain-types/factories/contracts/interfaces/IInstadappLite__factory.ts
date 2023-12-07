@@ -26,11 +26,49 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
+        name: "stinstaAmount",
+        type: "uint256",
+      },
+    ],
+    name: "viewStinstaTokens",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "mstValue",
+        type: "uint256",
+      },
+    ],
+    name: "viewStinstaTokensValue",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
         name: "assets_",
         type: "uint256",
       },
     ],
-    name: "withdraw",
+    name: "withdrawStinstaTokens",
     outputs: [
       {
         internalType: "uint256",

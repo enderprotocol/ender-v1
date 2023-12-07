@@ -787,7 +787,7 @@ contract StinstaToken is ERC20, Ownable {
         return mstValue;
 
     }
-        function viewStinstaTokensValue(uint256 mstValue) public view returns (uint256) {
+    function viewStinstaTokensValue(uint256 mstValue) public view returns (uint256) {
         // Ensure that the withdrawal amount is not greater than the user's balance
         require(mstValue <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
 
