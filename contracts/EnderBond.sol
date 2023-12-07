@@ -384,7 +384,8 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         console.log(block.timestamp, bond.startTime + bond.maturity, "---------------------------bond.startTime + bond.maturity------------------------");
-        if (block.timestamp > bond.startTime + bond.maturity) revert BondNotMatured();
+        if (block.timestamp <= bond.startTime + (bond.maturity * SECONDS_IN_DAY)) revert BondNotMatured();
+        // require(block.timestamp >= bond.startTime + (bond.maturity * SECONDS_IN_DAY), "Bond is not matured");
         IEndToken(endToken).distributeRefractionFees();
         // update current bond 
         bond.withdrawn = true;
@@ -409,6 +410,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         depositAmountRequired -= bond.depositPrincipal;                            
         totalDeposit -= bond.principal;
         amountRequired -= bond.principal; 
+        console.log("------------------------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     }
 
     function getLoopCount() public returns (uint256) {
@@ -417,9 +419,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         console.log(currentDay, lastDay, "--------------last-----------------------");
         if (currentDay == lastDay) return amountRequired;
         for (uint256 i = lastDay + 1; i <= currentDay; i++) {
-            console.log(depositPrincipalAtMaturity[i], availableFundsAtMaturity[i], "-------------------------depositPrincipalAtMaturity------------------");
-            amountRequired += availableFundsAtMaturity[i];
-            depositAmountRequired += depositPrincipalAtMaturity[i];
+            if(availableFundsAtMaturity[i] != 0) amountRequired += availableFundsAtMaturity[i];
+            if(depositPrincipalAtMaturity[i] != 0){
+                depositAmountRequired += depositPrincipalAtMaturity[i];
+                console.log("depositAmountRequired----------->>>>>>>>",depositAmountRequired);
+            } 
         }
         lastDay = currentDay;
         console.log("amountRequired", amountRequired);
