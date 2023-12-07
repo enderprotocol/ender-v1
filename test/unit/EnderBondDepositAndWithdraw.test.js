@@ -19,7 +19,7 @@ function expandTo18Decimals(n) {
 }
 
 describe.only("EnderBond Deposit and Withdraw", function () {
-  let owner, signer1, signer2, signer3;
+  let owner, signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
     enderTreasuryAddress,
@@ -51,12 +51,15 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     const EnderStaking = await ethers.getContractFactory("EnderStaking");
     const SEnd = await ethers.getContractFactory("SEndToken");
     const Oracle = await ethers.getContractFactory("EnderOracle");
-    [owner, wallet1, signer1, signer2, signer3] = await ethers.getSigners();
+ 
+    [owner, wallet1, signer1, signer2, signer3, signer4] = await ethers.getSigners();
+ 
     WETH = await wETH.connect(owner).deploy("wrappedETH", "weth", owner.address);
     mockWETHAddress = await WETH.getAddress();
+ 
     stEth = await StEth.deploy(mockWETHAddress ,owner.address);
     stEthAddress = await stEth.getAddress();
-    console.log("I'm heeeeeeeeeeeeeeeeeeeeeeeeerrrrrrrrrrreeeeeeeeeeee");
+
     sEnd = await SEnd.deploy();
     sEndTokenAddress = await sEnd.getAddress();
 
@@ -137,6 +140,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
     await endToken.setExclude([enderBondAddress], true);
     await endToken.setExclude([enderTreasuryAddress], true);
+    await endToken.setExclude([enderStakingAddress], true);
 
     await enderBond.setAddress(enderStakingAddress,8);
     await enderBond.setAddress(stEthAddress,6);
@@ -250,7 +254,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         bondFee
         );
         
-      console.log("I'm hheeeeeerrrrrreeeeeeeeee-----------------------")
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
       await WETH.mint(signer2.address, depositPrincipalStEth);
       await WETH.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
@@ -269,7 +272,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         maturity,
         bondFee
       );
-        console.log("-------------------------------------------------------------------")
       //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       increaseTime(6000);
       await enderBond.epochBondYieldShareIndex();
@@ -321,15 +323,14 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await enderTreasury.setAddress(instadappLitelidoStaking, 5);
       await enderTreasury.setStrategy([instadappLitelidoStaking], true);
       await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
-      // await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, "2000000000000000000");
-      console.log("------------before deposit------------------------------------------------------------------------------------")
+      await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, "2000000000000000000");
       const tokenId2 = await depositAndSetup(
         signer1,
         depositPrincipalStEth,
         maturity * 2,
         bondFee
       );
-
+      await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       // //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       await enderBond.epochBondYieldShareIndex();
 
@@ -360,7 +361,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       //     initalBalanceOfEnderBond
       //   );
       
-      console.log("jssksksksksksks");
       console.log(
         await endToken.balanceOf(enderBondAddress),
         "after the second distribution balance of enderBond for end tokens"
@@ -382,6 +382,13 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       //which will update the rewardShareIndex in the enderbond
 
       const userAddressBefore = await endToken.balanceOf(signer1.address);
+
+      await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
+      await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
+      console.log(await endToken.connect(signer3).balanceOf(signer3.address), depositAmountEnd, signer3.address, "AAAAAAAAAAAAAAaAAA")
+      console.log(await endToken.connect(signer3).allowance(signer3.address, enderStakingAddress), "Allowance check");
+      console.log(signer3.address, enderStakingAddress, "EnderStakingAddress");
+      await enderStaking.connect(signer3).stake(depositAmountEnd);
 
       // Wait for the bond to mature
       await increaseTime(180 * 600);

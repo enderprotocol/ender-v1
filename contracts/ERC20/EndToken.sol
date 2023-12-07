@@ -234,7 +234,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     function _transfer(address from, address to, uint256 amount) internal override {
         if (excludeWallets[from] || excludeWallets[to]) {
-            console.log("excluded");
             super._transfer(from, to, amount);
         } else {
             uint256 fee = (amount * refractionFeePercentage) / 100;
