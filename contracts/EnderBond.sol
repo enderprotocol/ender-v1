@@ -333,9 +333,8 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         console.log(100 + (bondFee), ": 100 + (bondFee)");
         console.log(principal, "principal");
 
-        uint256 depositPrincipal = (getInterest(maturity) * ((100 + (bondFee))) * rewardPrinciple) / (365 * 1e8);
-        console.log(depositPrincipal, "---------------------------depositPrincipal-------------------------------");
-        depositPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += depositPrincipal;
+        uint256 depositPrincipal = (getInterest(maturity) * ((100 + (bondFee))) * rewardPrinciple) / (365 * 100); // note we have to change 1e8 to 1e18
+         depositPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += depositPrincipal;
 
         totalDeposit += principal;
         totalRewardPrincipal += depositPrincipal;
@@ -385,7 +384,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         console.log(block.timestamp, bond.startTime + bond.maturity, "---------------------------bond.startTime + bond.maturity------------------------");
-        if (block.timestamp < bond.startTime + bond.maturity) revert BondNotMatured();
+        if (block.timestamp > bond.startTime + bond.maturity) revert BondNotMatured();
         IEndToken(endToken).distributeRefractionFees();
         // update current bond 
         bond.withdrawn = true;
@@ -407,7 +406,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         console.log(depositAmountRequired, "-------------------BOND---------------------");
         console.log(bond.depositPrincipal, "Bondddddddddddd");
         console.log(_tokenId, "_tokenId");
-        depositAmountRequired -= bond.depositPrincipal;
+        depositAmountRequired -= bond.depositPrincipal;                            
         totalDeposit -= bond.principal;
         amountRequired -= bond.principal; 
     }
@@ -418,6 +417,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         console.log(currentDay, lastDay, "--------------last-----------------------");
         if (currentDay == lastDay) return amountRequired;
         for (uint256 i = lastDay + 1; i <= currentDay; i++) {
+            console.log(depositPrincipalAtMaturity[i], availableFundsAtMaturity[i], "-------------------------depositPrincipalAtMaturity------------------");
             amountRequired += availableFundsAtMaturity[i];
             depositAmountRequired += depositPrincipalAtMaturity[i];
         }
