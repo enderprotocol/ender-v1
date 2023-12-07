@@ -88,16 +88,20 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      * @param amount  withdraw amount
      */
     function withdraw(uint256 amount) external {
+        console.log(ISEndToken(endToken).balanceOf(msg.sender), "------------balanceOfInWithdraw------------");
         if (amount == 0) revert InvalidAmount();
         if (ISEndToken(sEndToken).balanceOf(msg.sender) < amount) revert InvalidAmount();
-        epochStakingReward(stEth);
+        // epochStakingReward(stEth);
         // add reward
         uint256 reward = claimRebaseValue(amount);
-
+        console.log(reward, "---------------------reward----------------------");
         // transfer token
+        ISEndToken(endToken).transfer(msg.sender, reward);
         console.log("pending", reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
+        console.log(ISEndToken(endToken).balanceOf(msg.sender), "------------balanceOfInWithdraw------------");
         emit Withdraw(msg.sender, amount);
+
 
      
     }
@@ -138,6 +142,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     }
 
     function claimRebaseValue(uint256 _sendAMount) internal view returns (uint256 reward) {
-        reward = (_sendAMount * rebasingIndex) / 10 ** 18;
+        reward = (_sendAMount * rebasingIndex);
     }
 }

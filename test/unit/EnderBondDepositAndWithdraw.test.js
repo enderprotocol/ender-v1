@@ -392,7 +392,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
       // Wait for the bond to mature
       await increaseTime(180 * 600);
-
+      const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
+      console.log(sEndAmount, "--------------------sEndAmount---------------------------");
+      await enderStaking.connect(signer3).withdraw(sEndAmount);
       console.log(await stEth.balanceOf(signer1.address), "signer1");
 
       //   await endToken.distributeRefractionFees();
