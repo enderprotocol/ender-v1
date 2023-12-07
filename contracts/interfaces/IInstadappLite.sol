@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
-
-interface IInstadappLite{
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+interface IInstadappLite is IERC20{
     // function deposit(
     //     uint256 assets_,
     //     address receiver_
@@ -13,6 +13,7 @@ interface IInstadappLite{
     function viewStinstaTokensValue(uint256 mstValue) external view returns (uint256); //provide the amount of stETH as per my share
 
     function viewStinstaTokens(uint256 stinstaAmount) external view returns (uint256);
+
 }
 
 //0xA0D3707c569ff8C87FA923d3823eC5D81c98Be78

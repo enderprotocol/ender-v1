@@ -1,3 +1,4 @@
+import "hardhat/console.sol";
 /**
  *Submitted for verification at mumbai.polygonscan.com on 2023-12-04
 */
@@ -779,8 +780,9 @@ contract StinstaToken is ERC20, Ownable {
     }
     function viewStinstaTokens(uint256 stinstaAmount) public view returns (uint256){
         // Ensure that the withdrawal amount is not greater than the user's balance
-        require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
-
+        console.log(stinstaAmount, balanceOf(msg.sender), msg.sender, "viewStinstaTokens");
+        //require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
+       
         // Calculate the MST value using the provided formula
         uint256 mstValue = (stinstaAmount * IERC20(mstEth).balanceOf(address(this)) / totalSupply());
 
@@ -790,7 +792,7 @@ contract StinstaToken is ERC20, Ownable {
     function viewStinstaTokensValue(uint256 mstValue) public view returns (uint256) {
         // Ensure that the withdrawal amount is not greater than the user's balance
         require(mstValue <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
-
+         console.log("--------------------------------------");
         // Calculate the MST value using the provided formula
         uint256 stinsta = (mstValue * totalSupply() / IERC20(mstEth).balanceOf(address(this)));
         return stinsta;

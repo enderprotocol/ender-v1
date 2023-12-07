@@ -311,6 +311,7 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_strategy == instadapp) { 
             //Todo set the asset as recipt tokens and need to check the assets ratio while depolying on mainnet
             IERC20(receiptToken).approve(instadapp, _withdrawAmt);
+            console.log(_withdrawAmt, IInstadappLite(instadapp).balanceOf(address(this)), address(this), "------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>._withdrawAmt");
             _returnAmount = IInstadappLite(instadapp).withdrawStinstaTokens(_withdrawAmt);
             instaDappWithdrawlValuations += _returnAmount;
         } else if (_strategy == lybraFinance) {
@@ -366,12 +367,19 @@ event MintEndToUser(address indexed to, uint256 amount);
     function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
         // console.log(IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl, epochDeposit, "mmmmmmmmm");
         // console.log(_stEthAddress, "balanceLastEpoch3232");
-        
+        uint256  stReturn;
         address receiptToken = strategyToReceiptToken[instadapp];
-        uint256  stReturn = IInstadappLite(instadapp).viewStinstaTokensValue(IERC20(receiptToken).balanceOf(address(this))) +  instaDappWithdrawlValuations
-                            - instaDappDepositValuations - instaDappLastValuation;
+        uint256 receiptTokenAmount = IInstadappLite(receiptToken).balanceOf(address(this));
+        console.log(instaDappDepositValuations,instaDappWithdrawlValuations,instaDappLastValuation, "-------------------------------------------------------------");
+        // console.log(IInstadappLite(receiptToken).balanceOf(address(this)), IInstadappLite(receiptToken).viewStinstaTokensValue(receiptTokenAmount), "balanceOf");
+        if(IInstadappLite(receiptToken).balanceOf(address(this)) > 0 ){ 
+            stReturn = IInstadappLite(receiptToken).viewStinstaTokensValue(receiptTokenAmount) +  instaDappWithdrawlValuations
+                - instaDappDepositValuations - instaDappLastValuation;
+        }
         //todo add stlogic
-        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl - epochDeposit - balanceLastEpoch + stReturn;
+        console.log(IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl, "IERC20(_stEthAddress).balanceOf(address(this))");
+        console.log(epochDeposit, balanceLastEpoch, stReturn);
+        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl + instaDappDepositValuations + stReturn - epochDeposit - balanceLastEpoch;
         // console.log(totalReturn, "totalReturn");
         
     }

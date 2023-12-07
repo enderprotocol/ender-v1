@@ -65,7 +65,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
     instadappLitelidoStaking = await InstadappLite.deploy("InstaToken", "Inst", owner.address, stEthAddress);
     instadappLiteAddress = await instadappLitelidoStaking.getAddress();
-
+console.log("instadappLiteAddress",instadappLiteAddress);
     endToken = await upgrades.deployProxy(EndToken, [], {
       initializer: "initialize",
     });
@@ -104,7 +104,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         endTokenAddress,
         enderStakingAddress,
         enderBondAddress,
-        ethers.ZeroAddress,
+        instadappLiteAddress,
         ethers.ZeroAddress,
         ethers.ZeroAddress,
         70,
@@ -241,7 +241,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       .connect(signer1)
       .approve(enderBondAddress, depositPrincipalStEth);
       
-      await enderTreasury.setAddress(stEthAddress, 5);
+      await enderTreasury.setAddress(instadappLiteAddress, 5);
       
       //this is where the user will deposit the StEth in to the contract
       //in the deposit the amount will be divided in to 30 and 70% where the admin Will have access to further
@@ -324,6 +324,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await enderTreasury.setStrategy([instadappLitelidoStaking], true);
       await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, "2000000000000000000");
+      console.log("----------------------------------------------------------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
       const tokenId2 = await depositAndSetup(
         signer1,
         depositPrincipalStEth,
@@ -333,7 +334,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       // //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       await enderBond.epochBondYieldShareIndex();
-
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
         await enderBond.userBondYieldShareIndex(tokenId2)
       );
@@ -404,7 +404,10 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         "balance before the withdraw before"
       );
       MINTER_ROLE;
-
+      await WETH.mint(signer1.address, depositPrincipalStEth);
+      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      await stEth.connect(signer1).mintShare(depositPrincipalStEth);
+      await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth)
       await withdrawAndSetup(signer1, tokenId);
       console.log(tokenId2, "-------------------------PASSSSSSSS first withdraw-------------------------");
 
