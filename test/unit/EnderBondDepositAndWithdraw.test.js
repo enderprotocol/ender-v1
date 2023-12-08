@@ -5,6 +5,7 @@ const { BigNumber } = require("ethers");
 const { EigenLayerStrategyManagerAddress } = require("../utils/common");
 const exp = require("constants");
 const { sign } = require("crypto");
+const { log } = require("console");
 // const { describe } = require("node:test");
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
 const baseURI =
@@ -130,6 +131,7 @@ console.log("instadappLiteAddress",instadappLiteAddress);
     await enderStaking.setAddress(enderTreasuryAddress, 2);
 
     // console.log({enderBond});
+    await enderStaking.setAddress(stEthAddress,6);
     await enderBond.setBondableTokens([stEthAddress], true);
     await enderBond.setAddress(enderTreasuryAddress, 1);
     await enderBond.setAddress(bondNFTAddress, 3);
@@ -388,12 +390,14 @@ console.log("instadappLiteAddress",instadappLiteAddress);
       console.log(await endToken.connect(signer3).balanceOf(signer3.address), depositAmountEnd, signer3.address, "AAAAAAAAAAAAAAaAAA")
       console.log(await endToken.connect(signer3).allowance(signer3.address, enderStakingAddress), "Allowance check");
       console.log(signer3.address, enderStakingAddress, "EnderStakingAddress");
+      console.log(stEthAddress, "stEthAddress");
       await enderStaking.connect(signer3).stake(depositAmountEnd);
 
       // Wait for the bond to mature
       await increaseTime(180 * 600);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
       console.log(sEndAmount, "--------------------sEndAmount---------------------------");
+
       await enderStaking.connect(signer3).withdraw(sEndAmount);
       console.log(await stEth.balanceOf(signer1.address), "signer1");
 

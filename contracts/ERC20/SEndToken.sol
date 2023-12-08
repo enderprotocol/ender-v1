@@ -33,7 +33,6 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
         setStatus(1);
         status = 1;
         enableOrDisableTX = false;
-        console.log("im here");
         _mint(msg.sender, 1000000 * 10 ** decimals());
     }
 

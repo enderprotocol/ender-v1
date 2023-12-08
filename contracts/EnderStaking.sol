@@ -74,7 +74,8 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         console.log(ISEndToken(endToken).balanceOf(msg.sender), "------------balanceOf------------");
         ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
         console.log(ISEndToken(endToken).balanceOf(msg.sender), "------------balanceOf------------");
-        // epochStakingReward(stEth);
+        console.log(stEth, "stEth");
+        epochStakingReward(stEth);
         uint256 sEndAmount = calculateSEndTokens(amount);
         console.log("sEndAmount", sEndAmount);
 
@@ -91,7 +92,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         console.log(ISEndToken(endToken).balanceOf(msg.sender), "------------balanceOfInWithdraw------------");
         if (amount == 0) revert InvalidAmount();
         if (ISEndToken(sEndToken).balanceOf(msg.sender) < amount) revert InvalidAmount();
-        // epochStakingReward(stEth);
+        epochStakingReward(stEth);
         // add reward
         uint256 reward = claimRebaseValue(amount);
         console.log(reward, "---------------------reward----------------------");
