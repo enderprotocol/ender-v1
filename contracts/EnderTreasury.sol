@@ -310,8 +310,10 @@ event MintEndToUser(address indexed to, uint256 amount);
         console.log("receiptToken",receiptToken);
         if (_strategy == instadapp) { 
             //Todo set the asset as recipt tokens and need to check the assets ratio while depolying on mainnet
-            IERC20(receiptToken).approve(instadapp, _withdrawAmt);
             console.log(_withdrawAmt, IInstadappLite(instadapp).balanceOf(address(this)), address(this), "------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>._withdrawAmt");
+            _withdrawAmt = IInstadappLite(instadapp).viewStinstaTokensValue(_withdrawAmt);
+            console.log("_withdrawAmt",_withdrawAmt);
+            IERC20(receiptToken).approve(instadapp, _withdrawAmt);
             _returnAmount = IInstadappLite(instadapp).withdrawStinstaTokens(_withdrawAmt);
             instaDappWithdrawlValuations += _returnAmount;
         } else if (_strategy == lybraFinance) {
