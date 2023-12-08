@@ -774,7 +774,7 @@ contract StinstaToken is ERC20, Ownable {
         uint256 mstValue = (stinstaAmount * IERC20(mstEth).balanceOf(address(this)) / totalSupply());
 
         // Transfer MST to the user
-        transfer(msg.sender, mstValue);
+        IERC20(mstEth).transfer(msg.sender, mstValue);
         return mstValue;
 
     }
