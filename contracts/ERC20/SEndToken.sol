@@ -28,7 +28,8 @@ contract SEndToken is ERC20Upgradeable, AccessControlUpgradeable {
 event TransactionStatusChanged(uint256 newStatus);
 event WhitelistChanged(address indexed whitelistingAddress, bool indexed action);
     function initialize() external initializer {
-        __ERC20_init("End Token", "END");
+        __ERC20_init("sEndToken", "sEnd");
+        console.log(msg.sender, "msg.sender");
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         setStatus(1);
         status = 1;
@@ -87,6 +88,7 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
 
     ///for testing purpose
     function mint(address to, uint256 amount) public {
+        console.log(to, "???????????????????????????????????????????????????????????????????????????????");
         _mint(to, amount);
     }
 }

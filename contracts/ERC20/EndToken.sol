@@ -84,7 +84,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ENDERBOND_ROLE, enderBond);
-
+        admin = msg.sender;
         // add exclude wallets
         excludeWallets[address(this)] = true;
         excludeWallets[msg.sender] = true;
@@ -103,7 +103,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
      * @return uint8 The number of decimal places the token uses
      */
     function decimals() public view virtual override returns (uint8) {
-        return 9;
+        return 18;
     }
 
     function setBond(address addrs) external onlyRole(DEFAULT_ADMIN_ROLE) {

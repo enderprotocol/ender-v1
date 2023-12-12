@@ -162,7 +162,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         minDepositAmount = 1000000000000000;
         txFees = 200;
         enderOracle = IEnderOracle(_oracle);
-        bondYieldBaseRate = 400;
+        bondYieldBaseRate = 100;
         SECONDS_IN_DAY = 600; // note for testing purpose we have set it to 10 mint
         interval = 10 * 60; // note for testing purpose we have set it to 10 mint
         lastTimeStamp = block.timestamp;
@@ -303,7 +303,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         tokenId = _deposit(principal, maturity, token, bondFee);
         epochBondYieldShareIndex();
         console.log("stEth", stEth);
-        IEnderStaking(endStaking).epochStakingReward(stEth);
+        // IEnderStaking(endStaking).epochStakingReward(stEth);
         emit Deposit(msg.sender, tokenId, principal, maturity, token);
     }
 
@@ -329,12 +329,12 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;
 
 
-        console.log(getInterest(maturity), "getInterest(maturity)");
-        console.log(100 + (bondFee), ": 100 + (bondFee)");
-        console.log(principal, "principal");
+        console.log(getInterest(maturity), "getInterest(maturity)");                        
+        console.log(100 + (bondFee), ": 100 + (bondFee)");                                      
+        console.log(principal, "principal");                                                                
 
         uint256 depositPrincipal = (getInterest(maturity) * ((100 + (bondFee))) * rewardPrinciple) / (365 * 100); // note we have to change 1e8 to 1e18
-         depositPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += depositPrincipal;
+        depositPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += depositPrincipal;
 
         totalDeposit += principal;
         totalRewardPrincipal += depositPrincipal;

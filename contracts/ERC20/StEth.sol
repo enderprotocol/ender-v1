@@ -1,5 +1,3 @@
-import "hardhat/console.sol";
-
 /**
  *Submitted for verification at mumbai.polygonscan.com on 2023-12-01
 */
@@ -182,7 +180,6 @@ contract mockWETH is Ownable,IERC20 {
     }
 
     function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        console.log(spender, amount, "spender");
         _approve(_msgSender(), spender, amount);
         return true;
     }
@@ -191,7 +188,6 @@ contract mockWETH is Ownable,IERC20 {
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][_msgSender()];
-        console.log(currentAllowance, msg.sender, amount, "currentAllowance");
         require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
         unchecked {
             _approve(sender, _msgSender(), currentAllowance - amount);

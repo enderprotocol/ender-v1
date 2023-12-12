@@ -770,11 +770,9 @@ contract StinstaToken is ERC20, Ownable {
         require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
 
         // Burn the specified amount of Stinsta tokens from the user's balance
-        console.log(stinstaAmount, IERC20(mstEth).balanceOf(address(this)), totalSupply());
         uint256 mstValue = (stinstaAmount * IERC20(mstEth).balanceOf(address(this)) / totalSupply());
 
         // Transfer MST to the user
-        console.log(mstValue, IERC20(mstEth).balanceOf(address(this)),"withdrawStinstaTokens------>>>>");
         _burn(msg.sender, stinstaAmount);
         IERC20(mstEth).transfer(msg.sender, mstValue);
         return mstValue;
@@ -782,9 +780,8 @@ contract StinstaToken is ERC20, Ownable {
     }
     function viewStinstaTokens(uint256 stinstaAmount) public view returns (uint256){
         // Ensure that the withdrawal amount is not greater than the user's balance
-        console.log(stinstaAmount, balanceOf(msg.sender), msg.sender, "viewStinstaTokens");
-        //require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
-       
+        require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
+        console.log(IERC20(mstEth).balanceOf(address(this)), "IERC20(mstEth).balanceOf(address(this))");
         // Calculate the MST value using the provided formula
         uint256 mstValue = (stinstaAmount * IERC20(mstEth).balanceOf(address(this)) / totalSupply());
 
@@ -794,8 +791,8 @@ contract StinstaToken is ERC20, Ownable {
     function viewStinstaTokensValue(uint256 mstValue) public view returns (uint256) {
         // Ensure that the withdrawal amount is not greater than the user's balance
         require(mstValue <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
-         console.log("--------------------------------------", mstValue, totalSupply(), IERC20(mstEth).balanceOf(address(this)));
         // Calculate the MST value using the provided formula
+        console.log(IERC20(mstEth).balanceOf(address(this)), mstValue * totalSupply(), "IERC20(mstEth).balanceOf(address(this))-----------------");
         uint256 stinsta = (mstValue * totalSupply() / IERC20(mstEth).balanceOf(address(this)));
         return stinsta;
 

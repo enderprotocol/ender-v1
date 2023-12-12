@@ -61,12 +61,16 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     stEth = await StEth.deploy(mockWETHAddress ,owner.address);
     stEthAddress = await stEth.getAddress();
 
-    sEnd = await SEnd.deploy();
-    sEndTokenAddress = await sEnd.getAddress();
+    // sEnd = await SEnd.connect(owner).deploy();
+    sEnd = await upgrades.deployProxy(SEnd, [], {
+      initializer: "initialize",
+    });
+    sEndTokenAddress = await sEnd.connect(owner).getAddress();
+    console.log(signer3.address,signer4.address, signer2.address,  "owner");
 
     instadappLitelidoStaking = await InstadappLite.deploy("InstaToken", "Inst", owner.address, stEthAddress);
     instadappLiteAddress = await instadappLitelidoStaking.getAddress();
-console.log("instadappLiteAddress",instadappLiteAddress);
+    console.log("instadappLiteAddress",owner.address, instadappLiteAddress);
     endToken = await upgrades.deployProxy(EndToken, [], {
       initializer: "initialize",
     });
@@ -126,7 +130,8 @@ console.log("instadappLiteAddress",instadappLiteAddress);
     });
     await bondNFT.waitForDeployment();
     bondNFTAddress = await bondNFT.getAddress();
-
+    // await sEnd.connect(owner).grantRole("0x0000000000000000000000000000000000000000000000000000000000000000", "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266");
+    await sEnd.setAddress(enderStakingAddress, 1);
     await enderStaking.setAddress(enderBondAddress, 1);
     await enderStaking.setAddress(enderTreasuryAddress, 2);
 
@@ -390,13 +395,20 @@ console.log("instadappLiteAddress",instadappLiteAddress);
       console.log(await endToken.connect(signer3).balanceOf(signer3.address), depositAmountEnd, signer3.address, "AAAAAAAAAAAAAAaAAA")
       console.log(await endToken.connect(signer3).allowance(signer3.address, enderStakingAddress), "Allowance check");
       console.log(signer3.address, enderStakingAddress, "EnderStakingAddress");
-      console.log(stEthAddress, "stEthAddress");
+      console.log(stEthAddress, depositAmountEnd, "stEthAddress");
+      await sEnd.connect(owner).whitelist(enderStakingAddress, true);
+      await sEnd.connect(owner).setStatus(2);
+
+      await WETH.mint(signer1.address, depositPrincipalStEth);
+      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      await stEth.connect(signer1).mintShare(depositPrincipalStEth);
+      await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       await enderStaking.connect(signer3).stake(depositAmountEnd);
 
       // Wait for the bond to mature
       await increaseTime(180 * 600);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
-      console.log(sEndAmount, "--------------------sEndAmount---------------------------");
+      console.log(sEndAmount, signer3.address, "--------------------sEndAmount---------------------------");
 
       await enderStaking.connect(signer3).withdraw(sEndAmount);
       console.log(await stEth.balanceOf(signer1.address), "signer1");
@@ -407,7 +419,6 @@ console.log("instadappLiteAddress",instadappLiteAddress);
         await endToken.balanceOf(signer1.address),
         "balance before the withdraw before"
       );
-      MINTER_ROLE;
       await WETH.mint(signer1.address, depositPrincipalStEth);
       await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).mintShare(depositPrincipalStEth);
