@@ -71,17 +71,20 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      */
     function stake(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
-        console.log(ISEndToken(sEndToken).balanceOf(msg.sender), "------------sEndTokenBalanceOf------------");
-        console.log(ISEndToken(endToken).balanceOf(msg.sender), "------------balanceOf------------");
-        ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
-        console.log(ISEndToken(endToken).balanceOf(msg.sender), "------------balanceOf------------");
-        console.log(stEth, "stEth");
-        epochStakingReward(stEth);
-        uint256 sEndAmount = calculateSEndTokens(amount);
-        console.log("sEndAmount", sEndAmount);
-
-        ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
-        console.log(ISEndToken(endToken).balanceOf(msg.sender), msg.sender, "------------balanceOfInWithdraw------------");
+        console.log("End token deposit:- ", amount);
+        console.log(ISEndToken(endToken).balanceOf(address(this)));
+        if(ISEndToken(endToken).balanceOf(address(this)) == 0){
+            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
+            uint256 sEndAmount = calculateSEndTokens(amount);
+            console.log("Receipt token:- ", sEndAmount);
+            ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
+        } else {
+            epochStakingReward(stEth);
+            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
+            uint256 sEndAmount = calculateSEndTokens(amount);
+            console.log("Receipt token:- ", sEndAmount);
+            ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
+        }
         emit Stake(msg.sender, amount);
     }
 
@@ -90,18 +93,15 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      * @param amount  withdraw amount
      */
     function withdraw(uint256 amount) external {
-        console.log(ISEndToken(endToken).balanceOf(msg.sender), msg.sender, "------------balanceOfInWithdraw------------");
         if (amount == 0) revert InvalidAmount();
         if (ISEndToken(sEndToken).balanceOf(msg.sender) < amount) revert InvalidAmount();
-        epochStakingReward(stEth);
         // add reward
+        epochStakingReward(stEth);
         uint256 reward = claimRebaseValue(amount);
-        console.log(reward, "---------------------reward----------------------");
+        console.log("Withraw amount of staking contract:- ", reward);
         // transfer token
         ISEndToken(endToken).transfer(msg.sender, reward);
-        console.log("pending", reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
-        console.log(ISEndToken(endToken).balanceOf(msg.sender), "------------balanceOfInWithdraw------------");
         emit Withdraw(msg.sender, amount);
 
 
@@ -112,7 +112,6 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         // if (msg.sender != keeper) revert NotKeeper();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
-        console.log(rw2, "rw2---");
 
         uint256 sendTokens = calculateSEndTokens(rw2);
         ISEndToken(sEndToken).mint(enderBond, sendTokens);
@@ -123,20 +122,20 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
-        console.log("rebasingIndex----------------", rebasingIndex);
         if (rebasingIndex == 0) {
+            console.log("I'm here", _endAmount);
             sEndTokens = _endAmount;
-        }else{
-          sEndTokens = (_endAmount/ rebasingIndex);  
-          console.log("sEndTokens", sEndTokens);
+            return sEndTokens;
+        } else{
+            console.log("else", _endAmount, rebasingIndex);
+            sEndTokens = (_endAmount/ rebasingIndex); 
+            return sEndTokens; 
         }
     }
 
     function calculateRebaseIndex() internal {
         uint256 endBalStaking = ISEndToken(endToken).balanceOf(address(this));
-        console.log(endBalStaking, "endBalStaking");
         uint256 sEndTotalSupply = ISEndToken(sEndToken).totalSupply();
-        console.log(sEndTotalSupply, "sEndTotalSupply");
         if (endBalStaking == 0 || sEndTotalSupply == 0) {
             rebasingIndex = 1;
         } else {

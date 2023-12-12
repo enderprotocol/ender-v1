@@ -781,7 +781,6 @@ contract StinstaToken is ERC20, Ownable {
     function viewStinstaTokens(uint256 stinstaAmount) public view returns (uint256){
         // Ensure that the withdrawal amount is not greater than the user's balance
         require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
-        console.log(IERC20(mstEth).balanceOf(address(this)), "IERC20(mstEth).balanceOf(address(this))");
         // Calculate the MST value using the provided formula
         uint256 mstValue = (stinstaAmount * IERC20(mstEth).balanceOf(address(this)) / totalSupply());
 
@@ -792,7 +791,6 @@ contract StinstaToken is ERC20, Ownable {
         // Ensure that the withdrawal amount is not greater than the user's balance
         require(mstValue <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
         // Calculate the MST value using the provided formula
-        console.log(IERC20(mstEth).balanceOf(address(this)), mstValue * totalSupply(), "IERC20(mstEth).balanceOf(address(this))-----------------");
         uint256 stinsta = (mstValue * totalSupply() / IERC20(mstEth).balanceOf(address(this)));
         return stinsta;
 
