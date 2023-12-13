@@ -232,6 +232,7 @@ event MintEndToUser(address indexed to, uint256 amount);
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
         balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
         if (depositReturn == 0) {
+            console.log(depositReturn, "depositRetrun");
             epochWithdrawl = 0;
             epochDeposit = 0;
             rebaseReward = 0;
@@ -247,7 +248,7 @@ event MintEndToUser(address indexed to, uint256 amount);
             bondReturn = (priceEnd * bondReturn) / (10 ** endDecimal);
 
             rebaseReward = ((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));
-
+            console.log(rebaseReward, priceEnd, ethDecimal, "rebaseReward");
             rebaseReward = ((rebaseReward * 10 ** ethDecimal) / priceEnd);
 
             epochWithdrawl = 0;

@@ -33,7 +33,6 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
         setStatus(1);
         status = 1;
         enableOrDisableTX = false;
-        _mint(msg.sender, 1000000 * 10 ** decimals());
     }
 
     function setAddress(address _addr, uint256 _type) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -87,6 +86,7 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
 
     ///for testing purpose
     function mint(address to, uint256 amount) public {
+        console.log(amount, "sEndAmount");
         _mint(to, amount);
     }
 }

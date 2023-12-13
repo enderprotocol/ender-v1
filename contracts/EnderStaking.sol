@@ -71,11 +71,11 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      */
     function stake(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
-        console.log("End token deposit:- ", amount);
+        console.log("End token deposit:- ", amount, ISEndToken(sEndToken).totalSupply());
         console.log(ISEndToken(endToken).balanceOf(address(this)));
         if(ISEndToken(endToken).balanceOf(address(this)) == 0){
-            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
             epochStakingReward(stEth);
+            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
             uint256 sEndAmount = calculateSEndTokens(amount);
             console.log("Receipt token:- ", sEndAmount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
@@ -113,8 +113,9 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         // if (msg.sender != keeper) revert NotKeeper();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
-
+        console.log(totalReward, "----------------totalreward");
         uint256 sendTokens = calculateSEndTokens(rw2);
+        console.log(sendTokens, "------------------sendTokens");
         ISEndToken(sEndToken).mint(enderBond, sendTokens);
         ISEndToken(endToken).mint(address(this), totalReward);
         IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
@@ -140,11 +141,13 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         if (endBalStaking == 0 || sEndTotalSupply == 0) {
             rebasingIndex = 1;
         } else {
-            rebasingIndex = (endBalStaking * 10 ** 18) / sEndTotalSupply;
+            console.log(endBalStaking, sEndTotalSupply, "sEndTotalSupply");
+            rebasingIndex = endBalStaking / sEndTotalSupply;
         }
     }
 
-    function claimRebaseValue(uint256 _sendAMount) internal view returns (uint256 reward) {
-        reward = (_sendAMount * rebasingIndex);
+    function claimRebaseValue(uint256 _sendAmount) internal view returns (uint256 reward) {
+        console.log(_sendAmount, rebasingIndex, "claimrebaseValue");
+        reward = (_sendAmount * rebasingIndex);
     }
 }
