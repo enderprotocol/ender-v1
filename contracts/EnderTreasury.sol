@@ -364,7 +364,10 @@ event MintEndToUser(address indexed to, uint256 amount);
                 - instaDappDepositValuations - instaDappLastValuation;
         }
         //todo add stlogic
-        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl + instaDappDepositValuations + stReturn - epochDeposit - balanceLastEpoch;        
+        console.log(stReturn, IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl,"--------------------->>>>>>>>>>>>>>>>>>>>>>");
+        console.log(instaDappDepositValuations, epochDeposit, balanceLastEpoch, "----------------------------.................");
+        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl + instaDappDepositValuations + stReturn - epochDeposit - balanceLastEpoch;  
+        console.log(totalReturn, "totalReturn>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");      
     }
 
     /**
@@ -375,11 +378,15 @@ event MintEndToUser(address indexed to, uint256 amount);
 
     function calculateDepositReturn(address _stEthAddress) public view returns (uint256 depositReturn) {
         uint256 totalReturn = calculateTotalReturn(_stEthAddress);
+        console.log(totalReturn, "--------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.calculateDepositReturn");
         if (totalReturn == 0 || balanceLastEpoch == 0) {
+            console.log(totalReturn, "I'm here");
             depositReturn = 0;
         } else {
             
             //here we have to multiply 100000and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
+            console.log(totalReturn, (fundsInfo[_stEthAddress] * 100000), (IERC20(_stEthAddress).balanceOf(address(this))));
+            console.log(instaDappDepositValuations, totalReturn);
             depositReturn = (totalReturn * ((fundsInfo[_stEthAddress] * 100000) / (IERC20(_stEthAddress).balanceOf(address(this)) + instaDappDepositValuations  - totalReturn))) / 100000;
         }
     }
