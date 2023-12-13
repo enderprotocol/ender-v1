@@ -103,7 +103,7 @@ event MintEndToUser(address indexed to, uint256 amount);
         setAddress(_bond, 2);
         setBondYieldBaseRate(300);
         priorityStrategy = instadapp;
-        nominalYield = 500;
+        nominalYield = 1000;
     }
 
     modifier validStrategy(address str) {
@@ -229,13 +229,14 @@ event MintEndToUser(address indexed to, uint256 amount);
 
     function stakeRebasingReward(address _tokenAddress) public onlyStaking returns (uint256 rebaseReward) {
         uint256 bondReturn = IEnderBond(enderBond).endMint();
+        console.log("Bond return:- ", bondReturn);
         uint256 depositReturn = calculateDepositReturn(_tokenAddress);
         balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
         if (depositReturn == 0) {
-            console.log(depositReturn, "depositRetrun");
             epochWithdrawl = 0;
             epochDeposit = 0;
             rebaseReward = 0;
+            console.log("Rebase reward:- ", rebaseReward);
             address receiptToken = strategyToReceiptToken[instadapp];
             instaDappLastValuation = IInstadappLite(instadapp).viewStinstaTokens(IERC20(receiptToken).balanceOf(address(this)));
             instaDappWithdrawlValuations = 0;
@@ -243,14 +244,17 @@ event MintEndToUser(address indexed to, uint256 amount);
         } else {
             //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 18decimal
             (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
+            console.log("Price of Eth:- ", ethPrice);
             (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
+            console.log("Price of End:- ", priceEnd);
             depositReturn = (ethPrice * depositReturn) / (10 ** ethDecimal);
             bondReturn = (priceEnd * bondReturn) / (10 ** endDecimal);
-
+            console.log("Deposit return in Dollar:- ", depositReturn);
+            console.log("Bond return in Dollar:- ", bondReturn);
             rebaseReward = ((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));
-            console.log(rebaseReward, priceEnd, ethDecimal, "rebaseReward");
+            console.log("Rebase reward in dollar:- ", rebaseReward);
             rebaseReward = ((rebaseReward * 10 ** ethDecimal) / priceEnd);
-
+            console.log("Rebase reward:- ", rebaseReward);
             epochWithdrawl = 0;
             epochDeposit = 0;
             IEnderBond(enderBond).resetEndMint();
@@ -274,6 +278,7 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
             IERC20(_asset).approve(_strategy, _depositAmt);
+            console.log("Deposited in strategy:- ", _depositAmt);
             IInstadappLite(instadapp).deposit(_depositAmt);  // note for testing we changed the function sig.                         
             instaDappDepositValuations += _depositAmt;
         } else if (_strategy == lybraFinance) {                                                   
@@ -305,6 +310,7 @@ event MintEndToUser(address indexed to, uint256 amount);
             _withdrawAmt = IInstadappLite(instadapp).viewStinstaTokensValue(_withdrawAmt);
             IERC20(receiptToken).approve(instadapp, _withdrawAmt);
             _returnAmount = IInstadappLite(instadapp).withdrawStinstaTokens(_withdrawAmt);
+            console.log("Withdraw from strategy:- ", _returnAmount);
             instaDappWithdrawlValuations += _returnAmount;
         } else if (_strategy == lybraFinance) {
             IERC20(receiptToken).approve(lybraFinance, _withdrawAmt);
@@ -363,11 +369,14 @@ event MintEndToUser(address indexed to, uint256 amount);
             stReturn = IInstadappLite(receiptToken).viewStinstaTokens(receiptTokenAmount) +  instaDappWithdrawlValuations
                 - instaDappDepositValuations - instaDappLastValuation;
         }
+        console.log("Strategy return:- ", stReturn);
         //todo add stlogic
-        console.log(stReturn, IERC20(_stEthAddress).balanceOf(address(this)), epochWithdrawl,"--------------------->>>>>>>>>>>>>>>>>>>>>>");
-        console.log(instaDappDepositValuations, epochDeposit, balanceLastEpoch, "----------------------------.................");
+        console.log("In a epoch if any amount user withraws:- ", epochWithdrawl);
+        console.log("InstaDappDepositValuations:- ", instaDappDepositValuations);
+        console.log("EpochDeposit:- ", epochDeposit);
+        console.log("BalanceLastEpoch:- ", balanceLastEpoch);
         totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl + instaDappDepositValuations + stReturn - epochDeposit - balanceLastEpoch;  
-        console.log(totalReturn, "totalReturn>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");      
+        console.log("Strategy return + StEth rebasing:- ", totalReturn);
     }
 
     /**
@@ -378,16 +387,14 @@ event MintEndToUser(address indexed to, uint256 amount);
 
     function calculateDepositReturn(address _stEthAddress) public view returns (uint256 depositReturn) {
         uint256 totalReturn = calculateTotalReturn(_stEthAddress);
-        console.log(totalReturn, "--------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.calculateDepositReturn");
-        if (totalReturn == 0 || balanceLastEpoch == 0) {
-            console.log(totalReturn, "I'm here");
+        if (totalReturn == 0) {
             depositReturn = 0;
         } else {
             
             //here we have to multiply 100000and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
-            console.log(totalReturn, (fundsInfo[_stEthAddress] * 100000), (IERC20(_stEthAddress).balanceOf(address(this))));
-            console.log(instaDappDepositValuations, totalReturn);
-            depositReturn = (totalReturn * ((fundsInfo[_stEthAddress] * 100000) / (IERC20(_stEthAddress).balanceOf(address(this)) + instaDappDepositValuations  - totalReturn))) / 100000;
+            depositReturn = (totalReturn * fundsInfo[_stEthAddress]) / (fundsInfo[_stEthAddress] + IERC20(_stEthAddress).balanceOf(address(this)));
+            console.log("Deposit return:- ", depositReturn);
+            // depositReturn = (totalReturn * ((fundsInfo[_stEthAddress] * 100000) / (IERC20(_stEthAddress).balanceOf(address(this)) + instaDappDepositValuations)/ 100000));
         }
     }
 

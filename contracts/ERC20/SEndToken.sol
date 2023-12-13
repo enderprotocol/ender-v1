@@ -86,7 +86,6 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
 
     ///for testing purpose
     function mint(address to, uint256 amount) public {
-        console.log(amount, "sEndAmount");
         _mint(to, amount);
     }
 }
