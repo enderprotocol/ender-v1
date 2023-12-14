@@ -378,10 +378,10 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (block.timestamp <= bond.startTime + (bond.maturity * SECONDS_IN_DAY)) revert BondNotMatured();
         // require(block.timestamp >= bond.startTime + (bond.maturity * SECONDS_IN_DAY), "Bond is not matured");
         IEndToken(endToken).distributeRefractionFees();
-        console.log("User withdraw is amount from bond contract:- ", bond.principal);
+        console.log("User withdraw is amount from bond contract:- ", userBondPrincipalAmount[_tokenId]);
         // update current bond 
         bond.withdrawn = true;
-        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, userBondPrincipalAmount[_tokenId]), getLoopCount());
+        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal), getLoopCount());
         uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
         dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId];
 
@@ -420,8 +420,13 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (userBondPrincipalAmount[_tokenId] == 0) {
             revert NotBondUser();
         }
-        console.log("\nNft trading fees:- ", txFees, userBondPrincipalAmount[_tokenId], (userBondPrincipalAmount[_tokenId] * txFees) / 1000000);
+        console.log("\nNft trading fees:- ", txFees);
+        uint deductAmount = (bonds[_tokenId].principal * txFees) / 1000000;
+        bonds[_tokenId].principal -= deductAmount;
         userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
+        console.log(availableFundsAtMaturity[(block.timestamp + ((bonds[_tokenId].maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY], "availableFundsAtMaturity[bonds[_tokenId].maturity]");
+        availableFundsAtMaturity[(block.timestamp + ((bonds[_tokenId].maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] -= deductAmount;
+
         console.log(userBondPrincipalAmount[_tokenId], "userBondPrincipalAmount[_tokenId]");
     }
 
