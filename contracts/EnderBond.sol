@@ -420,7 +420,9 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (userBondPrincipalAmount[_tokenId] == 0) {
             revert NotBondUser();
         }
+        console.log("\nNft trading fees:- ", txFees, userBondPrincipalAmount[_tokenId], (userBondPrincipalAmount[_tokenId] * txFees) / 1000000);
         userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
+        console.log(userBondPrincipalAmount[_tokenId], "userBondPrincipalAmount[_tokenId]");
     }
 
     /**

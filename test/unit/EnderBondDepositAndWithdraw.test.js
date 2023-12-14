@@ -444,7 +444,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       expect(await bondNFT.ownerOf(tokenId2)).to.be.equal(
         await bondNFT.ownerOf(tokenId)
       );
-
+      await bondNFT.connect(signer1).transferFrom(signer1.address, signer4.address, tokenId2);
       
 
       //increasing the time 1 day
@@ -497,7 +497,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth)
       await withdrawAndSetup(signer1, tokenId);
 
-      await withdrawAndSetup(signer1, tokenId2);
+      await withdrawAndSetup(signer4, tokenId2);
 
      
     });
