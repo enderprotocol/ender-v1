@@ -283,7 +283,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 bondFee,
         address token
     ) external payable nonReentrant returns (uint256 tokenId) {
-        console.log("Deposited Amount:- ", principal);
+        console.log("\nDeposited Amount:- ", principal);
         console.log("Maturity:- ", maturity);
         console.log("Bond Fees:- ", bondFee);
         if (principal < minDepositAmount) revert InvalidAmount();
@@ -321,7 +321,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
 
         // mint bond nft
         tokenId = bondNFT.mint(msg.sender);
-        console.log("Token Id of user:- ", tokenId);
+        console.log("Token Id of user:- ", tokenId,"\n");
         availableFundsAtMaturity[(block.timestamp + ((maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
 
@@ -501,6 +501,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired);
         uint256 _endMint = (priceEth * finalRewardPrincipal)/priceEnd;
         endMint += _endMint;
+        console.log("BondMinted", _endMint);
         bondYieldShareIndex = bondYieldShareIndex + ((_endMint) / finalRewardPrincipal);
         dayBondYieldShareIndex[timeNow] = bondYieldShareIndex;
         secondsBondYieldShareIndex[timeNow] = bondYieldShareIndex;

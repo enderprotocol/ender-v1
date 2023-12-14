@@ -230,7 +230,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       );
       //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       increaseTime(6000);
-      await enderBond.epochBondYieldShareIndex();
+      // await enderBond.epochBondYieldShareIndex();
       //user cant collect the refraction rewards before the Distribution is done
       // await expect(
       //   enderBond.connect(signer1).claimRefractionRewards(tokenId)
@@ -276,7 +276,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       );
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       // //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
-      await enderBond.epochBondYieldShareIndex();
+      // await enderBond.epochBondYieldShareIndex();
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
         await enderBond.userBondYieldShareIndex(tokenId2)
       );
@@ -402,7 +402,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         bondFee
       );
       increaseTime(6000);
-      await enderBond.epochBondYieldShareIndex();
+      // await enderBond.epochBondYieldShareIndex();
 
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
         await enderBond.userBondYieldShareIndex(tokenId)
@@ -436,7 +436,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       );
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       // //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
-      await enderBond.epochBondYieldShareIndex();
+      // await enderBond.epochBondYieldShareIndex();
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
         await enderBond.userBondYieldShareIndex(tokenId2)
       );
