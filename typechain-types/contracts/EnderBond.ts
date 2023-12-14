@@ -34,8 +34,6 @@ export interface EnderBondInterface extends Interface {
       | "bondableTokens"
       | "bonds"
       | "checkUpkeep"
-      | "claimRefractionRewards"
-      | "claimStakingReward"
       | "dayBondYieldShareIndex"
       | "dayRewardShareIndexForSend"
       | "dayToRefractionShareUpdation"
@@ -144,14 +142,6 @@ export interface EnderBondInterface extends Interface {
   encodeFunctionData(
     functionFragment: "checkUpkeep",
     values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "claimRefractionRewards",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "claimStakingReward",
-    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "dayBondYieldShareIndex",
@@ -371,14 +361,6 @@ export interface EnderBondInterface extends Interface {
   decodeFunctionResult(functionFragment: "bonds", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "checkUpkeep",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "claimRefractionRewards",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "claimStakingReward",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -920,18 +902,6 @@ export interface EnderBond extends BaseContract {
     "view"
   >;
 
-  claimRefractionRewards: TypedContractMethod<
-    [_tokenId: BigNumberish, precalUsers: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
-  claimStakingReward: TypedContractMethod<
-    [_tokenId: BigNumberish, precalUsers: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
   dayBondYieldShareIndex: TypedContractMethod<
     [arg0: BigNumberish],
     [bigint],
@@ -1231,20 +1201,6 @@ export interface EnderBond extends BaseContract {
     [arg0: BytesLike],
     [[boolean, string] & { upkeepNeeded: boolean; performData: string }],
     "view"
-  >;
-  getFunction(
-    nameOrSignature: "claimRefractionRewards"
-  ): TypedContractMethod<
-    [_tokenId: BigNumberish, precalUsers: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "claimStakingReward"
-  ): TypedContractMethod<
-    [_tokenId: BigNumberish, precalUsers: BigNumberish],
-    [void],
-    "nonpayable"
   >;
   getFunction(
     nameOrSignature: "dayBondYieldShareIndex"

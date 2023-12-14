@@ -385,7 +385,8 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId];
 
         endTreasury.mintEndToUser(msg.sender, reward);
-        if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
+        if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
+        if(rewardShareIndexSend != rewardSharePerUserIndexSend[_tokenId]) claimStakingReward(_tokenId, bond.stakingSendIndex);
         totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
 
         userBondPrincipalAmount[_tokenId] == 0;
@@ -549,7 +550,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @param _tokenId The unique identifier of the bond.
      */
 
-    function claimStakingReward(uint256 _tokenId, uint256 precalUsers) public nonReentrant {
+    function claimStakingReward(uint256 _tokenId, uint256 precalUsers) internal {
         Bond memory temp = bonds[_tokenId];
         if (precalUsers != 0) {
             // (, uint rewardPrinciple) = calculateStakingPendingReward(temp.principal, temp.maturity, _tokenId);
@@ -596,7 +597,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @param _tokenId The unique identifier of the bond.
      */
 
-    function claimRefractionRewards(uint256 _tokenId, uint256 precalUsers) public nonReentrant {
+    function claimRefractionRewards(uint256 _tokenId, uint256 precalUsers) internal {
         Bond memory temp = bonds[_tokenId];
         if (precalUsers != 0) {
             uint rewardPrinciple = temp.principal;
