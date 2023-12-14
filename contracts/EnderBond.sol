@@ -289,7 +289,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee <= 0 || bondFee > 100) revert InvalidBondFee();
+        if (bondFee <= 0 || bondFee > 10000) revert InvalidBondFee();
         IEndToken(endToken).distributeRefractionFees();
 
         // token transfer
@@ -315,7 +315,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 bondFee
     ) private returns (uint256 tokenId) {
         endTreasury.depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal), getLoopCount());
-        principal = (principal * (100 - bondFee)) / 100;
+        principal = (principal * (10000 - bondFee)) / 10000;
         // uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         // dayToBondYieldShareUpdation[timeNow].push(block.timestamp + (maturity * SECONDS_IN_DAY));
 
@@ -329,7 +329,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;
 
-        uint256 depositPrincipal = (getInterest(maturity) * ((100 + (bondFee))) * rewardPrinciple) / (365 * 1000000);
+        uint256 depositPrincipal = (getInterest(maturity) * ((10000 + (bondFee))) * rewardPrinciple) / (365 * 100000000);
         depositPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += depositPrincipal;
 
         totalDeposit += principal;

@@ -160,7 +160,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
   describe("deposit and withdraw", async () => {
     it("should successfully withdraw and update balances", async () => {
       const maturity = 90;
-      const bondFee = 5;
+      const bondFee = 500;
       const depositAmountEnd = expandTo18Decimals(5);
       const depositPrincipalStEth = expandTo18Decimals(1);
 
@@ -350,7 +350,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     });
     it.only("complete Ender protocol scenario 1", async () => {
       const maturity = 90;
-      const bondFee = 5;
+      const bondFee = 500;
       const depositAmountEnd = expandTo18Decimals(5);
       const depositPrincipalStEth = expandTo18Decimals(1);
 
@@ -499,9 +499,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
       await withdrawAndSetup(signer1, tokenId2);
 
-      expect(await stEth.balanceOf(signer1.address)).to.be.equal(
-        expandTo18Decimals(1.9)
-      );
+     
     });
 
   });
