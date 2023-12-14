@@ -381,7 +381,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         console.log("User withdraw is amount from bond contract:- ", bond.principal);
         // update current bond 
         bond.withdrawn = true;
-        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal), getLoopCount());
+        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, userBondPrincipalAmount[_tokenId]), getLoopCount());
         uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
         dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId];
 
@@ -571,7 +571,6 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                         (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
 
                     if (sEndTokenReward > 0) {
-                        console.log(sEndTokenReward, sEndToken, "---------------------------------------------------");
                         ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
                     }
                 } else {
