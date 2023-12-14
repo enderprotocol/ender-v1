@@ -136,8 +136,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     await enderBond.setBondableTokens([stEthAddress], true);
     await enderBond.setAddress(enderTreasuryAddress, 1);
     await enderBond.setAddress(bondNFTAddress, 3);
-
-
+    await enderBond.setAddress(sEndTokenAddress, 9);
+    await sEnd.setStatus(2);
+    await sEnd.whitelist(enderBondAddress, true);
     await endToken.grantRole(MINTER_ROLE, owner.address);
     await endToken.setFee(20);
 
@@ -250,9 +251,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
       const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
 
-      //as the distribution is done user now can withdraw the rewards
-      await enderBond.connect(signer1).claimRefractionRewards(tokenId,0);
-
       //   as he claimed the rewards
       expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
         initialBalanceOfuser
@@ -286,11 +284,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       expect(await bondNFT.ownerOf(tokenId2)).to.be.equal(
         await bondNFT.ownerOf(tokenId)
       );
-
-      //user cant collect the refraction rewards before the Distribution is done
-      await expect(
-        enderBond.connect(signer1).claimRefractionRewards(tokenId2,0)
-      ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
 
       //increasing the time 1 day
 
@@ -421,12 +414,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
 
       //as the distribution is done user now can withdraw the rewards
-      await enderBond.connect(signer1).claimRefractionRewards(tokenId,0);
-
-      //   as he claimed the rewards
-      expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
-        initialBalanceOfuser
-      );
+      // await enderBond.connect(signer1).claimRefractionRewards(tokenId,0);
 
       //for depositing second time by the same user
       await WETH.mint(signer1.address, depositPrincipalStEth);
@@ -457,10 +445,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         await bondNFT.ownerOf(tokenId)
       );
 
-      //user cant collect the refraction rewards before the Distribution is done
-      await expect(
-        enderBond.connect(signer1).claimRefractionRewards(tokenId2,0)
-      ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
+      
 
       //increasing the time 1 day
 

@@ -198,6 +198,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         else if (_type == 6) stEth = _addr;
         else if (_type == 7) keeper = _addr;
         else if (_type == 8) endStaking = IEnderStaking(_addr);
+        else if (_type == 9) sEndToken = _addr;
 
         emit AddressSet(_type, _addr);
     }
@@ -570,6 +571,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                         (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
 
                     if (sEndTokenReward > 0) {
+                        console.log(sEndTokenReward, sEndToken, "---------------------------------------------------");
                         ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
                     }
                 } else {
