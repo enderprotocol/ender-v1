@@ -55,6 +55,7 @@ export interface EnderBondInterface extends Interface {
       | "isSet"
       | "keeper"
       | "lastDay"
+      | "lastSecOfRefraction"
       | "lastTimeStamp"
       | "lido"
       | "maturities"
@@ -212,6 +213,10 @@ export interface EnderBondInterface extends Interface {
   encodeFunctionData(functionFragment: "isSet", values?: undefined): string;
   encodeFunctionData(functionFragment: "keeper", values?: undefined): string;
   encodeFunctionData(functionFragment: "lastDay", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "lastSecOfRefraction",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "lastTimeStamp",
     values?: undefined
@@ -423,6 +428,10 @@ export interface EnderBondInterface extends Interface {
   decodeFunctionResult(functionFragment: "isSet", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "keeper", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lastDay", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "lastSecOfRefraction",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "lastTimeStamp",
     data: BytesLike
@@ -1007,6 +1016,8 @@ export interface EnderBond extends BaseContract {
 
   lastDay: TypedContractMethod<[], [bigint], "view">;
 
+  lastSecOfRefraction: TypedContractMethod<[], [bigint], "view">;
+
   lastTimeStamp: TypedContractMethod<[], [bigint], "view">;
 
   lido: TypedContractMethod<[], [string], "view">;
@@ -1299,6 +1310,9 @@ export interface EnderBond extends BaseContract {
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "lastDay"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lastSecOfRefraction"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "lastTimeStamp"
