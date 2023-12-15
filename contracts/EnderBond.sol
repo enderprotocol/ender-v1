@@ -674,7 +674,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                         msg.sender,
                         ((rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
                     );
-                    console.log("Refraction reward2:- ", ((rewardPrinciple * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18));
+                    console.log("Refraction reward2:- ", rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]) / 1e18);
                 } else {
                     console.log(bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY), "bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)====>");
                     uint256 sTime;
@@ -691,7 +691,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                         msg.sender,
                         ((rewardPrinciple * (userS - rewardSharePerUserIndex[_tokenId])) / 1e18)
                     );
-                    console.log("Refraction reward1:- ", ((rewardPrinciple * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18));
+                    console.log("Refraction reward1:- ", ((rewardPrinciple * (userS - rewardSharePerUserIndex[_tokenId])) / 1e18));
                 }
 
                 rewardSharePerUserIndex[_tokenId] = rewardShareIndex;

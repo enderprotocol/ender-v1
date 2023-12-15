@@ -428,6 +428,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await enderTreasury.setStrategy([instadappLitelidoStaking], true);
       await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, "2000000000000000000");
+      await increaseTime(20 * 600);
       const tokenId2 = await depositAndSetup(
         signer1,
         depositPrincipalStEth,
