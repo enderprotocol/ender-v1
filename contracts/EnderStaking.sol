@@ -71,7 +71,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
      */
     function stake(uint256 amount) external {
         if (amount == 0) revert InvalidAmount();
-        console.log("End token deposit:- ", amount);
+        console.log("\nEnd token deposit:- ", amount);
         if(ISEndToken(endToken).balanceOf(address(this)) == 0){
             epochStakingReward(stEth);
             ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
@@ -98,7 +98,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         // add reward
         epochStakingReward(stEth);
         uint256 reward = claimRebaseValue(amount);
-        console.log("Withraw amount of staking contract:- ", reward);
+        console.log("\nWithraw amount of staking contract:- ", reward);
         // transfer token
         ISEndToken(endToken).transfer(msg.sender, reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
