@@ -95,6 +95,7 @@ contract EnderBond is
     uint public interval;
     uint public lastTimeStamp;
     uint public lastSecOfRefraction;
+    uint public lastSecOfSendReward;
 
     bool public isSet;
 
@@ -169,6 +170,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         lastTimeStamp = block.timestamp;
         lastDay = block.timestamp / SECONDS_IN_DAY;
         lastSecOfRefraction = block.timestamp;
+        lastSecOfSendReward = block.timestamp;
 
         //this function is not used
         setBondFeeEnabled(true);
@@ -375,6 +377,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      */
     function _withdraw(uint256 _tokenId) private {
         epochRewardShareIndexByPass();
+        epochRewardShareIndexSendByPass();
         Bond storage bond = bonds[_tokenId];
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
@@ -497,16 +500,56 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
 
     function epochRewardShareIndexForSend(uint256 _reward) public {
         // if (msg.sender != keeper) revert NotKeeper();
-        uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
-        rewardShareIndexSend =
+        if (totalDeposit != 0) {
+            uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+           rewardShareIndexSend =
             rewardShareIndexSend +
             ((_reward * 10 ** 18) / totalDeposit - amountRequired);
-        console.log("Reward share index for sEnd:- ", rewardShareIndexSend);
-        dayRewardShareIndexForSend[timeNow] = rewardShareIndexSend;
-        console.log("dayToRefractionShareUpdationSend[timeNow]====>", timeNow);
-        dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
-        secondsRefractionShareIndexSend[block.timestamp] = rewardShareIndexSend;
+            if( lastSecOfSendReward / SECONDS_IN_DAY == timeNow ){
+                console.log("======no loop ========");
+                if(dayToRefractionShareUpdationSend[timeNow].length == 0) dayToRefractionShareUpdationSend[timeNow].push(lastSecOfSendReward);
+                dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
+            }else{
+                console.log("=====loop=====");
+                uint day = lastSecOfSendReward / SECONDS_IN_DAY;
+                for(uint i = day+1; i <= timeNow; i++){
+                    console.log("i, timeNow",i, timeNow);
+                    dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
+                }
+            }
+            lastSecOfSendReward = block.timestamp;
+            console.log("Reward Share Index for Refraction:- ", rewardShareIndexSend);
+            // dayToRefractionShareUpdation[timeNow].push(block.timestamp);
+            console.log("timeNow----->",timeNow);
+            dayRewardShareIndexForSend[timeNow] = rewardShareIndexSend;
+            secondsRefractionShareIndexSend[block.timestamp] = rewardShareIndexSend;
+        }
+        // uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+        
+        // console.log("Reward share index for sEnd:- ", rewardShareIndexSend);
+        // console.log("dayToRefractionShareUpdationSend[timeNow]====>", timeNow);
+        // dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
     }
+
+    function epochRewardShareIndexSendByPass() internal{
+         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+        if( lastSecOfSendReward / SECONDS_IN_DAY == timeNow && dayToRefractionShareUpdationSend[timeNow].length == 0){
+                console.log("======no loop ========");
+                dayToRefractionShareUpdationSend[timeNow].push(lastSecOfSendReward);
+            }else{
+                console.log("=====loop=====");
+                uint day = lastSecOfSendReward / SECONDS_IN_DAY;
+                for(uint i = day+1; i <= timeNow; i++){
+                    console.log("i, timeNow",i, timeNow);
+                    dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
+                }
+            }
+            lastSecOfSendReward = block.timestamp;
+            // console.log("Reward Share Index for Refraction:- ", rewardShareIndex);
+            // dayToRefractionShareUpdation[timeNow].push(block.timestamp);
+            console.log("timeNow----->",timeNow);
+    }
+
 
     function findClosestS(uint256[] memory arr, uint256 _totalMaturity) internal pure returns (uint256 _s) {
         uint256 low = 0;
@@ -617,7 +660,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                 uint rewardPrinciple = temp.principal;
                 // (, uint rewardPrinciple) = calculateStakingPendingReward(temp.principal, temp.maturity, _tokenId);
 
-                if (dayRewardShareIndexForSend[bonds[_tokenId].maturity] == 0) {
+                if (dayRewardShareIndexForSend[(block.timestamp / SECONDS_IN_DAY)] != 0 && block.timestamp / SECONDS_IN_DAY == bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)) {
                     uint sEndTokenReward = ((rewardPrinciple *
                         (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
 
@@ -626,10 +669,16 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                         console.log("Bond holder sEnd Amount:- ", sEndTokenReward);
                     }
                 } else {
-                    uint256 sTime = findClosestS(
+                    uint256 sTime;
+                    if(dayToRefractionShareUpdationSend[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)].length == 1){
+                        sTime = dayToRefractionShareUpdationSend[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)][0];
+                    }else{
+                        sTime = findClosestS(
                         dayToRefractionShareUpdationSend[bonds[_tokenId].maturity],
                         ((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)
                     );
+
+                    }
                     uint256 userS = secondsRefractionShareIndexSend[sTime];
                     uint sEndTokenReward = ((rewardPrinciple * (userS - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
 
@@ -639,7 +688,6 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                     }
                 }
                 rewardSharePerUserIndexSend[_tokenId] = rewardShareIndexSend;
-                dayRewardShareIndexForSend[_tokenId] = rewardShareIndexSend;
             } else {
                 revert NotAllowed();
             }
