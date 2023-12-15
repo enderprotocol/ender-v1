@@ -636,7 +636,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                         msg.sender,
                         ((rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
                     );
-                    console.log("Refraction reward2:- ", ((rewardPrinciple * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18));
+                    console.log("Refraction reward2:- ", rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]) / 1e18);
                 } else {
                     uint256 sTime = findClosestS(
                         dayToRefractionShareUpdation[bonds[_tokenId].maturity],
@@ -647,7 +647,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                         msg.sender,
                         ((rewardPrinciple * (userS - rewardSharePerUserIndex[_tokenId])) / 1e18)
                     );
-                    console.log("Refraction reward1:- ", ((rewardPrinciple * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18));
+                    console.log("Refraction reward1:- ", ((rewardPrinciple * (userS - rewardSharePerUserIndex[_tokenId])) / 1e18));
                 }
 
                 rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
