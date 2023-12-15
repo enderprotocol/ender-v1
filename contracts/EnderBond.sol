@@ -448,6 +448,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                 ((_reward * 10 ** 18) / (totalDeposit - amountRequired));
             console.log("Reward Share Index for Refraction:- ", rewardShareIndex);
             dayToRefractionShareUpdation[timeNow].push(block.timestamp);
+            console.log("timeNow----->",timeNow);
             dayToRewardShareIndex[timeNow] = rewardShareIndex;
         }
         emit RewardShareIndexUpdated(rewardShareIndex);
@@ -629,12 +630,13 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                 if (rewardShareIndex == rewardSharePerUserIndex[_tokenId]) revert NoRewardCollected();
                 uint rewardPrinciple = temp.principal;
                 // (, uint rewardPrinciple) = calculateRefractionData(temp.principal, temp.maturity, _tokenId);
-                if (dayToRewardShareIndex[bonds[_tokenId].maturity] == 0) {
+                console.log((block.timestamp / SECONDS_IN_DAY) + bonds[_tokenId].maturity,"bonds[_tokenId].maturity======>");
+                if (dayToRewardShareIndex[(block.timestamp / SECONDS_IN_DAY) + bonds[_tokenId].maturity] == 0) {
                     IERC20(endToken).transfer(
                         msg.sender,
                         ((rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
                     );
-                    console.log("Refraction reward:- ", ((rewardPrinciple * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18));
+                    console.log("Refraction reward2:- ", ((rewardPrinciple * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18));
                 } else {
                     uint256 sTime = findClosestS(
                         dayToRefractionShareUpdation[bonds[_tokenId].maturity],
@@ -645,11 +647,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                         msg.sender,
                         ((rewardPrinciple * (userS - rewardSharePerUserIndex[_tokenId])) / 1e18)
                     );
-                    console.log("Refraction reward:- ", ((rewardPrinciple * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18));
+                    console.log("Refraction reward1:- ", ((rewardPrinciple * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18));
                 }
 
                 rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
-                dayToRewardShareIndex[bonds[_tokenId].maturity] = rewardShareIndex;
+                dayToRewardShareIndex[(block.timestamp / SECONDS_IN_DAY) + bonds[_tokenId].maturity] = rewardShareIndex;
             } else {
                 revert NotAllowed();
             }
