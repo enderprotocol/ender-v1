@@ -453,21 +453,17 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                 (rewardShareIndex) +
                 ((_reward * 10 ** 18) / (totalDeposit - amountRequired));
             if( lastSecOfRefraction / SECONDS_IN_DAY == timeNow ){
-                console.log("======no loop ========");
                 if(dayToRefractionShareUpdation[timeNow].length == 0) dayToRefractionShareUpdation[timeNow].push(lastSecOfRefraction);
                 dayToRefractionShareUpdation[timeNow].push(block.timestamp);
             }else{
-                console.log("=====loop=====");
                 uint day = lastSecOfRefraction / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("i, timeNow",i, timeNow);
                     dayToRefractionShareUpdation[i].push(lastSecOfRefraction);
                 }
             }
             lastSecOfRefraction = block.timestamp;
             console.log("Reward Share Index for Refraction:- ", rewardShareIndex);
             // dayToRefractionShareUpdation[timeNow].push(block.timestamp);
-            console.log("timeNow----->",timeNow);
             dayToRewardShareIndex[block.timestamp] = rewardShareIndex;
         }
         emit RewardShareIndexUpdated(rewardShareIndex);
@@ -477,20 +473,16 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
 
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         if( lastSecOfRefraction / SECONDS_IN_DAY == timeNow && dayToRefractionShareUpdation[timeNow].length == 0){
-                console.log("======no loop ========");
                 dayToRefractionShareUpdation[timeNow].push(lastSecOfRefraction);
             }else{
-                console.log("=====loop=====");
                 uint day = lastSecOfRefraction / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("i, timeNow",i, timeNow);
                     dayToRefractionShareUpdation[i].push(lastSecOfRefraction);
                 }
             }
             lastSecOfRefraction = block.timestamp;
             console.log("Reward Share Index for Refraction:- ", rewardShareIndex);
             // dayToRefractionShareUpdation[timeNow].push(block.timestamp);
-            console.log("timeNow----->",timeNow);
     }
 
     /**
@@ -506,14 +498,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             rewardShareIndexSend +
             ((_reward * 10 ** 18) / totalDeposit - amountRequired);
             if( lastSecOfSendReward / SECONDS_IN_DAY == timeNow ){
-                console.log("======no loop ========");
                 if(dayToRefractionShareUpdationSend[timeNow].length == 0) dayToRefractionShareUpdationSend[timeNow].push(lastSecOfSendReward);
                 dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
             }else{
-                console.log("=====loop=====");
                 uint day = lastSecOfSendReward / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("i, timeNow",i, timeNow);
                     dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
                 }
             }
@@ -534,20 +523,16 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
     function epochRewardShareIndexSendByPass() internal{
          uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         if( lastSecOfSendReward / SECONDS_IN_DAY == timeNow && dayToRefractionShareUpdationSend[timeNow].length == 0){
-                console.log("======no loop ========");
                 dayToRefractionShareUpdationSend[timeNow].push(lastSecOfSendReward);
             }else{
-                console.log("=====loop=====");
                 uint day = lastSecOfSendReward / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("i, timeNow",i, timeNow);
                     dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
                 }
             }
             lastSecOfSendReward = block.timestamp;
             // console.log("Reward Share Index for Refraction:- ", rewardShareIndex);
             // dayToRefractionShareUpdation[timeNow].push(block.timestamp);
-            console.log("timeNow----->",timeNow);
     }
 
 
