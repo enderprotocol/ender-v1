@@ -92,6 +92,7 @@ contract EnderBond is
     uint256 public lastDay;
     uint256 private amountRequired;
     uint256 private depositAmountRequired;
+    uint256 private withdrawAmntFromSt;
     uint public interval;
     uint public lastTimeStamp;
     uint public lastSecOfRefraction;
@@ -409,15 +410,28 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
     function getLoopCount() public returns (uint256) {
         // if (msg.sender != address(endTreasury)) revert NotTreasury();
         uint256 currentDay = block.timestamp / SECONDS_IN_DAY;
-        if (currentDay == lastDay) return amountRequired;
-        for (uint256 i = lastDay + 1; i <= currentDay; i++) {
-            if(availableFundsAtMaturity[i] != 0) amountRequired += availableFundsAtMaturity[i];
-            if(depositPrincipalAtMaturity[i] != 0){
-                depositAmountRequired += depositPrincipalAtMaturity[i];
-            } 
+        if (currentDay == lastDay) return withdrawAmntFromSt = 0;
+        else{
+            for (uint256 i = lastDay + 1; i <= currentDay; i++) {
+                if(availableFundsAtMaturity[i] != 0) amountRequired += availableFundsAtMaturity[i];
+                if(depositPrincipalAtMaturity[i] != 0){
+                    depositAmountRequired += depositPrincipalAtMaturity[i];
+                } 
+                console.log("amountRequired-------For---------->>>>>>>>>", amountRequired);
+            }
+            lastDay = currentDay;
+            uint256 balanceInTreasury = ISEndToken(stEth).balanceOf(address(endTreasury));
+            console.log("balanceInTreasury---------->>>>>>>>>>>", balanceInTreasury);
+            console.log("amountRequired------------->>>>>>>>>>>", amountRequired);
+            if (amountRequired <= balanceInTreasury){ 
+                withdrawAmntFromSt = 0;
+            }
+            else{
+                withdrawAmntFromSt = amountRequired - balanceInTreasury;
+            }
+            return withdrawAmntFromSt;
+            console.log("withdrawAmntFromSt---------->>>>>>>>>>", withdrawAmntFromSt);
         }
-        lastDay = currentDay;
-        return amountRequired;
     }
 
     function deductFeesFromTransfer(uint256 _tokenId) public {
