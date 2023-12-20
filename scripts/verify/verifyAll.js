@@ -1,59 +1,59 @@
-const EndToken =  "0x23d23995b67ab79f962bad8eda7a32f8ff7162f1"
-const EnderBond =   "0x18f50e97316f694bd374d1c1afc79450ff23bffa"
-const SEndToken ="0xed9c9155979e4ac58345ce1dac282063e5c7a29a"
-const BondNFT =   "0x37e8b5d154299fe0adc0ea23b2e5b80ece428303"
-const EnderTreasury =   "0x9499c330f5ed02fb459c41fc2bb3d13420609b47"
-const EnderStaking =   "0x81bd03f3f5a324ee6a4459a8858970d5875dc015"
-const Weth =   "0x97F5d01557C49Fd4492508d662b91FeDe6d84bF7"
-const MockStEth = "0x4f1c8dF809CB90200534AC314503A74D9a60CC04"
-const EnderLidoStrategy =   "0x9E7c311CfdB5b38f871fD6FCcb1ccD66892C7570"
-const EnderOracle = "0xc2985d66eb5eea1f3f50a397e9adb378571979e5"
+const EndToken =  "0xd476de2e6e4b93ba7dc1dfc2051dc4e69ace66a1"
+const EnderBond =   "0x6364bda1d80697c8260c75408db345ddc86ba44b"
+const SEndToken ="0xa57daa4136bfd8a0059b30b2652e906412a09426"
+const BondNFT =   "0xa760f4caf70b14c3d3fa03317b6a93ac973486d1"
+const EnderTreasury =   "0x55b6f413159d0eaaff1d8f290bd51bec1f343495"
+const EnderStaking =   "0xf2ac820b4c6bf23ab5d82c819f6684ea9e3cb601"
+const Weth =   "0x35E1bF8BCfDFc3b571AE32873aD6A5d2A1cA1f55"
+const MockStEth = "0x80dDde9A43f770e009eB693f7d17eEb97d6d0abf"
+const EnderLidoStrategy =   "0x9F306B7119F24e78A286265905E80af7a318f3AD"
+const EnderOracle = "0x4CE5090196f000C6C486af65af8b55A98bBC728a"
 
 async function main() {
     try {
-        // await hre.run("verify:verify", {
-        // address: Weth,
-        // constructorArguments: ["wrappedEth", "weth", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"],
-        // contract: "contracts/ERC20/StEth.sol:mockWETH",
-        // });  
-        // await hre.run("verify:verify", {
-        //     address: MockStEth,
-        //     constructorArguments: [Weth, "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"],
-        //     contract: "contracts/ERC20/StEth.sol:MockStEth",
-        // });
-        // await hre.run("verify:verify", {
-        //     address: EnderLidoStrategy,
-        //     constructorArguments: ["InstaToken", "Inst", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", MockStEth],
-        //     contract: "contracts/strategy/instadapp/instadappLite.sol:StinstaToken",
-        // });
-        // await hre.run("verify:verify", {
-        //     address: EndToken,
-        //     contract: "contracts/ERC20/EndToken.sol:EndToken",
-        // });
-        // await hre.run("verify:verify", {
-        //     address: SEndToken,
-        //     contract: "contracts/ERC20/SEndToken.sol:SEndToken",
-        // });
+        await hre.run("verify:verify", {
+        address: Weth,
+        constructorArguments: ["wrappedEth", "weth", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"],
+        contract: "contracts/ERC20/StEth.sol:mockWETH",
+        });  
+        await hre.run("verify:verify", {
+            address: MockStEth,
+            constructorArguments: [Weth, "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"],
+            contract: "contracts/ERC20/StEth.sol:MockStEth",
+        });
+        await hre.run("verify:verify", {
+            address: EnderLidoStrategy,
+            constructorArguments: ["InstaToken", "Inst", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", MockStEth],
+            contract: "contracts/strategy/instadapp/instadappLite.sol:StinstaToken",
+        });
+        await hre.run("verify:verify", {
+            address: EndToken,
+            contract: "contracts/ERC20/EndToken.sol:EndToken",
+        });
+        await hre.run("verify:verify", {
+            address: SEndToken,
+            contract: "contracts/ERC20/SEndToken.sol:SEndToken",
+        });
 
-        // await hre.run("verify:verify", {
-        //     address: EnderBond,
-        //     contract: "contracts/EnderBond.sol:EnderBond",
-        // });
+        await hre.run("verify:verify", {
+            address: EnderBond,
+            contract: "contracts/EnderBond.sol:EnderBond",
+        });
 
-        // await hre.run("verify:verify", {
-        //     address: BondNFT,
-        //     contract: "contracts/NFT/BondNFT.sol:BondNFT",
-        // });;
+        await hre.run("verify:verify", {
+            address: BondNFT,
+            contract: "contracts/NFT/BondNFT.sol:BondNFT",
+        });;
 
-        // await hre.run("verify:verify", {
-        //     address: EnderTreasury,
-        //     contract: "contracts/EnderTreasury.sol:EnderTreasury",
-        // });
+        await hre.run("verify:verify", {
+            address: EnderTreasury,
+            contract: "contracts/EnderTreasury.sol:EnderTreasury",
+        });
 
-        // await hre.run("verify:verify", {
-        //     address: EnderStaking,
-        //     contract: "contracts/EnderStaking.sol:EnderStaking",
-        // });
+        await hre.run("verify:verify", {
+            address: EnderStaking,
+            contract: "contracts/EnderStaking.sol:EnderStaking",
+        });
         await hre.run("verify:verify", {
             address: EnderOracle,
             contract: "contracts/oracle/EnderOracle.sol:EnderOracle",

@@ -271,6 +271,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             if (maturity >= 30 && maturity < 60) maturityModifier = 85;
             if (maturity >= 15 && maturity < 30) maturityModifier = 80;
             if (maturity >= 7 && maturity < 15) maturityModifier = 70;
+            console.log("bondYieldBaseRate * maturityModifier", bondYieldBaseRate, maturityModifier);
             rate = bondYieldBaseRate * maturityModifier;
         }
     }
@@ -334,7 +335,9 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;
 
-        uint256 depositPrincipal = (getInterest(maturity) * ((10000 + (bondFee))) * rewardPrinciple) / (365 * 100000000);
+        console.log("Yield Multiplier", 10000 + (bondFee));
+        uint256 depositPrincipal = (getInterest(maturity) * (10000 + (bondFee)) * principal) / (365 * 100000000);
+        console.log("depositPrincipal For bond rewards per day",depositPrincipal);
         depositPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += depositPrincipal;
 
         totalDeposit += principal;
@@ -467,21 +470,17 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                 (rewardShareIndex) +
                 ((_reward * 10 ** 18) / (totalDeposit - amountRequired));
             if( lastSecOfRefraction / SECONDS_IN_DAY == timeNow ){
-                console.log("======no loop ========");
                 if(dayToRefractionShareUpdation[timeNow].length == 0) dayToRefractionShareUpdation[timeNow].push(lastSecOfRefraction);
                 dayToRefractionShareUpdation[timeNow].push(block.timestamp);
             }else{
-                console.log("=====loop=====");
                 uint day = lastSecOfRefraction / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("i, timeNow",i, timeNow);
                     dayToRefractionShareUpdation[i].push(lastSecOfRefraction);
                 }
             }
             lastSecOfRefraction = block.timestamp;
             console.log("Reward Share Index for Refraction:- ", rewardShareIndex);
             // dayToRefractionShareUpdation[timeNow].push(block.timestamp);
-            console.log("timeNow----->",timeNow);
             dayToRewardShareIndex[block.timestamp] = rewardShareIndex;
         }
         emit RewardShareIndexUpdated(rewardShareIndex);
@@ -491,20 +490,16 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
 
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         if( lastSecOfRefraction / SECONDS_IN_DAY == timeNow && dayToRefractionShareUpdation[timeNow].length == 0){
-                console.log("======no loop ========");
                 dayToRefractionShareUpdation[timeNow].push(lastSecOfRefraction);
             }else{
-                console.log("=====loop=====");
                 uint day = lastSecOfRefraction / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("i, timeNow",i, timeNow);
                     dayToRefractionShareUpdation[i].push(lastSecOfRefraction);
                 }
             }
             lastSecOfRefraction = block.timestamp;
             console.log("Reward Share Index for Refraction:- ", rewardShareIndex);
             // dayToRefractionShareUpdation[timeNow].push(block.timestamp);
-            console.log("timeNow----->",timeNow);
     }
 
     /**
@@ -520,14 +515,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             rewardShareIndexSend +
             ((_reward * 10 ** 18) / totalDeposit - amountRequired);
             if( lastSecOfSendReward / SECONDS_IN_DAY == timeNow ){
-                console.log("======no loop ========");
                 if(dayToRefractionShareUpdationSend[timeNow].length == 0) dayToRefractionShareUpdationSend[timeNow].push(lastSecOfSendReward);
                 dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
             }else{
-                console.log("=====loop=====");
                 uint day = lastSecOfSendReward / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("i, timeNow",i, timeNow);
                     dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
                 }
             }
@@ -548,20 +540,16 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
     function epochRewardShareIndexSendByPass() internal{
          uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         if( lastSecOfSendReward / SECONDS_IN_DAY == timeNow && dayToRefractionShareUpdationSend[timeNow].length == 0){
-                console.log("======no loop ========");
                 dayToRefractionShareUpdationSend[timeNow].push(lastSecOfSendReward);
             }else{
-                console.log("=====loop=====");
                 uint day = lastSecOfSendReward / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("i, timeNow",i, timeNow);
                     dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
                 }
             }
             lastSecOfSendReward = block.timestamp;
             // console.log("Reward Share Index for Refraction:- ", rewardShareIndex);
             // dayToRefractionShareUpdation[timeNow].push(block.timestamp);
-            console.log("timeNow----->",timeNow);
     }
 
 
@@ -605,6 +593,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         uint256 finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired);
+        console.log("finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired)",finalRewardPrincipal ,totalBondPrincipalAmount , depositAmountRequired);
         uint256 _endMint = (priceEth * finalRewardPrincipal)/priceEnd;
         endMint += _endMint;
         console.log("BondMinted", _endMint);
@@ -629,7 +618,9 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
     ) internal returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
+        console.log("avgRefractionIndex---->",avgRefractionIndex);
         rewardPrinciple = (_principle * avgRefractionIndex) / 100;
+        console.log("rewardPrinciple---->",rewardPrinciple);
         secondsRefractionShareIndex[block.timestamp] = rewardShareIndex;
 
         // pendingReward = rewardPrinciple * (rewardShareIndex - rewardSharePerUserIndex[_tokenId]);
