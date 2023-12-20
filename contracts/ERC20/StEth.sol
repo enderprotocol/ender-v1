@@ -150,7 +150,7 @@ contract mockWETH is Ownable,IERC20 {
         return _name;
     }
 
-    function mint(address to, uint256 amount) public onlyOwner {
+    function mint(address to, uint256 amount) public {
         _mint(to, amount);
     }
 

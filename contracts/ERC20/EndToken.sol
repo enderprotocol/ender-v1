@@ -225,8 +225,9 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     /**
      * @notice Mints a specified amount of tokens to the treasury
      * @param amount The amount of tokens to mint
+     * Note deleted the minter role for testing
      */
-    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
+    function mint(address to, uint256 amount) public{
         if (to == address(0)) revert ZeroAddress();
 
         _mint(to, amount);
