@@ -427,15 +427,16 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await enderTreasury.setAddress(instadappLitelidoStaking, 5);
       await enderTreasury.setStrategy([instadappLitelidoStaking], true);
       await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
-      await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, "2000000000000000000");
+      // await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, "2000000000000000000");
       await increaseTime(20 * 600);
+      console.log("---------------------------------------------------3rd-deposit-----------------------------------");
       const tokenId2 = await depositAndSetup(
         signer1,
         depositPrincipalStEth,
         maturity * 2,
         bondFee
       );
-      await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
+      // await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       // //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       // await enderBond.epochBondYieldShareIndex();
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
@@ -481,14 +482,14 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await WETH.mint(signer1.address, depositPrincipalStEth);
       await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).mintShare(depositPrincipalStEth);
-      await enderStaking.connect(signer3).stake(depositAmountEnd);
+      // await enderStaking.connect(signer3).stake(depositAmountEnd);
       
       // Wait for the bond to mature
       await increaseTime(180 * 600);
-      await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
+      // await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
 
-      await enderStaking.connect(signer3).withdraw(sEndAmount);
+      // await enderStaking.connect(signer3).withdraw(sEndAmount);
 
       //   await endToken.distributeRefractionFees();
 

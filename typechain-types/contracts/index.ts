@@ -3,6 +3,8 @@
 /* eslint-disable */
 import type * as erc20 from "./ERC20";
 export type { erc20 };
+import type * as enderPreLounchDepositSol from "./EnderPreLounchDeposit.sol";
+export type { enderPreLounchDepositSol };
 import type * as nft from "./NFT";
 export type { nft };
 import type * as interfaces from "./interfaces";

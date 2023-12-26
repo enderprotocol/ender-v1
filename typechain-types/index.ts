@@ -62,6 +62,8 @@ export type { IERC20 } from "./@openzeppelin/contracts/token/ERC20/IERC20";
 export { IERC20__factory } from "./factories/@openzeppelin/contracts/token/ERC20/IERC20__factory";
 export type { EnderBond } from "./contracts/EnderBond";
 export { EnderBond__factory } from "./factories/contracts/EnderBond__factory";
+export type { EnderPreLounchDeposit } from "./contracts/EnderPreLounchDeposit.sol/EnderPreLounchDeposit";
+export { EnderPreLounchDeposit__factory } from "./factories/contracts/EnderPreLounchDeposit.sol/EnderPreLounchDeposit__factory";
 export type { EnderStaking } from "./contracts/EnderStaking";
 export { EnderStaking__factory } from "./factories/contracts/EnderStaking__factory";
 export type { EnderTreasury } from "./contracts/EnderTreasury";

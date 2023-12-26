@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as erc20 from "./ERC20";
+export * as enderPreLounchDepositSol from "./EnderPreLounchDeposit.sol";
 export * as nft from "./NFT";
 export * as interfaces from "./interfaces";
 export * as oracle from "./oracle";

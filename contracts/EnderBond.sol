@@ -332,7 +332,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
 
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
-        rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
+         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;
 
         console.log("Yield Multiplier", 10000 + (bondFee));
@@ -394,7 +394,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal), getLoopCount());
         uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
         console.log("Bond reward:- ", reward);
-        dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId];
+        dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId]; 
 
         endTreasury.mintEndToUser(msg.sender, reward);
         if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
@@ -544,6 +544,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             }else{
                 uint day = lastSecOfSendReward / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
+                    console.log("-----------------refraction-------------------------------------------");
                     dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
                 }
             }
