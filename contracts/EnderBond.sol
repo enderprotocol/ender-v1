@@ -329,7 +329,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         tokenId = bondNFT.mint(msg.sender);
         console.log("Token Id of user:- ", tokenId,"\n");
         availableFundsAtMaturity[(block.timestamp + ((maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
-        (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId);
+        (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId, bondFee);
 
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
          rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
@@ -615,10 +615,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
     function calculateRefractionData(
         uint256 _principle,
         uint256 _maturity,
-        uint256 _tokenId
+        uint256 _tokenId,
+        uint256 _bondfee
     ) internal returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
+        avgRefractionIndex = 100 + ((rateOfChange * _bondfee * (_maturity - 1)) / (2 * 1000000));
         console.log("avgRefractionIndex---->",avgRefractionIndex);
         rewardPrinciple = (_principle * avgRefractionIndex) / 100;
         console.log("rewardPrinciple---->",rewardPrinciple);
