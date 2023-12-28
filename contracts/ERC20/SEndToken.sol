@@ -21,7 +21,7 @@ contract SEndToken is ERC20Upgradeable, AccessControlUpgradeable {
     error TransactionDisabled();
     error ZeroAddress();
 
-    event WhiteListChanged(address indexed _whitelistingAddress, bool indexed _action);
+    
     event AddressUpdated(address indexed _address, uint256 indexed _index);
 
 
@@ -81,7 +81,7 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
 
     function whitelist(address _whitelistingAddress, bool _action) external onlyRole(DEFAULT_ADMIN_ROLE){
         isWhitelisted[_whitelistingAddress] = _action;
-        emit WhiteListChanged(_whitelistingAddress, _action);
+        emit WhitelistChanged(_whitelistingAddress, _action);
     }
 
     ///for testing purpose

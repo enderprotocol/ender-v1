@@ -95,29 +95,29 @@ contract enderPreLounchDeposit is
         if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee <= 0 || bondFee > 10000) revert InvalidBondFee();
+        if (bondFee <= 0 || bondFee > 10000) revert InvalidBondFee();        
 
         // token transfer
         if (token == address(0)) {
-            if (msg.value != principal) revert InvalidAmount();
-            (bool suc, ) = payable(lido).call{value: msg.value}(abi.encodeWithSignature("submit()"));
-            require(suc, "lido eth deposit failed");
-            IERC20(stEth).transfer(address(this), IERC20(stEth).balanceOf(address(this)));
-        } else {
+            if (msg.value != principal) revert InvalidAmount();     
+            (bool suc, ) = payable(lido).call{value: msg.value}(abi.encodeWithSignature("submit()"));     
+            require(suc, "lido eth deposit failed");     
+            IERC20(stEth).transfer(address(this), principal);       
+        } else {           
             // send directly to the ender treasury
-            IERC20(token).transferFrom(msg.sender, address(this), principal);
-        }
+            IERC20(token).transferFrom(msg.sender, address(this), principal);       
+        }        
         totalStaked += principal;
         uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked;
         if (reward > 0){
             calculatingSForReward();
+            totalStaked += reward;
         }
         rewardSharePerUserIndexStEth[msg.sender] = rewardShareIndex;
         if(bonds[msg.sender].principalAmount > 0){
             calculatingPendingReward(msg.sender);
         }
 
-        
         bonds[msg.sender] = Bond(
             msg.sender,
             principal,
@@ -129,14 +129,14 @@ contract enderPreLounchDeposit is
         emit Deposit(msg.sender, bondFee, principal, maturity, token);
     }
     
-    function calculatingSForReward() internal{
+    function calculatingSForReward() internal {
         uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked;
         if (reward > 0){
             rewardShareIndex = rewardShareIndex + (reward/totalStaked);
         }
     }
 
-    function calculatingPendingReward(address user) internal{
+    function calculatingPendingReward(address user) internal {
         pendingReward[user] = bonds[user].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[user]);
     }
 

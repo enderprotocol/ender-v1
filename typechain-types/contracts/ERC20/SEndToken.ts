@@ -67,7 +67,6 @@ export interface SEndTokenInterface extends Interface {
       | "RoleRevoked"
       | "TransactionStatusChanged"
       | "Transfer"
-      | "WhiteListChanged"
       | "WhitelistChanged"
   ): EventFragment;
 
@@ -361,22 +360,6 @@ export namespace TransferEvent {
     from: string;
     to: string;
     value: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace WhiteListChangedEvent {
-  export type InputTuple = [
-    _whitelistingAddress: AddressLike,
-    _action: boolean
-  ];
-  export type OutputTuple = [_whitelistingAddress: string, _action: boolean];
-  export interface OutputObject {
-    _whitelistingAddress: string;
-    _action: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -767,13 +750,6 @@ export interface SEndToken extends BaseContract {
     TransferEvent.OutputObject
   >;
   getEvent(
-    key: "WhiteListChanged"
-  ): TypedContractEvent<
-    WhiteListChangedEvent.InputTuple,
-    WhiteListChangedEvent.OutputTuple,
-    WhiteListChangedEvent.OutputObject
-  >;
-  getEvent(
     key: "WhitelistChanged"
   ): TypedContractEvent<
     WhitelistChangedEvent.InputTuple,
@@ -868,17 +844,6 @@ export interface SEndToken extends BaseContract {
       TransferEvent.InputTuple,
       TransferEvent.OutputTuple,
       TransferEvent.OutputObject
-    >;
-
-    "WhiteListChanged(address,bool)": TypedContractEvent<
-      WhiteListChangedEvent.InputTuple,
-      WhiteListChangedEvent.OutputTuple,
-      WhiteListChangedEvent.OutputObject
-    >;
-    WhiteListChanged: TypedContractEvent<
-      WhiteListChangedEvent.InputTuple,
-      WhiteListChangedEvent.OutputTuple,
-      WhiteListChangedEvent.OutputObject
     >;
 
     "WhitelistChanged(address,bool)": TypedContractEvent<

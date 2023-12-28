@@ -24,13 +24,14 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     address public enderBond;
     address public keeper;
     address public stEth;
+    mapping(address => bool) public isWhitelisted;
 
-        event AddressUpdated(address indexed addr, uint256 indexed addrType);
+    event AddressUpdated(address indexed addr, uint256 indexed addrType);
     event PercentUpdated(uint256 percent);
     event Stake(address indexed staker, uint256 amount);
     event Withdraw(address indexed withdrawer, uint256 amount);
     event EpochStakingReward(address indexed asset, uint256 totalReward, uint256 rw2, uint256 sendTokens);
-
+    event WhitelistChanged(address indexed whitelistingAddress, bool indexed action);
   
     function initialize(address _end, address _sEnd) external initializer {
         __Ownable_init();
@@ -63,6 +64,11 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
           emit PercentUpdated(bondRewardPercentage);
 
         
+    }
+
+    function whitelist(address _whitelistingAddress, bool _action) external onlyOwner{
+        isWhitelisted[_whitelistingAddress] = _action;
+        emit WhitelistChanged(_whitelistingAddress, _action);
     }
 
     /**

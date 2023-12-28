@@ -53,7 +53,7 @@ contract EnderBond is
 
     /// @notice A mapping of bonds by token ID.
     mapping(uint256 => Bond) public bonds;
-
+    mapping(address => bool) public isWhitelisted;
     mapping(uint256 => uint256) public rewardSharePerUserIndex;
     mapping(uint256 => uint256) public rewardSharePerUserIndexSend;
 
@@ -148,6 +148,7 @@ event StakingRewardsClaimed(address indexed sender, uint256 indexed tokenId, uin
 event RewardShareIndexUpdated(uint256 indexed newRewardShareIndex);
 event BondYieldShareIndexUpdated(uint256 indexed newBondYieldShareIndex);
 event EndMintReset();
+event WhitelistChanged(address indexed whitelistingAddress, bool indexed action);
 event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRewardSharePerUserIndex);
     
 
@@ -274,6 +275,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             console.log("bondYieldBaseRate * maturityModifier", bondYieldBaseRate, maturityModifier);
             rate = bondYieldBaseRate * maturityModifier;
         }
+    }
+
+    function whitelist(address _whitelistingAddress, bool _action) external onlyOwner{
+        isWhitelisted[_whitelistingAddress] = _action;
+        emit WhitelistChanged(_whitelistingAddress, _action);
     }
 
     /**

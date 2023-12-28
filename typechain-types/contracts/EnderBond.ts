@@ -53,6 +53,7 @@ export interface EnderBondInterface extends Interface {
       | "initialize"
       | "interval"
       | "isSet"
+      | "isWhitelisted"
       | "keeper"
       | "lastDay"
       | "lastSecOfRefraction"
@@ -90,6 +91,7 @@ export interface EnderBondInterface extends Interface {
       | "txFees"
       | "userBondPrincipalAmount"
       | "userBondYieldShareIndex"
+      | "whitelist"
       | "withdraw"
   ): FunctionFragment;
 
@@ -113,6 +115,7 @@ export interface EnderBondInterface extends Interface {
       | "RewardSharePerUserIndexSet"
       | "StakingRewardsClaimed"
       | "TxFeesSet"
+      | "WhitelistChanged"
       | "Withdrawal"
   ): EventFragment;
 
@@ -212,6 +215,10 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "interval", values?: undefined): string;
   encodeFunctionData(functionFragment: "isSet", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "isWhitelisted",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(functionFragment: "keeper", values?: undefined): string;
   encodeFunctionData(functionFragment: "lastDay", values?: undefined): string;
   encodeFunctionData(
@@ -340,6 +347,10 @@ export interface EnderBondInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "whitelist",
+    values: [AddressLike, boolean]
+  ): string;
+  encodeFunctionData(
     functionFragment: "withdraw",
     values: [BigNumberish]
   ): string;
@@ -431,6 +442,10 @@ export interface EnderBondInterface extends Interface {
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "interval", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "isSet", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "isWhitelisted",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "keeper", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lastDay", data: BytesLike): Result;
   decodeFunctionResult(
@@ -549,6 +564,7 @@ export interface EnderBondInterface extends Interface {
     functionFragment: "userBondYieldShareIndex",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "whitelist", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 }
 
@@ -810,6 +826,19 @@ export namespace TxFeesSetEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace WhitelistChangedEvent {
+  export type InputTuple = [whitelistingAddress: AddressLike, action: boolean];
+  export type OutputTuple = [whitelistingAddress: string, action: boolean];
+  export interface OutputObject {
+    whitelistingAddress: string;
+    action: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace WithdrawalEvent {
   export type InputTuple = [sender: AddressLike, tokenId: BigNumberish];
   export type OutputTuple = [sender: string, tokenId: bigint];
@@ -1021,6 +1050,8 @@ export interface EnderBond extends BaseContract {
 
   isSet: TypedContractMethod<[], [boolean], "view">;
 
+  isWhitelisted: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+
   keeper: TypedContractMethod<[], [string], "view">;
 
   lastDay: TypedContractMethod<[], [bigint], "view">;
@@ -1158,6 +1189,12 @@ export interface EnderBond extends BaseContract {
     [arg0: BigNumberish],
     [bigint],
     "view"
+  >;
+
+  whitelist: TypedContractMethod<
+    [_whitelistingAddress: AddressLike, _action: boolean],
+    [void],
+    "nonpayable"
   >;
 
   withdraw: TypedContractMethod<[tokenId: BigNumberish], [void], "nonpayable">;
@@ -1317,6 +1354,9 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "isSet"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
+    nameOrSignature: "isWhitelisted"
+  ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+  getFunction(
     nameOrSignature: "keeper"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -1449,6 +1489,13 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "userBondYieldShareIndex"
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
+    nameOrSignature: "whitelist"
+  ): TypedContractMethod<
+    [_whitelistingAddress: AddressLike, _action: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "withdraw"
   ): TypedContractMethod<[tokenId: BigNumberish], [void], "nonpayable">;
 
@@ -1577,6 +1624,13 @@ export interface EnderBond extends BaseContract {
     TxFeesSetEvent.InputTuple,
     TxFeesSetEvent.OutputTuple,
     TxFeesSetEvent.OutputObject
+  >;
+  getEvent(
+    key: "WhitelistChanged"
+  ): TypedContractEvent<
+    WhitelistChangedEvent.InputTuple,
+    WhitelistChangedEvent.OutputTuple,
+    WhitelistChangedEvent.OutputObject
   >;
   getEvent(
     key: "Withdrawal"
@@ -1783,6 +1837,17 @@ export interface EnderBond extends BaseContract {
       TxFeesSetEvent.InputTuple,
       TxFeesSetEvent.OutputTuple,
       TxFeesSetEvent.OutputObject
+    >;
+
+    "WhitelistChanged(address,bool)": TypedContractEvent<
+      WhitelistChangedEvent.InputTuple,
+      WhitelistChangedEvent.OutputTuple,
+      WhitelistChangedEvent.OutputObject
+    >;
+    WhitelistChanged: TypedContractEvent<
+      WhitelistChangedEvent.InputTuple,
+      WhitelistChangedEvent.OutputTuple,
+      WhitelistChangedEvent.OutputObject
     >;
 
     "Withdrawal(address,uint256)": TypedContractEvent<

@@ -33,6 +33,7 @@ export interface EnderStakingInterface extends Interface {
       | "enderTreasury"
       | "epochStakingReward"
       | "initialize"
+      | "isWhitelisted"
       | "keeper"
       | "owner"
       | "rebasingIndex"
@@ -43,6 +44,7 @@ export interface EnderStakingInterface extends Interface {
       | "stEth"
       | "stake"
       | "transferOwnership"
+      | "whitelist"
       | "withdraw"
   ): FunctionFragment;
 
@@ -54,6 +56,7 @@ export interface EnderStakingInterface extends Interface {
       | "OwnershipTransferred"
       | "PercentUpdated"
       | "Stake"
+      | "WhitelistChanged"
       | "Withdraw"
   ): EventFragment;
 
@@ -78,6 +81,10 @@ export interface EnderStakingInterface extends Interface {
   encodeFunctionData(
     functionFragment: "initialize",
     values: [AddressLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isWhitelisted",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "keeper", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -105,6 +112,10 @@ export interface EnderStakingInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "whitelist",
+    values: [AddressLike, boolean]
+  ): string;
+  encodeFunctionData(
     functionFragment: "withdraw",
     values: [BigNumberish]
   ): string;
@@ -128,6 +139,10 @@ export interface EnderStakingInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "isWhitelisted",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "keeper", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
@@ -150,6 +165,7 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "whitelist", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 }
 
@@ -241,6 +257,19 @@ export namespace StakeEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace WhitelistChangedEvent {
+  export type InputTuple = [whitelistingAddress: AddressLike, action: boolean];
+  export type OutputTuple = [whitelistingAddress: string, action: boolean];
+  export interface OutputObject {
+    whitelistingAddress: string;
+    action: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace WithdrawEvent {
   export type InputTuple = [withdrawer: AddressLike, amount: BigNumberish];
   export type OutputTuple = [withdrawer: string, amount: bigint];
@@ -323,6 +352,8 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
 
+  isWhitelisted: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+
   keeper: TypedContractMethod<[], [string], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
@@ -351,6 +382,12 @@ export interface EnderStaking extends BaseContract {
 
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  whitelist: TypedContractMethod<
+    [_whitelistingAddress: AddressLike, _action: boolean],
     [void],
     "nonpayable"
   >;
@@ -387,6 +424,9 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "isWhitelisted"
+  ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+  getFunction(
     nameOrSignature: "keeper"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -420,6 +460,13 @@ export interface EnderStaking extends BaseContract {
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "whitelist"
+  ): TypedContractMethod<
+    [_whitelistingAddress: AddressLike, _action: boolean],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "withdraw"
   ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
@@ -465,6 +512,13 @@ export interface EnderStaking extends BaseContract {
     StakeEvent.InputTuple,
     StakeEvent.OutputTuple,
     StakeEvent.OutputObject
+  >;
+  getEvent(
+    key: "WhitelistChanged"
+  ): TypedContractEvent<
+    WhitelistChangedEvent.InputTuple,
+    WhitelistChangedEvent.OutputTuple,
+    WhitelistChangedEvent.OutputObject
   >;
   getEvent(
     key: "Withdraw"
@@ -539,6 +593,17 @@ export interface EnderStaking extends BaseContract {
       StakeEvent.InputTuple,
       StakeEvent.OutputTuple,
       StakeEvent.OutputObject
+    >;
+
+    "WhitelistChanged(address,bool)": TypedContractEvent<
+      WhitelistChangedEvent.InputTuple,
+      WhitelistChangedEvent.OutputTuple,
+      WhitelistChangedEvent.OutputObject
+    >;
+    WhitelistChanged: TypedContractEvent<
+      WhitelistChangedEvent.InputTuple,
+      WhitelistChangedEvent.OutputTuple,
+      WhitelistChangedEvent.OutputObject
     >;
 
     "Withdraw(address,uint256)": TypedContractEvent<
