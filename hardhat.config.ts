@@ -13,6 +13,7 @@ module.exports = {
       url: `${process.env.RPC}`,
       accounts: [`0x${process.env.PVTKEY}`],
     },
+
     // goerli: {
     //   // url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_PVT_KEY}`,
     //   url: `${process.env.ETHRPC}`,
@@ -22,6 +23,9 @@ module.exports = {
   etherscan: {
     apiKey: process.env.API_KEY_POLYGON,
   },
+  mocha: {
+    timeout: 200000, // 200 seconds max for running tests
+},
   solidity: {
     compilers: [
       {

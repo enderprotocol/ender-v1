@@ -32,11 +32,12 @@ export interface EnderPreLounchDepositInterface extends Interface {
       | "claimRebaseReward"
       | "deposit"
       | "depositEnable"
+      | "index"
       | "initialize"
+      | "isWhitelisted"
       | "lido"
       | "minDepositAmount"
       | "owner"
-      | "pendingReward"
       | "renounceOwnership"
       | "rewardShareIndex"
       | "rewardSharePerUserIndexStEth"
@@ -48,6 +49,7 @@ export interface EnderPreLounchDepositInterface extends Interface {
       | "totalRewardOfUser"
       | "totalStaked"
       | "transferOwnership"
+      | "whitelist"
   ): FunctionFragment;
 
   getEvent(
@@ -57,6 +59,7 @@ export interface EnderPreLounchDepositInterface extends Interface {
       | "Initialized"
       | "MinDepAmountSet"
       | "OwnershipTransferred"
+      | "WhitelistChanged"
       | "depositEnableSet"
       | "userInfo"
   ): EventFragment;
@@ -66,10 +69,10 @@ export interface EnderPreLounchDepositInterface extends Interface {
     functionFragment: "bondableTokens",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "bonds", values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: "bonds", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "claimRebaseReward",
-    values: [AddressLike, AddressLike]
+    values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "deposit",
@@ -79,9 +82,14 @@ export interface EnderPreLounchDepositInterface extends Interface {
     functionFragment: "depositEnable",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "index", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isWhitelisted",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "lido", values?: undefined): string;
   encodeFunctionData(
@@ -89,10 +97,6 @@ export interface EnderPreLounchDepositInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "pendingReward",
-    values: [AddressLike]
-  ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
@@ -103,7 +107,7 @@ export interface EnderPreLounchDepositInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "rewardSharePerUserIndexStEth",
-    values: [AddressLike]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setAddress",
@@ -124,7 +128,7 @@ export interface EnderPreLounchDepositInterface extends Interface {
   encodeFunctionData(functionFragment: "stEth", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalRewardOfUser",
-    values: [AddressLike]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "totalStaked",
@@ -133,6 +137,10 @@ export interface EnderPreLounchDepositInterface extends Interface {
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "whitelist",
+    values: [AddressLike, boolean]
   ): string;
 
   decodeFunctionResult(functionFragment: "admin", data: BytesLike): Result;
@@ -150,17 +158,18 @@ export interface EnderPreLounchDepositInterface extends Interface {
     functionFragment: "depositEnable",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "index", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "isWhitelisted",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "lido", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "minDepositAmount",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "pendingReward",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -199,6 +208,7 @@ export interface EnderPreLounchDepositInterface extends Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "whitelist", data: BytesLike): Result;
 }
 
 export namespace BondableTokensSetEvent {
@@ -217,6 +227,7 @@ export namespace BondableTokensSetEvent {
 export namespace DepositEvent {
   export type InputTuple = [
     sender: AddressLike,
+    index: BigNumberish,
     bondFees: BigNumberish,
     principal: BigNumberish,
     maturity: BigNumberish,
@@ -224,6 +235,7 @@ export namespace DepositEvent {
   ];
   export type OutputTuple = [
     sender: string,
+    index: bigint,
     bondFees: bigint,
     principal: bigint,
     maturity: bigint,
@@ -231,6 +243,7 @@ export namespace DepositEvent {
   ];
   export interface OutputObject {
     sender: string;
+    index: bigint;
     bondFees: bigint;
     principal: bigint;
     maturity: bigint;
@@ -279,6 +292,19 @@ export namespace OwnershipTransferredEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace WhitelistChangedEvent {
+  export type InputTuple = [whitelistingAddress: AddressLike, action: boolean];
+  export type OutputTuple = [whitelistingAddress: string, action: boolean];
+  export interface OutputObject {
+    whitelistingAddress: string;
+    action: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace depositEnableSetEvent {
   export type InputTuple = [depositEnable: boolean];
   export type OutputTuple = [depositEnable: boolean];
@@ -294,6 +320,7 @@ export namespace depositEnableSetEvent {
 export namespace userInfoEvent {
   export type InputTuple = [
     user: AddressLike,
+    index: BigNumberish,
     principal: BigNumberish,
     Reward: BigNumberish,
     totalAmount: BigNumberish,
@@ -302,6 +329,7 @@ export namespace userInfoEvent {
   ];
   export type OutputTuple = [
     user: string,
+    index: bigint,
     principal: bigint,
     Reward: bigint,
     totalAmount: bigint,
@@ -310,6 +338,7 @@ export namespace userInfoEvent {
   ];
   export interface OutputObject {
     user: string;
+    index: bigint;
     principal: bigint;
     Reward: bigint;
     totalAmount: bigint;
@@ -370,7 +399,7 @@ export interface EnderPreLounchDeposit extends BaseContract {
   bondableTokens: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
 
   bonds: TypedContractMethod<
-    [arg0: AddressLike],
+    [arg0: BigNumberish],
     [
       [string, bigint, bigint, bigint, bigint] & {
         user: string;
@@ -384,8 +413,15 @@ export interface EnderPreLounchDeposit extends BaseContract {
   >;
 
   claimRebaseReward: TypedContractMethod<
-    [user: AddressLike, _bond: AddressLike],
-    [void],
+    [index: BigNumberish, _bond: AddressLike],
+    [
+      [string, bigint, bigint, bigint] & {
+        user: string;
+        principal: bigint;
+        bonfees: bigint;
+        maturity: bigint;
+      }
+    ],
     "nonpayable"
   >;
 
@@ -402,11 +438,15 @@ export interface EnderPreLounchDeposit extends BaseContract {
 
   depositEnable: TypedContractMethod<[], [boolean], "view">;
 
+  index: TypedContractMethod<[], [bigint], "view">;
+
   initialize: TypedContractMethod<
-    [_stEth: AddressLike, _lido: AddressLike, _admin: AddressLike],
+    [_stEth: AddressLike, _lido: AddressLike],
     [void],
     "nonpayable"
   >;
+
+  isWhitelisted: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
 
   lido: TypedContractMethod<[], [string], "view">;
 
@@ -414,14 +454,12 @@ export interface EnderPreLounchDeposit extends BaseContract {
 
   owner: TypedContractMethod<[], [string], "view">;
 
-  pendingReward: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
-
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
   rewardShareIndex: TypedContractMethod<[], [bigint], "view">;
 
   rewardSharePerUserIndexStEth: TypedContractMethod<
-    [arg0: AddressLike],
+    [arg0: BigNumberish],
     [bigint],
     "view"
   >;
@@ -452,12 +490,22 @@ export interface EnderPreLounchDeposit extends BaseContract {
 
   stEth: TypedContractMethod<[], [string], "view">;
 
-  totalRewardOfUser: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  totalRewardOfUser: TypedContractMethod<
+    [arg0: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
   totalStaked: TypedContractMethod<[], [bigint], "view">;
 
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  whitelist: TypedContractMethod<
+    [_whitelistingAddress: AddressLike, _action: boolean],
     [void],
     "nonpayable"
   >;
@@ -475,7 +523,7 @@ export interface EnderPreLounchDeposit extends BaseContract {
   getFunction(
     nameOrSignature: "bonds"
   ): TypedContractMethod<
-    [arg0: AddressLike],
+    [arg0: BigNumberish],
     [
       [string, bigint, bigint, bigint, bigint] & {
         user: string;
@@ -490,8 +538,15 @@ export interface EnderPreLounchDeposit extends BaseContract {
   getFunction(
     nameOrSignature: "claimRebaseReward"
   ): TypedContractMethod<
-    [user: AddressLike, _bond: AddressLike],
-    [void],
+    [index: BigNumberish, _bond: AddressLike],
+    [
+      [string, bigint, bigint, bigint] & {
+        user: string;
+        principal: bigint;
+        bonfees: bigint;
+        maturity: bigint;
+      }
+    ],
     "nonpayable"
   >;
   getFunction(
@@ -510,12 +565,18 @@ export interface EnderPreLounchDeposit extends BaseContract {
     nameOrSignature: "depositEnable"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
+    nameOrSignature: "index"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [_stEth: AddressLike, _lido: AddressLike, _admin: AddressLike],
+    [_stEth: AddressLike, _lido: AddressLike],
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "isWhitelisted"
+  ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
   getFunction(
     nameOrSignature: "lido"
   ): TypedContractMethod<[], [string], "view">;
@@ -526,9 +587,6 @@ export interface EnderPreLounchDeposit extends BaseContract {
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "pendingReward"
-  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
-  getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
@@ -536,7 +594,7 @@ export interface EnderPreLounchDeposit extends BaseContract {
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "rewardSharePerUserIndexStEth"
-  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "setAddress"
   ): TypedContractMethod<
@@ -562,13 +620,20 @@ export interface EnderPreLounchDeposit extends BaseContract {
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "totalRewardOfUser"
-  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "totalStaked"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "whitelist"
+  ): TypedContractMethod<
+    [_whitelistingAddress: AddressLike, _action: boolean],
+    [void],
+    "nonpayable"
+  >;
 
   getEvent(
     key: "BondableTokensSet"
@@ -606,6 +671,13 @@ export interface EnderPreLounchDeposit extends BaseContract {
     OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
+    key: "WhitelistChanged"
+  ): TypedContractEvent<
+    WhitelistChangedEvent.InputTuple,
+    WhitelistChangedEvent.OutputTuple,
+    WhitelistChangedEvent.OutputObject
+  >;
+  getEvent(
     key: "depositEnableSet"
   ): TypedContractEvent<
     depositEnableSetEvent.InputTuple,
@@ -632,7 +704,7 @@ export interface EnderPreLounchDeposit extends BaseContract {
       BondableTokensSetEvent.OutputObject
     >;
 
-    "Deposit(address,uint256,uint256,uint256,address)": TypedContractEvent<
+    "Deposit(address,uint256,uint256,uint256,uint256,address)": TypedContractEvent<
       DepositEvent.InputTuple,
       DepositEvent.OutputTuple,
       DepositEvent.OutputObject
@@ -676,6 +748,17 @@ export interface EnderPreLounchDeposit extends BaseContract {
       OwnershipTransferredEvent.OutputObject
     >;
 
+    "WhitelistChanged(address,bool)": TypedContractEvent<
+      WhitelistChangedEvent.InputTuple,
+      WhitelistChangedEvent.OutputTuple,
+      WhitelistChangedEvent.OutputObject
+    >;
+    WhitelistChanged: TypedContractEvent<
+      WhitelistChangedEvent.InputTuple,
+      WhitelistChangedEvent.OutputTuple,
+      WhitelistChangedEvent.OutputObject
+    >;
+
     "depositEnableSet(bool)": TypedContractEvent<
       depositEnableSetEvent.InputTuple,
       depositEnableSetEvent.OutputTuple,
@@ -687,7 +770,7 @@ export interface EnderPreLounchDeposit extends BaseContract {
       depositEnableSetEvent.OutputObject
     >;
 
-    "userInfo(address,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+    "userInfo(address,uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
       userInfoEvent.InputTuple,
       userInfoEvent.OutputTuple,
       userInfoEvent.OutputObject

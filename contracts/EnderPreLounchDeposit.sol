@@ -13,16 +13,17 @@ contract enderPreLounchDeposit is
     address public stEth;
     address public lido;
     address public admin;
+    uint256 public index;
     uint256 public minDepositAmount;
     uint256 public rewardShareIndex;
     uint256 public totalStaked;
     bool public depositEnable;
     // @notice A mapping that indicates whether a token is bondable.
     mapping(address => bool) public bondableTokens;
-    mapping(address => uint256) public rewardSharePerUserIndexStEth;
-    mapping(address => uint256) public pendingReward;
-    mapping(address => uint256) public totalRewardOfUser;
-    mapping(address => Bond) public bonds;
+    mapping(uint256 => uint256) public rewardSharePerUserIndexStEth;
+    mapping(uint256 => uint256) public totalRewardOfUser;
+    mapping(address => bool) public isWhitelisted;
+    mapping(uint256 => Bond) public bonds;
     struct Bond {
         address user;
         uint256 principalAmount;
@@ -36,18 +37,20 @@ contract enderPreLounchDeposit is
     error ZeroAddress();
     error NotAllowed();
     error NotBondableToken();
+    error addressNotWhitelisted();
     event depositEnableSet(bool depositEnable);
     event MinDepAmountSet(uint256 indexed newAmount);
     event BondableTokensSet(address indexed token, bool indexed isEnabled);
-    event Deposit(address indexed sender, uint256 bondFees, uint256 principal, uint256 maturity, address token);
-    event userInfo(address indexed user, uint256 principal, uint256 Reward, uint256 totalAmount, uint256 bondFees, uint256 maturity);
+    event WhitelistChanged(address indexed whitelistingAddress, bool indexed action);
+    event Deposit(address indexed sender, uint256 index, uint256 bondFees, uint256 principal, uint256 maturity, address token);
+    event userInfo(address indexed user, uint256 index, uint256 principal, uint256 Reward, uint256 totalAmount, uint256 bondFees, uint256 maturity);
 
-    function initialize(address _stEth, address _lido, address _admin) public initializer {
+    function initialize(address _stEth, address _lido) public initializer {
         __Ownable_init();
         stEth = _stEth;
         lido = _lido;
-        admin = _admin;
-        minDepositAmount = 1000000000000000;
+        bondableTokens[_stEth] = true;
+        minDepositAmount = 100000000000000000; 
     }
 
     modifier depositEnabled() {
@@ -95,30 +98,32 @@ contract enderPreLounchDeposit is
         if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee <= 0 || bondFee > 10000) revert InvalidBondFee();        
+        if (bondFee <= 0 || bondFee >= 10000) revert InvalidBondFee();   
+        if (!isWhitelisted[msg.sender]) revert addressNotWhitelisted();     
 
         // token transfer
         if (token == address(0)) {
-            if (msg.value != principal) revert InvalidAmount();     
+            if (msg.value != principal) revert InvalidAmount();        
             (bool suc, ) = payable(lido).call{value: msg.value}(abi.encodeWithSignature("submit()"));     
-            require(suc, "lido eth deposit failed");     
+            require(suc, "lido eth deposit failed");                                    
             IERC20(stEth).transfer(address(this), principal);       
         } else {           
-            // send directly to the ender treasury
-            IERC20(token).transferFrom(msg.sender, address(this), principal);       
+            // send directly to the deposit contract            
+            IERC20(token).transferFrom(msg.sender, address(this), principal);                          
         }        
-        totalStaked += principal;
-        uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked;
+        totalStaked += principal;       
+        uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked;     
         if (reward > 0){
             calculatingSForReward();
             totalStaked += reward;
         }
-        rewardSharePerUserIndexStEth[msg.sender] = rewardShareIndex;
-        if(bonds[msg.sender].principalAmount > 0){
-            calculatingPendingReward(msg.sender);
-        }
+        index ++;
+        rewardSharePerUserIndexStEth[index] = rewardShareIndex;
+        // if(bonds[msg.sender].principalAmount > 0){
+        //     calculatingPendingReward(msg.sender);
+        // }
 
-        bonds[msg.sender] = Bond(
+        bonds[index] = Bond(
             msg.sender,
             principal,
             principal,
@@ -126,7 +131,7 @@ contract enderPreLounchDeposit is
             maturity
         );
         // IEnderStaking(endStaking).epochStakingReward(stEth);
-        emit Deposit(msg.sender, bondFee, principal, maturity, token);
+        emit Deposit(msg.sender, index, bondFee, principal, maturity, token);
     }
     
     function calculatingSForReward() internal {
@@ -136,14 +141,19 @@ contract enderPreLounchDeposit is
         }
     }
 
-    function calculatingPendingReward(address user) internal {
-        pendingReward[user] = bonds[user].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[user]);
+    // function calculatingPendingReward(address user) internal {
+    //     pendingReward[user] = bonds[user].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[user]);
+    // }
+    function claimRebaseReward(uint256 index, address _bond) external onlyOwner returns(address user, uint256 principal, uint256 bonfees, uint256 maturity){
+        totalRewardOfUser[index] =   (bonds[index].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[index]));
+        bonds[index].totalAmount = bonds[index].principalAmount + totalRewardOfUser[index];
+        IERC20(stEth).transfer(_bond, bonds[index].totalAmount);
+        emit userInfo(user, index, bonds[index].principalAmount, totalRewardOfUser[index], bonds[index].totalAmount, bonds[index].bondFees, bonds[index].maturity);
+        return (bonds[index].user, bonds[index].totalAmount, bonds[index].bondFees, bonds[index].maturity);
     }
 
-    function claimRebaseReward(address user, address _bond) external onlyOwner{
-        totalRewardOfUser[user] = pendingReward[user] + (bonds[user].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[user]));
-        bonds[user].totalAmount = bonds[user].principalAmount + totalRewardOfUser[user];
-        IERC20(stEth).transfer(_bond, bonds[user].totalAmount);
-        emit userInfo(user, bonds[user].principalAmount, totalRewardOfUser[user], bonds[user].totalAmount, bonds[user].bondFees, bonds[user].maturity);
+    function whitelist(address _whitelistingAddress, bool _action) external onlyOwner{
+        isWhitelisted[_whitelistingAddress] = _action;
+        emit WhitelistChanged(_whitelistingAddress, _action);
     }
 }

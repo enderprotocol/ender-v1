@@ -159,33 +159,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         emit MintAndVest(block.timestamp, mintAmount);
     }
 
-    // function getMintedEndtemp() external onlyRole(DEFAULT_ADMIN_ROLE) {
-    //     uint256 time = block.timestamp;
-    //     uint256 withdrawAmount = 0;
-
-    //     // VestAmount temp  =
-
-    //     if (lastYear < time / 31536000) {
-    //         if (!yearlyVestAmount[lastYear].nineMonths && (lastYear * 31536000) + 270 days < time)
-    //             withdrawAmount += yearlyVestAmount[lastYear].totalAmount / 3;
-    //         if (!yearlyVestAmount[lastYear].twelveMonths && (lastYear * 31536000) + 360 days < time)
-    //             withdrawAmount += yearlyVestAmount[lastYear].totalAmount / 3;
-    //         if (!yearlyVestAmount[lastYear].fifteenMonths && (lastYear * 31536000) + 450 days < time)
-    //             withdrawAmount += (yearlyVestAmount[lastYear].totalAmount -
-    //                 ((2 * yearlyVestAmount[lastYear].totalAmount) / 3));
-    //     }
-
-    //     if (!yearlyVestAmount[time / 31536000].nineMonths && ((time / 31536000) * 31536000) + 270 days < time)
-    //         withdrawAmount += yearlyVestAmount[time / 31536000].totalAmount / 3;
-    //     if (!yearlyVestAmount[time / 31536000].twelveMonths && ((time / 31536000) * 31536000) + 360 days < time)
-    //         withdrawAmount += yearlyVestAmount[time / 31536000].totalAmount / 3;
-
-    //     if (lastYear != time / 31536000) lastYear = time / 31536000;
-    //     transfer(admin, withdrawAmount);
-
-    //     lastYear = time / 31536000;
-    // }
-
     function getMintedEnd() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 time = block.timestamp;
         uint256 withdrawAmount = 0;
