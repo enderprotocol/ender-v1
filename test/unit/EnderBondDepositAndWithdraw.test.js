@@ -19,7 +19,7 @@ function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
 
-describe.only("EnderBond Deposit and Withdraw", function () {
+describe("EnderBond Deposit and Withdraw", function () {
   let owner, signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
@@ -348,7 +348,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         expandTo18Decimals(1.9)
       );
     });
-    it.only("complete Ender protocol scenario 1", async () => {
+    it("complete Ender protocol scenario 1", async () => {
       const maturity = 90;
       const bondFee = 500;
       const depositAmountEnd = expandTo18Decimals(5);

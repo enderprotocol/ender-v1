@@ -2,11 +2,11 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as erc20 from "./ERC20";
-export * as enderPreLounchDepositSol from "./EnderPreLounchDeposit.sol";
 export * as nft from "./NFT";
 export * as interfaces from "./interfaces";
 export * as oracle from "./oracle";
 export * as strategy from "./strategy";
 export { EnderBond__factory } from "./EnderBond__factory";
+export { EnderBondLiquidityDeposit__factory } from "./EnderBondLiquidityDeposit__factory";
 export { EnderStaking__factory } from "./EnderStaking__factory";
 export { EnderTreasury__factory } from "./EnderTreasury__factory";

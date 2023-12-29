@@ -52,6 +52,8 @@ export type { ERC165Upgradeable } from "./@openzeppelin/contracts-upgradeable/ut
 export { ERC165Upgradeable__factory } from "./factories/@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable__factory";
 export type { IERC165Upgradeable } from "./@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable";
 export { IERC165Upgradeable__factory } from "./factories/@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable__factory";
+export type { IERC5267 } from "./@openzeppelin/contracts/interfaces/IERC5267";
+export { IERC5267__factory } from "./factories/@openzeppelin/contracts/interfaces/IERC5267__factory";
 export type { ERC20 } from "./@openzeppelin/contracts/token/ERC20/ERC20";
 export { ERC20__factory } from "./factories/@openzeppelin/contracts/token/ERC20/ERC20__factory";
 export type { ERC20Burnable } from "./@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable";
@@ -60,10 +62,14 @@ export type { IERC20Metadata } from "./@openzeppelin/contracts/token/ERC20/exten
 export { IERC20Metadata__factory } from "./factories/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata__factory";
 export type { IERC20 } from "./@openzeppelin/contracts/token/ERC20/IERC20";
 export { IERC20__factory } from "./factories/@openzeppelin/contracts/token/ERC20/IERC20__factory";
+export type { EIP712 } from "./@openzeppelin/contracts/utils/cryptography/EIP712";
+export { EIP712__factory } from "./factories/@openzeppelin/contracts/utils/cryptography/EIP712__factory";
+export type { ShortStrings } from "./@openzeppelin/contracts/utils/ShortStrings";
+export { ShortStrings__factory } from "./factories/@openzeppelin/contracts/utils/ShortStrings__factory";
 export type { EnderBond } from "./contracts/EnderBond";
 export { EnderBond__factory } from "./factories/contracts/EnderBond__factory";
-export type { EnderPreLaunchDeposit } from "./contracts/EnderPreLounchDeposit.sol/EnderPreLaunchDeposit";
-export { EnderPreLaunchDeposit__factory } from "./factories/contracts/EnderPreLounchDeposit.sol/EnderPreLaunchDeposit__factory";
+export type { EnderBondLiquidityDeposit } from "./contracts/EnderBondLiquidityDeposit";
+export { EnderBondLiquidityDeposit__factory } from "./factories/contracts/EnderBondLiquidityDeposit__factory";
 export type { EnderStaking } from "./contracts/EnderStaking";
 export { EnderStaking__factory } from "./factories/contracts/EnderStaking__factory";
 export type { EnderTreasury } from "./contracts/EnderTreasury";

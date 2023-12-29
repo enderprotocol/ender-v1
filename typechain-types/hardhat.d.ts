@@ -102,6 +102,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC165Upgradeable__factory>;
     getContractFactory(
+      name: "IERC5267",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC5267__factory>;
+    getContractFactory(
       name: "ERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20__factory>;
@@ -118,13 +122,21 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20__factory>;
     getContractFactory(
+      name: "EIP712",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.EIP712__factory>;
+    getContractFactory(
+      name: "ShortStrings",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ShortStrings__factory>;
+    getContractFactory(
       name: "EnderBond",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.EnderBond__factory>;
     getContractFactory(
-      name: "EnderPreLaunchDeposit",
+      name: "EnderBondLiquidityDeposit",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.EnderPreLaunchDeposit__factory>;
+    ): Promise<Contracts.EnderBondLiquidityDeposit__factory>;
     getContractFactory(
       name: "EnderStaking",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -393,6 +405,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC165Upgradeable>;
     getContractAt(
+      name: "IERC5267",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC5267>;
+    getContractAt(
       name: "ERC20",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -413,15 +430,25 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20>;
     getContractAt(
+      name: "EIP712",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.EIP712>;
+    getContractAt(
+      name: "ShortStrings",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ShortStrings>;
+    getContractAt(
       name: "EnderBond",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.EnderBond>;
     getContractAt(
-      name: "EnderPreLaunchDeposit",
+      name: "EnderBondLiquidityDeposit",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.EnderPreLaunchDeposit>;
+    ): Promise<Contracts.EnderBondLiquidityDeposit>;
     getContractAt(
       name: "EnderStaking",
       address: string | ethers.Addressable,
@@ -707,6 +734,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165Upgradeable>;
     deployContract(
+      name: "IERC5267",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC5267>;
+    deployContract(
       name: "ERC20",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ERC20>;
@@ -723,13 +754,21 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
+      name: "EIP712",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EIP712>;
+    deployContract(
+      name: "ShortStrings",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ShortStrings>;
+    deployContract(
       name: "EnderBond",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EnderBond>;
     deployContract(
-      name: "EnderPreLaunchDeposit",
+      name: "EnderBondLiquidityDeposit",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.EnderPreLaunchDeposit>;
+    ): Promise<Contracts.EnderBondLiquidityDeposit>;
     deployContract(
       name: "EnderStaking",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -998,6 +1037,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165Upgradeable>;
     deployContract(
+      name: "IERC5267",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC5267>;
+    deployContract(
       name: "ERC20",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -1018,15 +1062,25 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
+      name: "EIP712",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EIP712>;
+    deployContract(
+      name: "ShortStrings",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ShortStrings>;
+    deployContract(
       name: "EnderBond",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EnderBond>;
     deployContract(
-      name: "EnderPreLaunchDeposit",
+      name: "EnderBondLiquidityDeposit",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.EnderPreLaunchDeposit>;
+    ): Promise<Contracts.EnderBondLiquidityDeposit>;
     deployContract(
       name: "EnderStaking",
       args: any[],
