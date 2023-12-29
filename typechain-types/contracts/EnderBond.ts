@@ -91,6 +91,7 @@ export interface EnderBondInterface extends Interface {
       | "txFees"
       | "userBondPrincipalAmount"
       | "userBondYieldShareIndex"
+      | "userInfoDepositContract"
       | "whitelist"
       | "withdraw"
   ): FunctionFragment;
@@ -174,7 +175,7 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "deposit",
-    values: [BigNumberish, BigNumberish, BigNumberish, AddressLike]
+    values: [AddressLike, BigNumberish, BigNumberish, BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "depositPrincipalAtMaturity",
@@ -345,6 +346,10 @@ export interface EnderBondInterface extends Interface {
   encodeFunctionData(
     functionFragment: "userBondYieldShareIndex",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "userInfoDepositContract",
+    values: [BigNumberish[]]
   ): string;
   encodeFunctionData(
     functionFragment: "whitelist",
@@ -562,6 +567,10 @@ export interface EnderBondInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "userBondYieldShareIndex",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "userInfoDepositContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "whitelist", data: BytesLike): Result;
@@ -987,6 +996,7 @@ export interface EnderBond extends BaseContract {
 
   deposit: TypedContractMethod<
     [
+      user: AddressLike,
       principal: BigNumberish,
       maturity: BigNumberish,
       bondFee: BigNumberish,
@@ -1191,6 +1201,12 @@ export interface EnderBond extends BaseContract {
     "view"
   >;
 
+  userInfoDepositContract: TypedContractMethod<
+    [index: BigNumberish[]],
+    [void],
+    "nonpayable"
+  >;
+
   whitelist: TypedContractMethod<
     [_whitelistingAddress: AddressLike, _action: boolean],
     [void],
@@ -1291,6 +1307,7 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "deposit"
   ): TypedContractMethod<
     [
+      user: AddressLike,
       principal: BigNumberish,
       maturity: BigNumberish,
       bondFee: BigNumberish,
@@ -1488,6 +1505,9 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "userBondYieldShareIndex"
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "userInfoDepositContract"
+  ): TypedContractMethod<[index: BigNumberish[]], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "whitelist"
   ): TypedContractMethod<

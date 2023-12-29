@@ -11,6 +11,7 @@ import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
 
 // Interfaces
 import "./interfaces/IBondNFT.sol";
+import "./interfaces/IEnderPreLaunchDeposit.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/IEnderOracle.sol";
 import "./interfaces/ISEndToken.sol";
@@ -112,6 +113,7 @@ contract EnderBond is
     // address public endStaking;
 
     IBondNFT private bondNFT;
+    IEnderPreLaunchDeposit private depositContract;
     IEnderTreasury private endTreasury;
     IEnderOracle private enderOracle;
     IEnderStaking private endStaking;
@@ -205,6 +207,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         else if (_type == 7) keeper = _addr;
         else if (_type == 8) endStaking = IEnderStaking(_addr);
         else if (_type == 9) sEndToken = _addr;
+        else if (_type == 10) depositContract = IEnderPreLaunchDeposit(_addr);
 
         emit AddressSet(_type, _addr);
     }
@@ -282,6 +285,15 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         emit WhitelistChanged(_whitelistingAddress, _action);
     }
 
+    function userInfoDepositContract(uint256[] memory index) external onlyOwner{
+        if (index.length > 0){
+            for (uint256 i = index[0]; i <= index.length; i++){
+                (address user, uint256 principal, uint256 bondFees, uint256 maturity) = depositContract.depositedIntoBond(index[i], address(this));
+                deposit(user, principal, maturity, bondFees, stEth);
+            }
+        }
+    }
+
     /**
      * @notice Allows a user to deposit a specified token into a bond
      * @param principal The principal amount of the bond
@@ -290,11 +302,12 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @param token The address of the token (if token is zero address, then depositing ETH)
      */
     function deposit(
+        address user,
         uint256 principal,
         uint256 maturity,
         uint256 bondFee,
         address token
-    ) external payable nonReentrant returns (uint256 tokenId) {
+    ) public payable nonReentrant returns (uint256 tokenId) {
         console.log("\nDeposited Amount:- ", principal);
         console.log("Maturity:- ", maturity);
         console.log("Bond Fees:- ", bondFee);
@@ -314,25 +327,26 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
-        tokenId = _deposit(principal, maturity, token, bondFee);
+        tokenId = _deposit(user, principal, maturity, token, bondFee);
         epochBondYieldShareIndex();
         // IEnderStaking(endStaking).epochStakingReward(stEth);
         emit Deposit(msg.sender, tokenId, principal, maturity, token);
     }
 
     function _deposit(
+        address user,
         uint256 principal,
         uint256 maturity,
         address token,
         uint256 bondFee
     ) private returns (uint256 tokenId) {
-        endTreasury.depositTreasury(IEnderBase.EndRequest(msg.sender, token, principal), getLoopCount());
+        endTreasury.depositTreasury(IEnderBase.EndRequest(user, token, principal), getLoopCount());
         principal = (principal * (10000 - bondFee)) / 10000;
         // uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         // dayToBondYieldShareUpdation[timeNow].push(block.timestamp + (maturity * SECONDS_IN_DAY));
 
         // mint bond nft
-        tokenId = bondNFT.mint(msg.sender);
+        tokenId = bondNFT.mint(user);
         console.log("Token Id of user:- ", tokenId,"\n");
         availableFundsAtMaturity[(block.timestamp + ((maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId, bondFee);

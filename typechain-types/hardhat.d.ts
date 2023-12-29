@@ -122,9 +122,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.EnderBond__factory>;
     getContractFactory(
-      name: "EnderPreLounchDeposit",
+      name: "EnderPreLaunchDeposit",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.EnderPreLounchDeposit__factory>;
+    ): Promise<Contracts.EnderPreLaunchDeposit__factory>;
     getContractFactory(
       name: "EnderStaking",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -173,6 +173,10 @@ declare module "hardhat/types/runtime" {
       name: "IPriceFeed",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IPriceFeed__factory>;
+    getContractFactory(
+      name: "IEnderPreLaunchDeposit",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IEnderPreLaunchDeposit__factory>;
     getContractFactory(
       name: "IEnderStaking",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -414,10 +418,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.EnderBond>;
     getContractAt(
-      name: "EnderPreLounchDeposit",
+      name: "EnderPreLaunchDeposit",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.EnderPreLounchDeposit>;
+    ): Promise<Contracts.EnderPreLaunchDeposit>;
     getContractAt(
       name: "EnderStaking",
       address: string | ethers.Addressable,
@@ -478,6 +482,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IPriceFeed>;
+    getContractAt(
+      name: "IEnderPreLaunchDeposit",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IEnderPreLaunchDeposit>;
     getContractAt(
       name: "IEnderStaking",
       address: string | ethers.Addressable,
@@ -718,9 +727,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EnderBond>;
     deployContract(
-      name: "EnderPreLounchDeposit",
+      name: "EnderPreLaunchDeposit",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.EnderPreLounchDeposit>;
+    ): Promise<Contracts.EnderPreLaunchDeposit>;
     deployContract(
       name: "EnderStaking",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -769,6 +778,10 @@ declare module "hardhat/types/runtime" {
       name: "IPriceFeed",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IPriceFeed>;
+    deployContract(
+      name: "IEnderPreLaunchDeposit",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IEnderPreLaunchDeposit>;
     deployContract(
       name: "IEnderStaking",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -1010,10 +1023,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EnderBond>;
     deployContract(
-      name: "EnderPreLounchDeposit",
+      name: "EnderPreLaunchDeposit",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.EnderPreLounchDeposit>;
+    ): Promise<Contracts.EnderPreLaunchDeposit>;
     deployContract(
       name: "EnderStaking",
       args: any[],
@@ -1074,6 +1087,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IPriceFeed>;
+    deployContract(
+      name: "IEnderPreLaunchDeposit",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IEnderPreLaunchDeposit>;
     deployContract(
       name: "IEnderStaking",
       args: any[],

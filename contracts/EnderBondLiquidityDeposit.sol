@@ -5,14 +5,22 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
-contract enderPreLounchDeposit is 
+contract EnderBondLiquidityDeposit is 
     Initializable, 
+    EIP712("depositContract", "1"),
     OwnableUpgradeable, 
     ReentrancyGuardUpgradeable {
+
+    string private constant SIGNING_DOMAIN = "depositContract";
+    string private constant SIGNATURE_VERSION = "1";
+
     address public stEth;
     address public lido;
     address public admin;
+    address public enderBond;
     uint256 public index;
     uint256 public minDepositAmount;
     uint256 public rewardShareIndex;
@@ -24,12 +32,19 @@ contract enderPreLounchDeposit is
     mapping(uint256 => uint256) public totalRewardOfUser;
     mapping(address => bool) public isWhitelisted;
     mapping(uint256 => Bond) public bonds;
+    mapping(address => signData) public signedData;
     struct Bond {
         address user;
         uint256 principalAmount;
         uint256 totalAmount;
         uint256 bondFees;
         uint256 maturity;
+    }
+
+    struct signData{
+        address user;
+        uint256 key;
+        bytes signature;
     }
     error InvalidAmount();
     error InvalidMaturity();
@@ -55,6 +70,11 @@ contract enderPreLounchDeposit is
 
     modifier depositEnabled() {
         if (depositEnable != true) revert NotAllowed();
+        _;
+    }
+
+    modifier onlyBond() {
+        if (msg.sender != enderBond) revert NotAllowed();
         _;
     }
 
@@ -87,20 +107,23 @@ contract enderPreLounchDeposit is
 
         if (_type == 1) stEth = _addr;
         else if (_type == 2) lido = _addr;
+        else if (_type == 3) enderBond = _addr;
     }
 
     function deposit(
         uint256 principal,
         uint256 maturity,
         uint256 bondFee,
-        address token
+        address token,
+        signData memory userSign
     ) external payable nonReentrant depositEnabled {
         if (principal < minDepositAmount) revert InvalidAmount();
-        if (maturity < 7 || maturity > 365) revert InvalidMaturity();
+        if (maturity < 7 || maturity > 365 ) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee <= 0 || bondFee >= 10000) revert InvalidBondFee();   
-        if (!isWhitelisted[msg.sender]) revert addressNotWhitelisted();     
 
+        address signer = _verify(userSign);
+        require(signer == userSign.user, "user is not whitelisted");
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount();        
@@ -144,7 +167,7 @@ contract enderPreLounchDeposit is
     // function calculatingPendingReward(address user) internal {
     //     pendingReward[user] = bonds[user].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[user]);
     // }
-    function claimRebaseReward(uint256 index, address _bond) external onlyOwner returns(address user, uint256 principal, uint256 bonfees, uint256 maturity){
+    function depositedIntoBond(uint256 index, address _bond) external   returns(address user, uint256 principal, uint256 bondFees, uint256 maturity){
         totalRewardOfUser[index] =   (bonds[index].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[index]));
         bonds[index].totalAmount = bonds[index].principalAmount + totalRewardOfUser[index];
         IERC20(stEth).transfer(_bond, bonds[index].totalAmount);
@@ -155,5 +178,33 @@ contract enderPreLounchDeposit is
     function whitelist(address _whitelistingAddress, bool _action) external onlyOwner{
         isWhitelisted[_whitelistingAddress] = _action;
         emit WhitelistChanged(_whitelistingAddress, _action);
+    }
+
+    function _hash(signData memory userSign)
+        internal
+        view
+        returns (bytes32)
+    {
+        return
+            _hashTypedDataV4(
+                keccak256(
+                    abi.encode(
+                        keccak256(
+                            "userSign(address user, uint256 key)"
+                        ),
+                        userSign.user,
+                        userSign.key
+                    )
+                )
+            );
+    }
+
+    function _verify(signData memory userSign)
+        internal
+        view
+        returns (address)
+    {
+        bytes32 digest = _hash(userSign);
+        return ECDSA.recover(digest, userSign.signature);
     }
 }
