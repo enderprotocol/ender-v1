@@ -11,7 +11,7 @@ import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
 
 // Interfaces
 import "./interfaces/IBondNFT.sol";
-import "./interfaces/IEnderPreLaunchDeposit.sol";
+import "./interfaces/IEnderBondLiquidityDeposit.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/IEnderOracle.sol";
 import "./interfaces/ISEndToken.sol";
@@ -113,7 +113,7 @@ contract EnderBond is
     // address public endStaking;
 
     IBondNFT private bondNFT;
-    IEnderPreLaunchDeposit private depositContract;
+    IEnderBondLiquidityDeposit private depositContract;
     IEnderTreasury private endTreasury;
     IEnderOracle private enderOracle;
     IEnderStaking private endStaking;
@@ -207,7 +207,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         else if (_type == 7) keeper = _addr;
         else if (_type == 8) endStaking = IEnderStaking(_addr);
         else if (_type == 9) sEndToken = _addr;
-        else if (_type == 10) depositContract = IEnderPreLaunchDeposit(_addr);
+        else if (_type == 10) depositContract = IEnderBondLiquidityDeposit(_addr);
 
         emit AddressSet(_type, _addr);
     }

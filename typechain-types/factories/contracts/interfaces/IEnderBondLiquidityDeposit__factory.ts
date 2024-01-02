@@ -4,9 +4,9 @@
 
 import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
-  IEnderPreLaunchDeposit,
-  IEnderPreLaunchDepositInterface,
-} from "../../../contracts/interfaces/IEnderPreLaunchDeposit";
+  IEnderBondLiquidityDeposit,
+  IEnderBondLiquidityDepositInterface,
+} from "../../../contracts/interfaces/IEnderBondLiquidityDeposit";
 
 const _abi = [
   {
@@ -50,19 +50,19 @@ const _abi = [
   },
 ] as const;
 
-export class IEnderPreLaunchDeposit__factory {
+export class IEnderBondLiquidityDeposit__factory {
   static readonly abi = _abi;
-  static createInterface(): IEnderPreLaunchDepositInterface {
-    return new Interface(_abi) as IEnderPreLaunchDepositInterface;
+  static createInterface(): IEnderBondLiquidityDepositInterface {
+    return new Interface(_abi) as IEnderBondLiquidityDepositInterface;
   }
   static connect(
     address: string,
     runner?: ContractRunner | null
-  ): IEnderPreLaunchDeposit {
+  ): IEnderBondLiquidityDeposit {
     return new Contract(
       address,
       _abi,
       runner
-    ) as unknown as IEnderPreLaunchDeposit;
+    ) as unknown as IEnderBondLiquidityDeposit;
   }
 }

@@ -214,8 +214,7 @@ contract mockWETH is Ownable,IERC20 {
     function _transfer(address sender, address recipient, uint256 amount) internal virtual {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
-
-        uint256 senderBalance = _balances[sender];
+        uint256 senderBalance = balanceOf(sender);
         require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
         unchecked {
             _balances[sender] = senderBalance - amount;
@@ -256,6 +255,9 @@ contract mockWETH is Ownable,IERC20 {
 
 contract MockStEth is mockWETH {
     uint256 public totalShare;
+    uint256 public sIndex;
+    mapping (address => uint256) public totalShareOfUser;
+    mapping (address => uint256) public pendingReward;
     IERC20 public mockWeth;
 
     constructor(address _WETH,address owner) mockWETH("MockStEth", "MSTEth",owner) {
@@ -264,9 +266,24 @@ contract MockStEth is mockWETH {
 
     function mintShare(uint256 share) public{
         require(share>0,"Share must be greater than zero");
-        totalShare+=share;
-        _balances[msg.sender] += share;
+        if((sIndex - totalShareOfUser[msg.sender]) > 0){
+            pendingReward[msg.sender] += (_balances[msg.sender] * (sIndex - totalShareOfUser[msg.sender]))/ 1e3;
+        }
+        if(pendingReward[msg.sender] > 0){
+            totalShareOfUser[msg.sender] = sIndex;
+        }
+        uint256 reward = mockWeth.balanceOf(address(this)) - totalShare;
+        if(reward > 0 ){
+            sIndex = (sIndex + ((reward*1e3)/totalShare));
+            totalShare += reward;
+        }
+        if(pendingReward[msg.sender] == 0){
+            totalShareOfUser[msg.sender] = sIndex;
+        }
+
         mockWeth.transferFrom(msg.sender, address(this), share);
+        totalShare += share;
+        _balances[msg.sender] += share;
     }
 
     function totalSupply() public view override returns(uint256){
@@ -274,13 +291,15 @@ contract MockStEth is mockWETH {
     }
 
     function _approve(address owner, address spender,uint256 amount) internal override {
-        _allowances[owner][spender] = (amount*totalShare)/mockWeth.balanceOf(address(this));
+
+        _allowances[owner][spender] = _balances[owner] + (pendingReward[owner] + ((_balances[owner] * (sIndex - totalShareOfUser[owner]))/ 1e3));
         emit Approval(owner, spender, amount);
     }
 
     function balanceOf(address account) public view override returns(uint256) {
         require(account!=address(0),"Zero Address");
-        uint256 balance = (_balances[account]*mockWeth.balanceOf(address(this)))/totalShare;
+        uint256 balance = _balances[account] + (pendingReward[account] + ((_balances[account] * (sIndex - totalShareOfUser[account]))/ 1e3));
+        
         return balance;
     }
 
@@ -288,8 +307,8 @@ contract MockStEth is mockWETH {
         uint256 balance = balanceOf(sender);
         require(balance >= amount,"Insufficient Share");
         // console.log(amount, totalShare, mockWeth.balanceOf(address(this)), "mockWeth.balanceOf(address(this))");
-        uint256 amountToTransfer = (amount*totalShare)/mockWeth.balanceOf(address(this));
+        // uint256 amountToTransfer = (amount*totalShare)/mockWeth.balanceOf(address(this));
         // console.log(amountToTransfer, "-----------------------------------------");
-        super._transfer(sender, recipient, amountToTransfer);
+        super._transfer(sender, recipient, amount);
     }
 }

@@ -6,9 +6,6 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-import "hardhat/console.sol";
-// import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-// import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
 contract EnderBondLiquidityDeposit is 
     Initializable, 
@@ -21,6 +18,7 @@ contract EnderBondLiquidityDeposit is
 
     address public stEth; // address of stEth
     address public lido; // address of lido
+    address public signer; // address of signer
     address public admin; // address of admin
     address public enderBond; // address of enderBond
     uint256 public index; // undex is used to track user info
@@ -45,8 +43,8 @@ contract EnderBondLiquidityDeposit is
     }
 
     struct signData{
-        address admin;
-        uint256 key;
+        address signer;
+        string key;
         bytes signature;
     }
     error InvalidAmount();
@@ -56,6 +54,7 @@ contract EnderBondLiquidityDeposit is
     error NotAllowed();
     error NotBondableToken();
     error addressNotWhitelisted();
+    event newSigner(address _signer);
     event depositEnableSet(bool depositEnable);
     event MinDepAmountSet(uint256 indexed newAmount);
     event BondableTokensSet(address indexed token, bool indexed isEnabled);
@@ -63,11 +62,14 @@ contract EnderBondLiquidityDeposit is
     event Deposit(address indexed sender, uint256 index, uint256 bondFees, uint256 principal, uint256 maturity, address token);
     event userInfo(address indexed user, uint256 index, uint256 principal, uint256 Reward, uint256 totalAmount, uint256 bondFees, uint256 maturity);
 
-    function initialize(address _stEth, address _lido) public initializer {
+    function initialize(address _stEth, address _lido, address _signer, address _admin) public initializer {
         __Ownable_init();
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         stEth = _stEth;
         lido = _lido;
+        signer = _signer;
+        admin = _admin;
+        _transferOwnership(admin);
         bondableTokens[_stEth] = true;
         minDepositAmount = 100000000000000000; 
     }
@@ -80,6 +82,12 @@ contract EnderBondLiquidityDeposit is
     modifier onlyBond() {
         if (msg.sender != enderBond) revert NotAllowed();
         _;
+    }
+
+    function setsigner(address _signer) external onlyOwner{
+        require(_signer != address(0), "Address can't be zero");
+        signer = _signer;
+        emit newSigner(signer);
     }
 
     /**
@@ -148,10 +156,9 @@ contract EnderBondLiquidityDeposit is
         if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 7 || maturity > 365 ) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee <= 0 || bondFee >= 10000) revert InvalidBondFee();   
-        address signer = _verify(userSign);
-        require(signer == userSign.admin, "user is not whitelisted");
-        console.log(IERC20(stEth).balanceOf(address(this)), totalStaked);
+        if (bondFee <= 0 || bondFee >= 10000) revert InvalidBondFee();  
+        address signAddress = _verify(userSign);
+        require(signAddress == signer, "user is not whitelisted");
         uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked;   
         if (reward > 0){
             calculatingSForReward();
@@ -167,7 +174,6 @@ contract EnderBondLiquidityDeposit is
             IERC20(token).transferFrom(msg.sender, address(this), principal);  
         }        
         totalStaked += principal;  
-        console.log(totalStaked, "totalStaked");
         index ++;
         rewardSharePerUserIndexStEth[index] = rewardShareIndex;
         bonds[index] = Bond(
@@ -177,7 +183,6 @@ contract EnderBondLiquidityDeposit is
             bondFee,
             maturity
         );
-        // IEnderStaking(endStaking).epochStakingReward(stEth);
 
         emit Deposit(msg.sender, index, bondFee, principal, maturity, token);
     }
@@ -206,14 +211,24 @@ contract EnderBondLiquidityDeposit is
     /**
     * @notice This function is call by ender bond contract when ender bond contract go live
     * @param index this is used to get user info of a particular user
-    * @param _bond The address of ender bond
+    * @notice For testing purpose we've revoke the access of onlyBond calling
      */
-    function depositedIntoBond(uint256 index, address _bond) external   returns(address user, uint256 principal, uint256 bondFees, uint256 maturity){
+    function depositedIntoBond(uint256 index) external returns(address user, uint256 principal, uint256 bondFees, uint256 maturity){
         totalRewardOfUser[index] =   (bonds[index].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[index]));
         bonds[index].totalAmount = (bonds[index].principalAmount + (totalRewardOfUser[index])/expandTo6Decimal());  // dividing the user amount with 1e6
-        IERC20(stEth).transfer(_bond, bonds[index].totalAmount);
         emit userInfo(user, index, bonds[index].principalAmount, totalRewardOfUser[index], bonds[index].totalAmount, bonds[index].bondFees, bonds[index].maturity);
         return (bonds[index].user, bonds[index].totalAmount, bonds[index].bondFees, bonds[index].maturity);
+    }
+
+
+    /**
+    * @notice This function is call by Admin address when ender bond contract go live for approval of stEth
+    * @param _bond The address of ender bond
+    * @param _amount this input is used for approval
+     */
+    function approvalForBond(address _bond, uint256 _amount) external onlyOwner{
+        require(_bond == address(0), "Address can't be zero");
+        IERC20(stEth).approve(_bond, _amount);
     }
 
     function _hash(signData memory userSign)
@@ -226,10 +241,10 @@ contract EnderBondLiquidityDeposit is
                 keccak256(
                     abi.encode(
                         keccak256(
-                            "userSign(address admin,uint256 key)"
+                            "userSign(address signer,string key)"
                         ),
-                        userSign.admin,
-                        userSign.key
+                        userSign.signer,
+                        keccak256(bytes(userSign.key))
                     )
                 )
             );

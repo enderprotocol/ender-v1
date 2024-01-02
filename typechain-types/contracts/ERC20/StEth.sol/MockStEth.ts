@@ -39,9 +39,12 @@ export interface MockStEthInterface extends Interface {
       | "mockWeth"
       | "name"
       | "owner"
+      | "pendingReward"
       | "renounceOwnership"
+      | "sIndex"
       | "symbol"
       | "totalShare"
+      | "totalShareOfUser"
       | "totalSupply"
       | "transfer"
       | "transferFrom"
@@ -93,13 +96,22 @@ export interface MockStEthInterface extends Interface {
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "pendingReward",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "sIndex", values?: undefined): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalShare",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "totalShareOfUser",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -141,11 +153,20 @@ export interface MockStEthInterface extends Interface {
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "pendingReward",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "sIndex", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "totalShare", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "totalShareOfUser",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
     data: BytesLike
@@ -303,11 +324,17 @@ export interface MockStEth extends BaseContract {
 
   owner: TypedContractMethod<[], [string], "view">;
 
+  pendingReward: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
+  sIndex: TypedContractMethod<[], [bigint], "view">;
 
   symbol: TypedContractMethod<[], [string], "view">;
 
   totalShare: TypedContractMethod<[], [bigint], "view">;
+
+  totalShareOfUser: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
   totalSupply: TypedContractMethod<[], [bigint], "view">;
 
@@ -397,14 +424,23 @@ export interface MockStEth extends BaseContract {
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "pendingReward"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "sIndex"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "totalShare"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "totalShareOfUser"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "totalSupply"
   ): TypedContractMethod<[], [bigint], "view">;

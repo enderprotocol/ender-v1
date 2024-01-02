@@ -3,8 +3,12 @@
 /* eslint-disable */
 import type {
   BaseContract,
+  BigNumberish,
+  BytesLike,
   FunctionFragment,
+  Result,
   Interface,
+  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -14,15 +18,28 @@ import type {
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
-} from "../../../common";
+  TypedContractMethod,
+} from "../../common";
 
-export interface ShortStringsInterface extends Interface {}
+export interface IEnderBondLiquidityDepositInterface extends Interface {
+  getFunction(nameOrSignature: "depositedIntoBond"): FunctionFragment;
 
-export interface ShortStrings extends BaseContract {
-  connect(runner?: ContractRunner | null): ShortStrings;
+  encodeFunctionData(
+    functionFragment: "depositedIntoBond",
+    values: [BigNumberish, AddressLike]
+  ): string;
+
+  decodeFunctionResult(
+    functionFragment: "depositedIntoBond",
+    data: BytesLike
+  ): Result;
+}
+
+export interface IEnderBondLiquidityDeposit extends BaseContract {
+  connect(runner?: ContractRunner | null): IEnderBondLiquidityDeposit;
   waitForDeployment(): Promise<this>;
 
-  interface: ShortStringsInterface;
+  interface: IEnderBondLiquidityDepositInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -61,9 +78,37 @@ export interface ShortStrings extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  depositedIntoBond: TypedContractMethod<
+    [index: BigNumberish, _bond: AddressLike],
+    [
+      [string, bigint, bigint, bigint] & {
+        user: string;
+        principal: bigint;
+        bonfees: bigint;
+        maturity: bigint;
+      }
+    ],
+    "nonpayable"
+  >;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
+
+  getFunction(
+    nameOrSignature: "depositedIntoBond"
+  ): TypedContractMethod<
+    [index: BigNumberish, _bond: AddressLike],
+    [
+      [string, bigint, bigint, bigint] & {
+        user: string;
+        principal: bigint;
+        bonfees: bigint;
+        maturity: bigint;
+      }
+    ],
+    "nonpayable"
+  >;
 
   filters: {};
 }
