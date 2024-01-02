@@ -8,7 +8,7 @@ require("dotenv").config();
 module.exports = {
   // defaultNetwork: "matic",
   networks: {
-    mumbai: {
+    ethereum: {
       // url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_PVT_KEY}`,
       url: `${process.env.RPC}`,
       accounts: [`0x${process.env.PVTKEY}`],

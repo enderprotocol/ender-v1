@@ -128,7 +128,7 @@ describe.only("enderBondLiquidityDeposit testing", function () {
         await enderBondLiquidityDeposit.connect(signer2).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [admin.address, "0", signature1]);
     });
 
-    it.only("enderBondLiquidityDeposit:- multiple deposit", async() => {
+    it("enderBondLiquidityDeposit:- multiple deposit", async() => {
         const maturity = 90;
         const bondFee = 500;
         const depositPrincipalStEth = expandTo18Decimals(1);
@@ -154,6 +154,35 @@ describe.only("enderBondLiquidityDeposit testing", function () {
         await enderBondLiquidityDeposit.connect(signer2).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer4.address, "0", signature1]);
         await enderBondLiquidityDeposit.depositedIntoBond(1);
         await enderBondLiquidityDeposit.depositedIntoBond(2);
+    });
+
+    it.only("enderBondLiquidityDeposit testing for mainnet:- multiple deposit", async() => {
+        const maturity = 90;
+        const bondFee = 500;
+        const depositPrincipalStEth = expandTo18Decimals(1);
+        console.log(signer4.address, owner.address, "admin");
+        await enderBondLiquidityDeposit.setDepositEnable(true);
+        await WETH.mint(signer1.address, depositPrincipalStEth);
+        await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+        await StEth.connect(signer1).mintShare(depositPrincipalStEth);
+        let signature = await signatureDigest();
+        await StEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
+        await enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer4.address, "0", signature]);
+        
+        await WETH.mint(signer1.address, depositPrincipalStEth);
+        await WETH.connect(signer1).transfer(stEthAddress, depositPrincipalStEth);
+
+        await WETH.mint(signer2.address, depositPrincipalStEth);
+        await WETH.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
+        await StEth.connect(signer2).mintShare(depositPrincipalStEth);
+        
+        let signature1 = await signatureDigest();
+        console.log("ddddd");
+        await StEth.connect(signer2).approve(enderBondLiquidityDepositAddress, 1500000000000000000n);
+        await enderBondLiquidityDeposit.connect(signer2).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer4.address, "0", signature1]);
+        await enderBondLiquidityDeposit.withdraw(admin.address);
+        // await enderBondLiquidityDeposit.depositedIntoBond(1);
+        // await enderBondLiquidityDeposit.depositedIntoBond(2);
     });
 
     it("testing the stEth", async() =>{

@@ -67,6 +67,7 @@ export interface EnderBondLiquidityDepositInterface extends Interface {
       | "totalRewardOfUser"
       | "totalStaked"
       | "transferOwnership"
+      | "withdraw"
   ): FunctionFragment;
 
   getEvent(
@@ -173,6 +174,10 @@ export interface EnderBondLiquidityDepositInterface extends Interface {
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "withdraw",
+    values: [AddressLike]
+  ): string;
 
   decodeFunctionResult(functionFragment: "admin", data: BytesLike): Result;
   decodeFunctionResult(
@@ -246,6 +251,7 @@ export interface EnderBondLiquidityDepositInterface extends Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 }
 
 export namespace BondableTokensSetEvent {
@@ -593,6 +599,8 @@ export interface EnderBondLiquidityDeposit extends BaseContract {
     "nonpayable"
   >;
 
+  withdraw: TypedContractMethod<[_receiver: AddressLike], [void], "nonpayable">;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -746,6 +754,9 @@ export interface EnderBondLiquidityDeposit extends BaseContract {
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "withdraw"
+  ): TypedContractMethod<[_receiver: AddressLike], [void], "nonpayable">;
 
   getEvent(
     key: "BondableTokensSet"

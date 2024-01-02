@@ -51,7 +51,7 @@ async function main() {
     // console.log("stEthAddress-->", stEthAddress)
     // await sleep(9000);
 
-    depositContract = await upgrades.deployProxy(DepositContract, ["0xdDf451A02E495219478e8077Ebb054b8F81ce8f3", "0xdDf451A02E495219478e8077Ebb054b8F81ce8f3", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"], {
+    depositContract = await upgrades.deployProxy(DepositContract, ["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"], {
         initializer: "initialize",
     });
     await sleep(9000);
