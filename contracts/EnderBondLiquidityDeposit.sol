@@ -64,6 +64,8 @@ contract EnderBondLiquidityDeposit is
 
     function initialize(address _stEth, address _lido, address _signer, address _admin) public initializer {
         __Ownable_init();
+        __ReentrancyGuard_init();
+        _disableInitializers();
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         stEth = _stEth;
         lido = _lido;
@@ -159,11 +161,8 @@ contract EnderBondLiquidityDeposit is
         if (bondFee <= 0 || bondFee >= 10000) revert InvalidBondFee();  
         address signAddress = _verify(userSign);
         require(signAddress == signer, "user is not whitelisted");
-        uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked;   
-        if (reward > 0){
-            calculatingSForReward();
-            totalStaked += reward;
-        }
+        uint256 reward = calculatingSForReward();
+        totalStaked += reward;
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount(); 
@@ -200,12 +199,13 @@ contract EnderBondLiquidityDeposit is
      */
     
     
-    function calculatingSForReward() internal {
+    function calculatingSForReward() internal returns(uint256 rewards){
         uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked;
         if (reward > 0){
             // multipling the rewardShareIndex with 1e6 to avoid underflow
             rewardShareIndex = rewardShareIndex + ((reward * expandTo6Decimal())/totalStaked); 
         }
+        return reward;
     }
 
     /**
