@@ -25,16 +25,16 @@ import type {
 
 export declare namespace EnderBondLiquidityDeposit {
   export type SignDataStruct = {
-    signer: AddressLike;
+    user: AddressLike;
     key: string;
     signature: BytesLike;
   };
 
   export type SignDataStructOutput = [
-    signer: string,
+    user: string,
     key: string,
     signature: string
-  ] & { signer: string; key: string; signature: string };
+  ] & { user: string; key: string; signature: string };
 }
 
 export interface EnderBondLiquidityDepositInterface extends Interface {
@@ -64,6 +64,7 @@ export interface EnderBondLiquidityDepositInterface extends Interface {
       | "setsigner"
       | "signer"
       | "stEth"
+      | "totalReward"
       | "totalRewardOfUser"
       | "totalStaked"
       | "transferOwnership"
@@ -163,6 +164,10 @@ export interface EnderBondLiquidityDepositInterface extends Interface {
   encodeFunctionData(functionFragment: "signer", values?: undefined): string;
   encodeFunctionData(functionFragment: "stEth", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "totalReward",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "totalRewardOfUser",
     values: [BigNumberish]
   ): string;
@@ -239,6 +244,10 @@ export interface EnderBondLiquidityDepositInterface extends Interface {
   decodeFunctionResult(functionFragment: "setsigner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "signer", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "stEth", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "totalReward",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "totalRewardOfUser",
     data: BytesLike
@@ -585,6 +594,8 @@ export interface EnderBondLiquidityDeposit extends BaseContract {
 
   stEth: TypedContractMethod<[], [string], "view">;
 
+  totalReward: TypedContractMethod<[], [bigint], "view">;
+
   totalRewardOfUser: TypedContractMethod<
     [arg0: BigNumberish],
     [bigint],
@@ -745,6 +756,9 @@ export interface EnderBondLiquidityDeposit extends BaseContract {
   getFunction(
     nameOrSignature: "stEth"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "totalReward"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "totalRewardOfUser"
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;

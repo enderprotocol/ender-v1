@@ -4,11 +4,11 @@ const SEndToken ="0xa57daa4136bfd8a0059b30b2652e906412a09426"
 const BondNFT =   "0xa760f4caf70b14c3d3fa03317b6a93ac973486d1"
 const EnderTreasury =   "0x55b6f413159d0eaaff1d8f290bd51bec1f343495"
 const EnderStaking =   "0xf2ac820b4c6bf23ab5d82c819f6684ea9e3cb601"
-const Weth =   "0x490f831634797DE90AdB3EA892d977af0264dc0D"
-const MockStEth = "0xdDf451A02E495219478e8077Ebb054b8F81ce8f3"
+const Weth =   "0x94D818e0B85F7b1D3D38871C0D58758A23FF9CcB"
+const MockStEth = "0xaE46bd402a3bd35B7A3Fb931E66833a560b32d21"
 const EnderLidoStrategy =   "0x9F306B7119F24e78A286265905E80af7a318f3AD"
 const EnderOracle = "0x4CE5090196f000C6C486af65af8b55A98bBC728a"
-const depositContract = "0xcb1c77ef83d5679299cd437a8bd768480c87198f"
+const depositContract = "0x964416bf7f479c3da4d5a6ef72354b9e0b1136be"
  
 async function main() {
     try {

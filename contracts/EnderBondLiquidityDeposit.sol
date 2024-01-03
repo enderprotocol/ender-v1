@@ -26,6 +26,7 @@ contract EnderBondLiquidityDeposit is
     uint256 public minDepositAmount; // minimum deposit amount for EnderBondLiquidityDeposit
     uint256 public rewardShareIndex; // overall reward share index for users
     uint256 public totalStaked; // total Staked amount
+    uint256 public totalReward; // total reward amount
     bool public depositEnable; // Used for go live on a particular time
     // @notice A mapping that indicates whether a token is bondable.
     mapping(address => bool) public bondableTokens; // To allow a particular token to deposit 
@@ -44,7 +45,7 @@ contract EnderBondLiquidityDeposit is
     }
 
     struct signData{
-        address signer;
+        address user;
         string key;
         bytes signature;
     }
@@ -74,7 +75,7 @@ contract EnderBondLiquidityDeposit is
         admin = _admin;
         _transferOwnership(admin);
         bondableTokens[_stEth] = true;
-        minDepositAmount = 100000000000000000; 
+        minDepositAmount = 100000000000000; 
     }
 
     modifier depositEnabled() {
@@ -161,9 +162,8 @@ contract EnderBondLiquidityDeposit is
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee <= 0 || bondFee >= 10000) revert InvalidBondFee();  
         address signAddress = _verify(userSign);
-        require(signAddress == signer, "user is not whitelisted");
-        uint256 reward = calculatingSForReward();
-        totalStaked += reward;
+        require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
+        calculatingSForReward();
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount(); 
@@ -200,13 +200,13 @@ contract EnderBondLiquidityDeposit is
      */
     
     
-    function calculatingSForReward() internal returns(uint256 rewards){
-        uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked;
+    function calculatingSForReward() internal{
+        uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked - totalReward;
         if (reward > 0){
             // multipling the rewardShareIndex with 1e6 to avoid underflow
+            totalReward += reward;
             rewardShareIndex = rewardShareIndex + ((reward * expandTo6Decimal())/totalStaked); 
         }
-        return reward;
     }
 
     /**
@@ -241,9 +241,9 @@ contract EnderBondLiquidityDeposit is
                 keccak256(
                     abi.encode(
                         keccak256(
-                            "userSign(address signer,string key)"
+                            "userSign(address user,string key)"
                         ),
-                        userSign.signer,
+                        userSign.user,
                         keccak256(bytes(userSign.key))
                     )
                 )

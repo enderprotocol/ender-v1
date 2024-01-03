@@ -1,5 +1,10 @@
 const { ethers, upgrades } = require("hardhat");
+const { BigNumber } = require("ethers");
 
+// const { EigenLayerStrategyManagerAddress } = require("../utils/common");
+const exp = require("constants");
+const { sign } = require("crypto");
+const { log } = require("console");
 const baseURI = "https://endworld-backend.vercel.app/nft/metadata/";
 function sleep(ms)
  {
@@ -17,6 +22,7 @@ async function main() {
     const EnderStaking = await ethers.getContractFactory("EnderStaking");
     const DepositContract = await ethers.getContractFactory("EnderBondLiquidityDeposit");
     const oracle = await ethers.getContractFactory("EnderOracle");
+    // let admin, owner, signer1, signer2, signer3, signer4;
     let endTokenAddress,
         wEthAddress,
         stEthAddress,
@@ -39,8 +45,44 @@ async function main() {
         sEnd,
         stEth,
         bondNFT;
+    //     let signer = await ethers.getSigners()
+    //     owner = signer[0]
+    //     console.log("owner -====== ", owner.address)
+    // // let owner = "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9";
+    // let enderBondLiquidityDepositAddress = "0x2Aee811f218c34840ded025191393a04085Fc222";
 
-        await sleep(9000);
+    //     async function signatureDigest() { 
+    //         let sig = await owner.signTypedData(
+    //             {
+    //                 name: "depositContract",
+    //                 version: "1",
+    //                 chainId: 80001,
+    //                 verifyingContract: enderBondLiquidityDepositAddress,
+    //             },
+    //             {
+    //                 userSign: [
+    //                     {
+    //                         name: 'signer',
+    //                         type: 'address',
+    //                     },
+    //                     {
+    //                         name: 'key',
+    //                         type: 'string',
+    //                     },
+    //                 ],
+    //             },
+    //             {
+    //                 signer: owner.address,
+    //                 key: "0",
+    //             }
+    //         )
+    //         return sig;
+    //     };
+
+    // let signature = await signatureDigest();
+    // console.log("signature", signature);
+    
+    //     await sleep(9000);
     // wEth = await weth.deploy("wrappedEth", "weth", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9");
     // wEthAddress = await wEth.getAddress();
     // console.log("wEthAddress--> ", wEthAddress);
@@ -54,7 +96,7 @@ async function main() {
     depositContract = await upgrades.deployProxy(DepositContract, ["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"], {
         initializer: "initialize",
     });
-    await sleep(9000);
+    // await sleep(9000);
     console.log("--------------------------------------");
     depositContractAddress = await depositContract.getAddress();
     console.log("depositContractAddress-->", depositContractAddress);
