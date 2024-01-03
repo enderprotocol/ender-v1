@@ -25,8 +25,6 @@ contract EnderBondLiquidityDeposit is
     uint256 public index; // undex is used to track user info
     uint256 public minDepositAmount; // minimum deposit amount for EnderBondLiquidityDeposit
     uint256 public rewardShareIndex; // overall reward share index for users
-    uint256 public totalStaked; // total Staked amount
-    uint256 public totalReward; // total reward amount
     bool public depositEnable; // Used for go live on a particular time
     // @notice A mapping that indicates whether a token is bondable.
     mapping(address => bool) public bondableTokens; // To allow a particular token to deposit 
