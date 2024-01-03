@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-import "hardhat/console.sol";
+import "contracts/interfaces/ISTETH.sol";
 
 contract EnderBondLiquidityDeposit is 
     Initializable, 
@@ -62,7 +62,7 @@ contract EnderBondLiquidityDeposit is
     event BondableTokensSet(address indexed token, bool indexed isEnabled);
     event WhitelistChanged(address indexed whitelistingAddress, bool indexed action);
     event Deposit(address indexed sender, uint256 index, uint256 bondFees, uint256 principal, uint256 maturity, address token);
-    event userInfo(address indexed user, uint256 index, uint256 principal, uint256 Reward, uint256 totalAmount, uint256 bondFees, uint256 maturity);
+    event userInfo(address indexed user, uint256 index, uint256 principal, uint256 totalAmount, uint256 bondFees, uint256 maturity);
 
     function initialize(address _stEth, address _lido, address _signer, address _admin) public initializer {
         __Ownable_init();
@@ -163,7 +163,6 @@ contract EnderBondLiquidityDeposit is
         if (bondFee <= 0 || bondFee >= 10000) revert InvalidBondFee();  
         address signAddress = _verify(userSign);
         require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
-        calculatingSForReward();
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount(); 
@@ -172,14 +171,13 @@ contract EnderBondLiquidityDeposit is
         } else {           
             // send directly to the deposit contract      
             IERC20(token).transferFrom(msg.sender, address(this), principal);  
-        }        
-        totalStaked += principal;  
+        }         
         index ++;
         rewardSharePerUserIndexStEth[index] = rewardShareIndex;
         bonds[index] = Bond(
             msg.sender,
-            principal,
-            principal,
+            IStEth(stEth).getSharesByPooledEth(principal),
+            IStEth(stEth).getSharesByPooledEth(principal),
             bondFee,
             maturity
         );
@@ -195,30 +193,14 @@ contract EnderBondLiquidityDeposit is
         return 1e6;
     }
 
-    /** 
-    * @notice This function is used to update the reward share index 
-     */
-    
-    
-    function calculatingSForReward() internal{
-        uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked - totalReward;
-        console.log("calculatingSForReward", reward);
-        if (reward > 0){
-            // multipling the rewardShareIndex with 1e6 to avoid underflow
-            totalReward += reward;
-            rewardShareIndex = rewardShareIndex + ((reward * expandTo6Decimal())/totalStaked); 
-        }
-    }
-
     /**
     * @notice This function is call by ender bond contract when ender bond contract go live
     * @param index this is used to get user info of a particular user
      */
     function depositedIntoBond(uint256 index) external onlyBond returns(address user, uint256 principal, uint256 bondFees, uint256 maturity){
-        totalRewardOfUser[index] =   (bonds[index].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[index]));
-        bonds[index].totalAmount = (bonds[index].principalAmount + (totalRewardOfUser[index])/expandTo6Decimal());  // dividing the user amount with 1e6
-        emit userInfo(user, index, bonds[index].principalAmount, totalRewardOfUser[index], bonds[index].totalAmount, bonds[index].bondFees, bonds[index].maturity);
-        return (bonds[index].user, bonds[index].totalAmount, bonds[index].bondFees, bonds[index].maturity);
+        principal = IStEth(stEth).getPooledEthByShares(bonds[index].principalAmount);
+        emit userInfo(bonds[index].user, index,bonds[index].principalAmount, principal, bonds[index].bondFees, bonds[index].maturity);
+        return (bonds[index].user, principal, bonds[index].bondFees, bonds[index].maturity);
     }
 
 

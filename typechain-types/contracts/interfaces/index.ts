@@ -3,6 +3,8 @@
 /* eslint-disable */
 import type * as iEnderOracleSol from "./IEnderOracle.sol";
 export type { iEnderOracleSol };
+import type * as istethSol from "./ISTETH.sol";
+export type { istethSol };
 export type { IBondNFT } from "./IBondNFT";
 export type { IEndToken } from "./IEndToken";
 export type { IEnderBond } from "./IEnderBond";
