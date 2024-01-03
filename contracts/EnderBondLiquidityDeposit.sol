@@ -73,6 +73,7 @@ contract EnderBondLiquidityDeposit is
         lido = _lido;
         signer = _signer;
         admin = _admin;
+        depositEnable = true; // @note for testing purpose
         _transferOwnership(admin);
         bondableTokens[_stEth] = true;
         minDepositAmount = 100000000000000; 
