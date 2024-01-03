@@ -194,12 +194,12 @@ contract EnderBondLiquidityDeposit is
 
     /**
     * @notice This function is call by ender bond contract when ender bond contract go live
-    * @param index this is used to get user info of a particular user
+    * @param _index this is used to get user info of a particular user
      */
-    function depositedIntoBond(uint256 index) external onlyBond returns(address user, uint256 principal, uint256 bondFees, uint256 maturity){
-        principal = IStEth(stEth).getPooledEthByShares(bonds[index].principalAmount);
-        emit userInfo(bonds[index].user, index,bonds[index].principalAmount, principal, bonds[index].bondFees, bonds[index].maturity);
-        return (bonds[index].user, principal, bonds[index].bondFees, bonds[index].maturity);
+    function depositedIntoBond(uint256 _index) external onlyBond returns(address user, uint256 principal, uint256 bondFees, uint256 maturity){
+        principal = IStEth(stEth).getPooledEthByShares(bonds[_index].principalAmount);
+        emit userInfo(bonds[_index].user, index,bonds[_index].principalAmount, principal, bonds[_index].bondFees, bonds[_index].maturity);
+        return (bonds[_index].user, principal, bonds[_index].bondFees, bonds[_index].maturity);
     }
 
 
