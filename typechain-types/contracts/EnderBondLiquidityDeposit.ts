@@ -396,7 +396,6 @@ export namespace userInfoEvent {
     user: AddressLike,
     index: BigNumberish,
     principal: BigNumberish,
-    Reward: BigNumberish,
     totalAmount: BigNumberish,
     bondFees: BigNumberish,
     maturity: BigNumberish
@@ -405,7 +404,6 @@ export namespace userInfoEvent {
     user: string,
     index: bigint,
     principal: bigint,
-    Reward: bigint,
     totalAmount: bigint,
     bondFees: bigint,
     maturity: bigint
@@ -414,7 +412,6 @@ export namespace userInfoEvent {
     user: string;
     index: bigint;
     principal: bigint;
-    Reward: bigint;
     totalAmount: bigint;
     bondFees: bigint;
     maturity: bigint;
@@ -943,7 +940,7 @@ export interface EnderBondLiquidityDeposit extends BaseContract {
       newSignerEvent.OutputObject
     >;
 
-    "userInfo(address,uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+    "userInfo(address,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
       userInfoEvent.InputTuple,
       userInfoEvent.OutputTuple,
       userInfoEvent.OutputObject

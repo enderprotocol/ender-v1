@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as iEnderOracleSol from "./IEnderOracle.sol";
+export * as istethSol from "./ISTETH.sol";
 export { IBondNFT__factory } from "./IBondNFT__factory";
 export { IEndToken__factory } from "./IEndToken__factory";
 export { IEnderBond__factory } from "./IEnderBond__factory";

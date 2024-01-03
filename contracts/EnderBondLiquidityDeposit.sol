@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import "contracts/interfaces/ISTETH.sol";
 import "hardhat/console.sol";
 
 contract EnderBondLiquidityDeposit is 
@@ -178,8 +179,8 @@ contract EnderBondLiquidityDeposit is
         rewardSharePerUserIndexStEth[index] = rewardShareIndex;
         bonds[index] = Bond(
             msg.sender,
-            IstETH(stEth).getSharesByPooledEth(principal),
-            IstETH(stEth).getSharesByPooledEth(principal),
+            IStEth(stEth).getSharesByPooledEth(principal),
+            IStEth(stEth).getSharesByPooledEth(principal),
             bondFee,
             maturity
         );
@@ -216,7 +217,7 @@ contract EnderBondLiquidityDeposit is
     function depositedIntoBond(uint256 index) external onlyBond returns(address user, uint256 principal, uint256 bondFees, uint256 maturity){
         // totalRewardOfUser[index] =   (bonds[index].principalAmount * (rewardShareIndex - rewardSharePerUserIndexStEth[index]));
         // bonds[index].totalAmount = (bonds[index].principalAmount + (totalRewardOfUser[index])/expandTo6Decimal());  // dividing the user amount with 1e6
-        principal = IstETH(stEth).getPooledEthByShares(bonds[index].principalAmount);
+        principal = IStEth(stEth).getPooledEthByShares(bonds[index].principalAmount);
         emit userInfo(bonds[index].user, index,bonds[index].principalAmount, principal, bonds[index].bondFees, bonds[index].maturity);
         return (bonds[index].user, principal, bonds[index].bondFees, bonds[index].maturity);
     }
