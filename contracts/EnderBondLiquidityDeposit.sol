@@ -202,6 +202,7 @@ contract EnderBondLiquidityDeposit is
     
     function calculatingSForReward() internal{
         uint256 reward = IERC20(stEth).balanceOf(address(this)) - totalStaked - totalReward;
+        console.log("calculatingSForReward", reward);
         if (reward > 0){
             // multipling the rewardShareIndex with 1e6 to avoid underflow
             totalReward += reward;

@@ -93,13 +93,16 @@ async function main() {
     // console.log("stEthAddress-->", stEthAddress)
     // await sleep(9000);
 
-    depositContract = await upgrades.deployProxy(DepositContract, ["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"], {
-        initializer: "initialize",
-    });
-    // await sleep(9000);
-    console.log("--------------------------------------");
-    depositContractAddress = await depositContract.getAddress();
-    console.log("depositContractAddress-->", depositContractAddress);
+    // depositContract = await upgrades.deployProxy(DepositContract, ["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"], {
+    //     initializer: "initialize",
+    // });
+    // // await sleep(9000);
+    // console.log("--------------------------------------");
+    // depositContractAddress = await depositContract.getAddress();
+    // console.log("depositContractAddress-->", depositContractAddress);
+
+    await upgrades.upgradeProxy("0x41f0Cc6865Ae1cA32d096b3bE317ae84C48A99e8",DepositContract);
+    console.log(upgrades.upgradeProxy);
 
 //     instaDappLite = await InstaDapp.deploy("InstaToken", "Inst", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", stEthAddress);
 //     InstaDappAddress = await instaDappLite.getAddress();

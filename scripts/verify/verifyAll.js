@@ -8,7 +8,7 @@ const Weth =   "0x94D818e0B85F7b1D3D38871C0D58758A23FF9CcB"
 const MockStEth = "0xaE46bd402a3bd35B7A3Fb931E66833a560b32d21"
 const EnderLidoStrategy =   "0x9F306B7119F24e78A286265905E80af7a318f3AD"
 const EnderOracle = "0x4CE5090196f000C6C486af65af8b55A98bBC728a"
-const depositContract = "0x964416bf7f479c3da4d5a6ef72354b9e0b1136be"
+const depositContract = "0xCcb2374039fB1937A65a2233a130391A1643EbE5"
  
 async function main() {
     try {

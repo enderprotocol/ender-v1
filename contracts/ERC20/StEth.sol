@@ -188,7 +188,6 @@ contract mockWETH is Ownable,IERC20 {
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][recipient];
-        console.log(currentAllowance, amount, balanceOf(sender), "ERc20");
         require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
         unchecked {
             _approve(sender, _msgSender(), currentAllowance - amount);
@@ -221,7 +220,6 @@ contract mockWETH is Ownable,IERC20 {
             _balances[sender] = senderBalance - amount;
         }
         _balances[recipient] += amount;
-        console.log(_balances[recipient], balanceOf(recipient), "-----------------");
         emit Transfer(sender, recipient, amount);
     }
 
@@ -293,7 +291,6 @@ contract MockStEth is mockWETH {
     }
 
     function _approve(address owner, address spender,uint256 amount) internal override {
-        console.log("_balances[owner] + (pendingReward[owner] + ((_balances[owner] * (sIndex - totalShareOfUser[owner]))/ 1e3))",_balances[owner] + (pendingReward[owner] + ((_balances[owner] * (sIndex - totalShareOfUser[owner]))/ 1e3)));
         _allowances[owner][spender] = _balances[owner] + (pendingReward[owner] + ((_balances[owner] * (sIndex - totalShareOfUser[owner]))/ 1e3));
         emit Approval(owner, spender, amount);
     }
