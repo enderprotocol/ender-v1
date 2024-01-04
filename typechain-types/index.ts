@@ -52,8 +52,6 @@ export type { ERC165Upgradeable } from "./@openzeppelin/contracts-upgradeable/ut
 export { ERC165Upgradeable__factory } from "./factories/@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable__factory";
 export type { IERC165Upgradeable } from "./@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable";
 export { IERC165Upgradeable__factory } from "./factories/@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable__factory";
-export type { Ownable } from "./@openzeppelin/contracts/access/Ownable";
-export { Ownable__factory } from "./factories/@openzeppelin/contracts/access/Ownable__factory";
 export type { ERC20 } from "./@openzeppelin/contracts/token/ERC20/ERC20";
 export { ERC20__factory } from "./factories/@openzeppelin/contracts/token/ERC20/ERC20__factory";
 export type { ERC20Burnable } from "./@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable";
@@ -78,6 +76,8 @@ export type { MockStEth } from "./contracts/ERC20/StEth.sol/MockStEth";
 export { MockStEth__factory } from "./factories/contracts/ERC20/StEth.sol/MockStEth__factory";
 export type { MockWETH } from "./contracts/ERC20/StEth.sol/MockWETH";
 export { MockWETH__factory } from "./factories/contracts/ERC20/StEth.sol/MockWETH__factory";
+export type { Ownable } from "./contracts/ERC20/StEth.sol/Ownable";
+export { Ownable__factory } from "./factories/contracts/ERC20/StEth.sol/Ownable__factory";
 export type { IBondNFT } from "./contracts/interfaces/IBondNFT";
 export { IBondNFT__factory } from "./factories/contracts/interfaces/IBondNFT__factory";
 export type { IEnderBond } from "./contracts/interfaces/IEnderBond";
