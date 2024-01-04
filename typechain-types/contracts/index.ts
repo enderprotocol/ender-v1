@@ -5,6 +5,8 @@ import type * as erc20 from "./ERC20";
 export type { erc20 };
 import type * as nft from "./NFT";
 export type { nft };
+import type * as ownedUpgradeabilityProxySol from "./OwnedUpgradeabilityProxy.sol";
+export type { ownedUpgradeabilityProxySol };
 import type * as interfaces from "./interfaces";
 export type { interfaces };
 import type * as oracle from "./oracle";

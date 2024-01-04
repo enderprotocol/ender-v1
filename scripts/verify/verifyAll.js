@@ -23,15 +23,20 @@ async function main() {
         //     contract: "contracts/ERC20/StEth.sol:MockStEth",
         // });
 
-        await hre.run("verify:verify", {
-            address: "0x74afffc16032b10708cc0195d9223e7ceb03ee35",
-            contract: "contracts/EnderBondLiquidityDeposit.sol:EnderBondLiquidityDeposit",
-        });
+        // await hre.run("verify:verify", {
+        //     address: "0x4527386134da524e28e428cb7f0809c44780a574",
+        //     contract: "contracts/EnderBondLiquidityDeposit.sol:EnderBondLiquidityDeposit",
+        // });
 
         await hre.run("verify:verify", {
-            address: "0x910bB421BB7B01818085DC57EBF5a38071110043",
-            contract: "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
+            address: "0xbff25a70f8e5ffb263d9eac806f4206d180a7f8f",
+            contract: "contracts/OwnedUpgradeabilityProxy.sol:EnderProxy",
         });
+
+        // await hre.run("verify:verify", {
+        //     address: "0x910bB421BB7B01818085DC57EBF5a38071110043",
+        //     contract: "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
+        // });
         // await hre.run("verify:verify", {
         //     address: EnderLidoStrategy,
         //     constructorArguments: ["InstaToken", "Inst", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", MockStEth],

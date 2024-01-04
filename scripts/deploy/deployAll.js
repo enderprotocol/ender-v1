@@ -22,6 +22,7 @@ async function main() {
     const EnderStaking = await ethers.getContractFactory("EnderStaking");
     const DepositContract = await ethers.getContractFactory("EnderBondLiquidityDeposit");
     const oracle = await ethers.getContractFactory("EnderOracle");
+    const proxy = await ethers.getContractFactory("EnderProxy");
     // let admin, owner, signer1, signer2, signer3, signer4;
     let endTokenAddress,
         wEthAddress,
@@ -97,15 +98,30 @@ async function main() {
     //     initializer: "initialize",
     // });
 
-    await upgrades.upgradeProxy("0x41f0Cc6865Ae1cA32d096b3bE317ae84C48A99e8",DepositContract);
-    console.log(upgrades.upgradeProxy);
+    // await upgrades.upgradeProxy("0x41f0Cc6865Ae1cA32d096b3bE317ae84C48A99e8",DepositContract);
+    // console.log(upgrades.upgradeProxy);
 
-    console.log("--------------------------------------");
-    depositContractAddress = await depositContract.getAddress();
-    console.log("depositContractAddress-->", depositContractAddress);
+    // console.log("--------------------------------------");
+    // depositContractAddress = await depositContract.getAddress();
+    // console.log("depositContractAddress-->", depositContractAddress);
+    // await sleep(9000);
+
+    // await upgrades.transferOwnership("0x6965C9b015AfC8FbF088936614d40877E3f058Ae");
+
+    // impl = await DepositContract.deploy();
+    // Impl = await impl.getAddress();
+    // console.log(Impl);
+    
+    initializeData = DepositContract.interface.encodeFunctionData('initialize',["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0x8feF51D82E188B4cB41dcF6b23DA22284E28c835", "0x6965C9b015AfC8FbF088936614d40877E3f058Ae"]);
+    Proxy = await proxy.deploy();
     await sleep(9000);
+    console.log(await Proxy.getAddress());
+    // console.log("Proxy",Proxy);
+    await Proxy.upgradeToAndCall("0x4527386134Da524e28E428cb7F0809C44780a574",initializeData);
+    await sleep(9000);
+    await Proxy.transferProxyOwnership("0x6965C9b015AfC8FbF088936614d40877E3f058Ae");
 
-    await upgrades.transferOwnership("0x6965C9b015AfC8FbF088936614d40877E3f058Ae");
+
 
 
 //     instaDappLite = await InstaDapp.deploy("InstaToken", "Inst", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", stEthAddress);
