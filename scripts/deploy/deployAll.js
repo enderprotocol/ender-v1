@@ -108,18 +108,18 @@ async function main() {
 
     // await upgrades.transferOwnership("0x6965C9b015AfC8FbF088936614d40877E3f058Ae");
 
-    // impl = await DepositContract.deploy();
-    // Impl = await impl.getAddress();
-    // console.log(Impl);
+    impl = await DepositContract.deploy();
+    Impl = await impl.getAddress();
+    console.log(Impl);
     
-    initializeData = DepositContract.interface.encodeFunctionData('initialize',["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0x8feF51D82E188B4cB41dcF6b23DA22284E28c835", "0x6965C9b015AfC8FbF088936614d40877E3f058Ae"]);
-    Proxy = await proxy.deploy();
-    await sleep(9000);
-    console.log(await Proxy.getAddress());
-    // console.log("Proxy",Proxy);
-    await Proxy.upgradeToAndCall("0x4527386134Da524e28E428cb7F0809C44780a574",initializeData);
-    await sleep(9000);
-    await Proxy.transferProxyOwnership("0x6965C9b015AfC8FbF088936614d40877E3f058Ae");
+    // initializeData = DepositContract.interface.encodeFunctionData('initialize',["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0x8feF51D82E188B4cB41dcF6b23DA22284E28c835", "0x6965C9b015AfC8FbF088936614d40877E3f058Ae"]);
+    // Proxy = await proxy.deploy();
+    // await sleep(9000);
+    // console.log(await Proxy.getAddress());       
+    // // console.log("Proxy",Proxy);
+    // await Proxy.upgradeToAndCall("0x4527386134Da524e28E428cb7F0809C44780a574",initializeData);
+    // await sleep(9000);
+    // await Proxy.transferProxyOwnership("0x6965C9b015AfC8FbF088936614d40877E3f058Ae");
 
 
 

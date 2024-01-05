@@ -23,15 +23,15 @@ async function main() {
         //     contract: "contracts/ERC20/StEth.sol:MockStEth",
         // });
 
-        // await hre.run("verify:verify", {
-        //     address: "0x4527386134da524e28e428cb7f0809c44780a574",
-        //     contract: "contracts/EnderBondLiquidityDeposit.sol:EnderBondLiquidityDeposit",
-        // });
-
         await hre.run("verify:verify", {
-            address: "0xbff25a70f8e5ffb263d9eac806f4206d180a7f8f",
-            contract: "contracts/OwnedUpgradeabilityProxy.sol:EnderProxy",
+            address: "0xA15eB836D2fE5287e89acA0e1d86d0C21D96dA83",
+            contract: "contracts/EnderBondLiquidityDeposit.sol:EnderBondLiquidityDeposit",
         });
+
+        // await hre.run("verify:verify", {
+        //     address: "0xbff25a70f8e5ffb263d9eac806f4206d180a7f8f",
+        //     contract: "contracts/OwnedUpgradeabilityProxy.sol:EnderProxy",
+        // });
 
         // await hre.run("verify:verify", {
         //     address: "0x910bB421BB7B01818085DC57EBF5a38071110043",

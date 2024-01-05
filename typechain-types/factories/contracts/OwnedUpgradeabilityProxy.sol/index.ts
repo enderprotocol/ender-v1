@@ -2,4 +2,3 @@
 /* tslint:disable */
 /* eslint-disable */
 export { EnderProxy__factory } from "./EnderProxy__factory";
-export { OwnedUpgradeabilityProxy__factory } from "./OwnedUpgradeabilityProxy__factory";

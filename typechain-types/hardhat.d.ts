@@ -102,10 +102,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC165Upgradeable__factory>;
     getContractFactory(
-      name: "Ownable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Ownable__factory>;
-    getContractFactory(
       name: "ERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20__factory>;
@@ -229,10 +225,6 @@ declare module "hardhat/types/runtime" {
       name: "EnderProxy",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.EnderProxy__factory>;
-    getContractFactory(
-      name: "OwnedUpgradeabilityProxy",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.OwnedUpgradeabilityProxy__factory>;
     getContractFactory(
       name: "BaseStrategy",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -409,11 +401,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC165Upgradeable>;
     getContractAt(
-      name: "Ownable",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Ownable>;
-    getContractAt(
       name: "ERC20",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -568,11 +555,6 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.EnderProxy>;
-    getContractAt(
-      name: "OwnedUpgradeabilityProxy",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.OwnedUpgradeabilityProxy>;
     getContractAt(
       name: "BaseStrategy",
       address: string | ethers.Addressable,
@@ -743,10 +725,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165Upgradeable>;
     deployContract(
-      name: "Ownable",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Ownable>;
-    deployContract(
       name: "ERC20",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ERC20>;
@@ -870,10 +848,6 @@ declare module "hardhat/types/runtime" {
       name: "EnderProxy",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EnderProxy>;
-    deployContract(
-      name: "OwnedUpgradeabilityProxy",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.OwnedUpgradeabilityProxy>;
     deployContract(
       name: "BaseStrategy",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -1050,11 +1024,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165Upgradeable>;
     deployContract(
-      name: "Ownable",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Ownable>;
-    deployContract(
       name: "ERC20",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -1209,11 +1178,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EnderProxy>;
-    deployContract(
-      name: "OwnedUpgradeabilityProxy",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.OwnedUpgradeabilityProxy>;
     deployContract(
       name: "BaseStrategy",
       args: any[],

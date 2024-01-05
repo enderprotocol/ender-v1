@@ -2,4 +2,3 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { EnderProxy } from "./EnderProxy";
-export type { OwnedUpgradeabilityProxy } from "./OwnedUpgradeabilityProxy";
