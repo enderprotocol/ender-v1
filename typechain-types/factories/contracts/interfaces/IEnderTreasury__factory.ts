@@ -13,6 +13,30 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
+        name: "_stEthAddress",
+        type: "address",
+      },
+    ],
+    name: "ETHDenomination",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "stETHPoolAmount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "ENDSupply",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "",
         type: "address",
       },

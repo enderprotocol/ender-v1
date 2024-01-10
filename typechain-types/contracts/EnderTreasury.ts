@@ -40,6 +40,7 @@ export declare namespace IEnderBase {
 export interface EnderTreasuryInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "ETHDenomination"
       | "availableFundsPercentage"
       | "balanceLastEpoch"
       | "bondYieldBaseRate"
@@ -83,6 +84,8 @@ export interface EnderTreasuryInterface extends Interface {
       | "strategyToReceiptToken"
       | "tokenStrategy"
       | "totalAssetStakedInStrategy"
+      | "totalAssetStakedPerStrategy"
+      | "totalDepositInStrategy"
       | "totalRewardsFromStrategy"
       | "transferOwnership"
       | "treasury"
@@ -109,6 +112,10 @@ export interface EnderTreasuryInterface extends Interface {
       | "TreasuryWithdraw"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "ETHDenomination",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "availableFundsPercentage",
     values?: undefined
@@ -283,6 +290,14 @@ export interface EnderTreasuryInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "totalAssetStakedPerStrategy",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "totalDepositInStrategy",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "totalRewardsFromStrategy",
     values: [AddressLike]
   ): string;
@@ -308,6 +323,10 @@ export interface EnderTreasuryInterface extends Interface {
     values: [IEnderBase.EndRequestStruct]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "ETHDenomination",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "availableFundsPercentage",
     data: BytesLike
@@ -442,6 +461,14 @@ export interface EnderTreasuryInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "totalAssetStakedInStrategy",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "totalAssetStakedPerStrategy",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "totalDepositInStrategy",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -686,6 +713,12 @@ export interface EnderTreasury extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  ETHDenomination: TypedContractMethod<
+    [_stEthAddress: AddressLike],
+    [[bigint, bigint] & { stETHPoolAmount: bigint; ENDSupply: bigint }],
+    "view"
+  >;
+
   availableFundsPercentage: TypedContractMethod<[], [bigint], "view">;
 
   balanceLastEpoch: TypedContractMethod<[], [bigint], "view">;
@@ -858,6 +891,14 @@ export interface EnderTreasury extends BaseContract {
     "view"
   >;
 
+  totalAssetStakedPerStrategy: TypedContractMethod<
+    [arg0: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  totalDepositInStrategy: TypedContractMethod<[], [bigint], "view">;
+
   totalRewardsFromStrategy: TypedContractMethod<
     [arg0: AddressLike],
     [bigint],
@@ -900,6 +941,13 @@ export interface EnderTreasury extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "ETHDenomination"
+  ): TypedContractMethod<
+    [_stEthAddress: AddressLike],
+    [[bigint, bigint] & { stETHPoolAmount: bigint; ENDSupply: bigint }],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "availableFundsPercentage"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -1087,6 +1135,12 @@ export interface EnderTreasury extends BaseContract {
   getFunction(
     nameOrSignature: "totalAssetStakedInStrategy"
   ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "totalAssetStakedPerStrategy"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "totalDepositInStrategy"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "totalRewardsFromStrategy"
   ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
