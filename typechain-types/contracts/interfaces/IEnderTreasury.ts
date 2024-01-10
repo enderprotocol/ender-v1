@@ -38,6 +38,7 @@ export declare namespace IEnderBase {
 export interface IEnderTreasuryInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "ETHDenomination"
       | "collect"
       | "depositTreasury"
       | "mintEndToUser"
@@ -45,6 +46,10 @@ export interface IEnderTreasuryInterface extends Interface {
       | "withdraw"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "ETHDenomination",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "collect",
     values: [AddressLike, BigNumberish]
@@ -66,6 +71,10 @@ export interface IEnderTreasuryInterface extends Interface {
     values: [IEnderBase.EndRequestStruct, BigNumberish]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "ETHDenomination",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "collect", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "depositTreasury",
@@ -125,6 +134,12 @@ export interface IEnderTreasury extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  ETHDenomination: TypedContractMethod<
+    [_stEthAddress: AddressLike],
+    [[bigint, bigint] & { stETHPoolAmount: bigint; ENDSupply: bigint }],
+    "view"
+  >;
+
   collect: TypedContractMethod<
     [arg0: AddressLike, arg1: BigNumberish],
     [void],
@@ -159,6 +174,13 @@ export interface IEnderTreasury extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "ETHDenomination"
+  ): TypedContractMethod<
+    [_stEthAddress: AddressLike],
+    [[bigint, bigint] & { stETHPoolAmount: bigint; ENDSupply: bigint }],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "collect"
   ): TypedContractMethod<

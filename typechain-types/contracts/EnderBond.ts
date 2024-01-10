@@ -65,6 +65,7 @@ export interface EnderBondInterface extends Interface {
       | "owner"
       | "performUpkeep"
       | "rateOfChange"
+      | "refractionPrincipalAtMaturity"
       | "renounceOwnership"
       | "resetEndMint"
       | "rewardShareIndex"
@@ -86,6 +87,7 @@ export interface EnderBondInterface extends Interface {
       | "stEth"
       | "totalBondPrincipalAmount"
       | "totalDeposit"
+      | "totalRefractionPrincipal"
       | "totalRewardPrincipal"
       | "transferOwnership"
       | "txFees"
@@ -253,6 +255,10 @@ export interface EnderBondInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "refractionPrincipalAtMaturity",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
@@ -328,6 +334,10 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "totalDeposit",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "totalRefractionPrincipal",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -481,6 +491,10 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "refractionPrincipalAtMaturity",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
@@ -550,6 +564,10 @@ export interface EnderBondInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "totalDeposit",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "totalRefractionPrincipal",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -943,7 +961,7 @@ export interface EnderBond extends BaseContract {
         token: string;
         bondFee: bigint;
         depositPrincipal: bigint;
-        rewardPrincipal: bigint;
+        refractionPrincipal: bigint;
         refractionSIndex: bigint;
         stakingSendIndex: bigint;
         YieldIndex: bigint;
@@ -1084,6 +1102,12 @@ export interface EnderBond extends BaseContract {
 
   rateOfChange: TypedContractMethod<[], [bigint], "view">;
 
+  refractionPrincipalAtMaturity: TypedContractMethod<
+    [arg0: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
   resetEndMint: TypedContractMethod<[], [void], "nonpayable">;
@@ -1179,6 +1203,8 @@ export interface EnderBond extends BaseContract {
 
   totalDeposit: TypedContractMethod<[], [bigint], "view">;
 
+  totalRefractionPrincipal: TypedContractMethod<[], [bigint], "view">;
+
   totalRewardPrincipal: TypedContractMethod<[], [bigint], "view">;
 
   transferOwnership: TypedContractMethod<
@@ -1262,7 +1288,7 @@ export interface EnderBond extends BaseContract {
         token: string;
         bondFee: bigint;
         depositPrincipal: bigint;
-        rewardPrincipal: bigint;
+        refractionPrincipal: bigint;
         refractionSIndex: bigint;
         stakingSendIndex: bigint;
         YieldIndex: bigint;
@@ -1407,6 +1433,9 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "rateOfChange"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "refractionPrincipalAtMaturity"
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
+  getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
@@ -1489,6 +1518,9 @@ export interface EnderBond extends BaseContract {
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "totalDeposit"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "totalRefractionPrincipal"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "totalRewardPrincipal"

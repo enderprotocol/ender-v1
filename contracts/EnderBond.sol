@@ -62,6 +62,7 @@ contract EnderBond is
     mapping(uint256 => uint256) public userBondYieldShareIndex; //s0
     mapping(uint256 => uint256) public availableFundsAtMaturity;
     mapping(uint256 => uint256) public depositPrincipalAtMaturity;
+    mapping(uint256 => uint256) public refractionPrincipalAtMaturity;
 
     mapping(uint256 => uint256) public dayToRewardShareIndex;
 
@@ -81,6 +82,7 @@ contract EnderBond is
     uint256 public rewardShareIndex;
     uint256 public rewardShareIndexSend;
     uint256 public totalRewardPrincipal;
+    uint256 public totalRefractionPrincipal;
     uint256 public rateOfChange;
     uint256 public totalDeposit;
     uint256 public bondYieldShareIndex;
@@ -93,11 +95,13 @@ contract EnderBond is
     uint256 public lastDay;
     uint256 private amountRequired;
     uint256 private depositAmountRequired;
+    uint256 private refractionAmountRequired;
     uint256 private withdrawAmntFromSt;
     uint public interval;
     uint public lastTimeStamp;
     uint public lastSecOfRefraction;
     uint public lastSecOfSendReward;
+
 
     bool public isSet;
 
@@ -129,7 +133,7 @@ contract EnderBond is
         address token; // The token used for the bond
         uint256 bondFee; // bond fee self-set
         uint256 depositPrincipal;
-        uint256 rewardPrincipal;
+        uint256 refractionPrincipal;
         uint256 refractionSIndex;
         uint256 stakingSendIndex;
         uint256 YieldIndex;
@@ -349,7 +353,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         tokenId = bondNFT.mint(user);
         console.log("Token Id of user:- ", tokenId,"\n");
         availableFundsAtMaturity[(block.timestamp + ((maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
-        (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId, bondFee);
+        (, uint256 refractionPrincipal) = calculateRefractionData(principal, maturity, tokenId, bondFee);
 
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
          rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
@@ -359,9 +363,10 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 depositPrincipal = (getInterest(maturity) * (10000 + (bondFee)) * principal) / (365 * 100000000);
         console.log("depositPrincipal For bond rewards per day",depositPrincipal);
         depositPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += depositPrincipal;
-
+        refractionPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += refractionPrincipal;
         totalDeposit += principal;
         totalRewardPrincipal += depositPrincipal;
+        totalRefractionPrincipal += refractionPrincipal;
         userBondPrincipalAmount[tokenId] = depositPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
 
@@ -374,7 +379,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             token,
             bondFee,
             depositPrincipal,
-            rewardPrinciple,
+            refractionPrincipal,
             0,
             0,
             0
@@ -425,7 +430,9 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         delete userBondYieldShareIndex[_tokenId];
 
         totalRewardPrincipal -= bond.depositPrincipal;
-        depositAmountRequired -= bond.depositPrincipal;                            
+        depositAmountRequired -= bond.depositPrincipal;   
+        refractionAmountRequired -= bond.refractionPrincipal;
+        totalRefractionPrincipal -= bond.refractionPrincipal;                         
         totalDeposit -= bond.principal;
         amountRequired -= bond.principal; 
     }
@@ -436,10 +443,15 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (currentDay == lastDay) return withdrawAmntFromSt = 0;
         else{
             for (uint256 i = lastDay + 1; i <= currentDay; i++) {
-                if(availableFundsAtMaturity[i] != 0) amountRequired += availableFundsAtMaturity[i];
-                if(depositPrincipalAtMaturity[i] != 0){
+                if(availableFundsAtMaturity[i] != 0){
+                    amountRequired += availableFundsAtMaturity[i];
                     depositAmountRequired += depositPrincipalAtMaturity[i];
+                    refractionAmountRequired += refractionPrincipalAtMaturity[i];
+                    //todo set value from the mapping
                 } 
+                // if(depositPrincipalAtMaturity[i] != 0){
+                //     depositAmountRequired += depositPrincipalAtMaturity[i];
+                // } 
                 console.log("amountRequired-------For---------->>>>>>>>>", amountRequired);
             }
             lastDay = currentDay;
@@ -488,7 +500,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             
             rewardShareIndex =
                 (rewardShareIndex) +
-                ((_reward * 10 ** 18) / (totalDeposit - amountRequired));
+                ((_reward * 10 ** 18) / (totalRefractionPrincipal - refractionAmountRequired));
             if( lastSecOfRefraction / SECONDS_IN_DAY == timeNow ){
                 if(dayToRefractionShareUpdation[timeNow].length == 0) dayToRefractionShareUpdation[timeNow].push(lastSecOfRefraction);
                 dayToRefractionShareUpdation[timeNow].push(block.timestamp);
