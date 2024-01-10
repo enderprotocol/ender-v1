@@ -17,14 +17,14 @@ async function main() {
         // constructorArguments: ["wrappedEth", "weth", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"],
         // contract: "contracts/ERC20/StEth.sol:mockWETH",
         // });  
-        // await hre.run("verify:verify", {
-        //     address: MockStEth,
-        //     constructorArguments: [Weth, "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"],
-        //     contract: "contracts/ERC20/StEth.sol:MockStEth",
-        // });
+        await hre.run("verify:verify", {
+            address: "0x63aFb90219d64a4E389499e5cC0CB7A53Bdd3214",
+            constructorArguments: [],
+            contract: "contracts/ERC20/mockStEth.sol:StETH",
+        });
 
         await hre.run("verify:verify", {
-            address: "0xA15eB836D2fE5287e89acA0e1d86d0C21D96dA83",
+            address: "0xF660cF784bA21C041E355C589790D7DBc02f7bD8",
             contract: "contracts/EnderBondLiquidityDeposit.sol:EnderBondLiquidityDeposit",
         });
 

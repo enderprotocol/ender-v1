@@ -43,6 +43,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
         string key;
         bytes signature;
     }
+    
     error InvalidAmount();
     error InvalidMaturity();
     error InvalidBondFee();
