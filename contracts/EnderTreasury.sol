@@ -31,6 +31,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
     mapping(address => uint256) public fundsInfo;
     mapping(address => uint256) public totalAssetStakedInStrategy;
+    mapping(address => uint256) public totalAssetStakedPerStrategy;
     mapping(address => uint256) public totalRewardsFromStrategy;
 
     mapping(address => address) public strategyToReceiptToken;
@@ -56,6 +57,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public instaDappLastValuation;
     uint256 public instaDappWithdrawlValuations;
     uint256 public instaDappDepositValuations;
+    uint256 public totalDepositInStrategy;
     /* Use an interval in seconds and a timestamp to slow execution of Upkeep */
 
     // uint256 public stEthBalBeforeStDep;
@@ -191,25 +193,6 @@ event MintEndToUser(address indexed to, uint256 amount);
          emit NominalYieldUpdated(_nominalYield);
     }
 
-    // function getInterest(uint256 maturity) public view returns (uint256 rate) {
-    //     unchecked {
-    //         if (maturity > 180) rate = ((maturity - 180) * 15) / 180 + (bondYieldBaseRate + 30);
-    //         else if (maturity > 90) rate = ((maturity - 90) * 15) / 90 + (bondYieldBaseRate + 15);
-    //         else if (maturity > 60) rate = ((maturity - 60) * 15) / 30 + bondYieldBaseRate;
-    //         else if (maturity > 30) rate = ((maturity - 30) * 30) / 30 + (bondYieldBaseRate - 30);
-    //         else if (maturity > 15) rate = ((maturity - 15) * 15) / 15 + (bondYieldBaseRate - 45);
-    //         else if (maturity > 7) rate = ((maturity - 7) * 15) / 8 + (bondYieldBaseRate - 60);
-    //         else rate = ((maturity - 7) * 30) / 6 + (bondYieldBaseRate - 90);
-    //     }
-    // }
-
-    // function getYieldMultiplier(uint256 bondFee) public pure returns (uint256 yieldMultiplier) {
-    //     unchecked {
-    //         if (bondFee > 100 || bondFee < 1) yieldMultiplier = 100;
-    //         else yieldMultiplier = 100 + bondFee;
-    //     }
-    // }
-
     function depositTreasury(EndRequest memory param, uint256 amountRequired) external onlyBond {
         unchecked {
             if (amountRequired > 0) {
@@ -243,17 +226,19 @@ event MintEndToUser(address indexed to, uint256 amount);
             instaDappDepositValuations = 0;
         } else {
             //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 18decimal
-            (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
-            console.log("Price of Eth:- ", ethPrice);
-            (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
-            console.log("Price of End:- ", priceEnd);
-            depositReturn = (ethPrice * depositReturn) / (10 ** ethDecimal);
-            bondReturn = (priceEnd * bondReturn) / (10 ** endDecimal);
+            // (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
+            // console.log("Price of Eth:- ", ethPrice);
+            // (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
+            // console.log("Price of End:- ", priceEnd);
+            (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);
+            depositReturn = (depositReturn * stETHPool * 1000) / ENDSupply;
+            // depositReturn = (ethPrice * depositReturn) / (10 ** ethDecimal);
+            // bondReturn = (priceEnd * bondReturn) / (10 ** endDecimal);
             console.log("Deposit return in Dollar:- ", depositReturn);
             console.log("Bond return in Dollar:- ", bondReturn);
             rebaseReward = ((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));
             console.log("Rebase reward in dollar:- ", rebaseReward);
-            rebaseReward = ((rebaseReward * 10 ** ethDecimal) / priceEnd);
+            // rebaseReward = ((rebaseReward * 10 ** ethDecimal) / priceEnd);
             console.log("Rebase reward:- ", rebaseReward);
             epochWithdrawl = 0;
             epochDeposit = 0;
@@ -287,7 +272,9 @@ event MintEndToUser(address indexed to, uint256 amount);
         } else if (_strategy == eigenLayer) {                                                                 
             //Todo will add the instance while going on mainnet.                                                 
         }                                                                                 
-        totalAssetStakedInStrategy[_asset] += _depositAmt;                                                    
+        totalAssetStakedInStrategy[_asset] += _depositAmt;   
+        totalAssetStakedPerStrategy[_strategy] += _depositAmt;  
+        totalDepositInStrategy += _depositAmt;                                               
          emit StrategyDeposit(_asset, _strategy, _depositAmt);                                            
     }                                                                                                       
 
@@ -317,6 +304,8 @@ event MintEndToUser(address indexed to, uint256 amount);
             _returnAmount = ILybraFinance(lybraFinance).withdraw(address(this), _withdrawAmt);
         }
         totalAssetStakedInStrategy[_asset] -= _withdrawAmt;
+        totalAssetStakedPerStrategy[_strategy] -= _withdrawAmt;
+        totalDepositInStrategy -= _withdrawAmt;
         if (_returnAmount > 0) {
             totalRewardsFromStrategy[_asset] += _returnAmount;
         }
@@ -397,6 +386,19 @@ event MintEndToUser(address indexed to, uint256 amount);
             // depositReturn = (totalReturn * ((fundsInfo[_stEthAddress] * 100000) / (IERC20(_stEthAddress).balanceOf(address(this)) + instaDappDepositValuations)/ 100000));
         }
     }
+
+    function ETHDenomination(address _stEthAddress) public view returns (uint stETHPoolAmount, uint ENDSupply){
+        uint stETHBalance = IERC20(_stEthAddress).balanceOf(address(this)); 
+        address receiptToken = strategyToReceiptToken[instadapp];
+        uint256 receiptTokenAmount = IInstadappLite(receiptToken).balanceOf(address(this));
+        uint stRewards;
+        if(IInstadappLite(receiptToken).balanceOf(address(this)) > 0 )
+            stRewards = IInstadappLite(receiptToken).viewStinstaTokens(receiptTokenAmount);
+
+        stETHPoolAmount = stETHBalance + stRewards + totalDepositInStrategy;
+        ENDSupply = IERC20(endToken).totalSupply();
+
+    } 
 
     receive() external payable virtual override {}
 }

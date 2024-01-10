@@ -610,12 +610,14 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
     function epochBondYieldShareIndex() public {
         // if (msg.sender != keeper) revert NotKeeper();
 
-        (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
-        (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
+        // (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
+        // (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
+        (uint stETHPool, uint ENDSupply) = endTreasury.ETHDenomination(stEth);
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         uint256 finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired);
         console.log("finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired)",finalRewardPrincipal ,totalBondPrincipalAmount , depositAmountRequired);
-        uint256 _endMint = (priceEth * finalRewardPrincipal)/priceEnd;
+        // uint256 _endMint = (priceEth * finalRewardPrincipal)/priceEnd;
+        uint256 _endMint = (finalRewardPrincipal * stETHPool * 1000) / ENDSupply;
         endMint += _endMint;
         console.log("BondMinted", _endMint);
         bondYieldShareIndex = bondYieldShareIndex + ((_endMint) / finalRewardPrincipal);
