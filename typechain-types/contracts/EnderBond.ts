@@ -43,6 +43,7 @@ export interface EnderBondInterface extends Interface {
       | "SECONDS_IN_DAY"
       | "availableFundsAtMaturity"
       | "bondFeeEnabled"
+      | "bondPause"
       | "bondYieldBaseRate"
       | "bondYieldShareIndex"
       | "bondableTokens"
@@ -69,6 +70,7 @@ export interface EnderBondInterface extends Interface {
       | "interval"
       | "isSet"
       | "isWhitelisted"
+      | "isWithdrawPause"
       | "keeper"
       | "lastDay"
       | "lastSecOfRefraction"
@@ -91,6 +93,7 @@ export interface EnderBondInterface extends Interface {
       | "secondsRefractionShareIndexSend"
       | "setAddress"
       | "setBondFeeEnabled"
+      | "setBondPause"
       | "setBondYieldBaseRate"
       | "setBondableTokens"
       | "setBool"
@@ -99,6 +102,7 @@ export interface EnderBondInterface extends Interface {
       | "setInterval"
       | "setMinDepAmount"
       | "setTxFees"
+      | "setWithdrawPause"
       | "setsigner"
       | "signer"
       | "stEth"
@@ -136,8 +140,10 @@ export interface EnderBondInterface extends Interface {
       | "TxFeesSet"
       | "WhitelistChanged"
       | "Withdrawal"
+      | "bondPauseSet"
       | "depositEnableSet"
       | "newSigner"
+      | "withdrawPauseSet"
   ): EventFragment;
 
   encodeFunctionData(
@@ -152,6 +158,7 @@ export interface EnderBondInterface extends Interface {
     functionFragment: "bondFeeEnabled",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "bondPause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "bondYieldBaseRate",
     values?: undefined
@@ -251,6 +258,10 @@ export interface EnderBondInterface extends Interface {
     functionFragment: "isWhitelisted",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "isWithdrawPause",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "keeper", values?: undefined): string;
   encodeFunctionData(functionFragment: "lastDay", values?: undefined): string;
   encodeFunctionData(
@@ -328,6 +339,10 @@ export interface EnderBondInterface extends Interface {
     values: [boolean]
   ): string;
   encodeFunctionData(
+    functionFragment: "setBondPause",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setBondYieldBaseRate",
     values: [BigNumberish]
   ): string;
@@ -355,6 +370,10 @@ export interface EnderBondInterface extends Interface {
   encodeFunctionData(
     functionFragment: "setTxFees",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setWithdrawPause",
+    values: [boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setsigner",
@@ -409,6 +428,7 @@ export interface EnderBondInterface extends Interface {
     functionFragment: "bondFeeEnabled",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "bondPause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "bondYieldBaseRate",
     data: BytesLike
@@ -492,6 +512,10 @@ export interface EnderBondInterface extends Interface {
     functionFragment: "isWhitelisted",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "isWithdrawPause",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "keeper", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lastDay", data: BytesLike): Result;
   decodeFunctionResult(
@@ -563,6 +587,10 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setBondPause",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setBondYieldBaseRate",
     data: BytesLike
   ): Result;
@@ -588,6 +616,10 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setTxFees", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setWithdrawPause",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "setsigner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "signer", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "stEth", data: BytesLike): Result;
@@ -907,6 +939,18 @@ export namespace WithdrawalEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace bondPauseSetEvent {
+  export type InputTuple = [isEnabled: boolean];
+  export type OutputTuple = [isEnabled: boolean];
+  export interface OutputObject {
+    isEnabled: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace depositEnableSetEvent {
   export type InputTuple = [isEnabled: boolean];
   export type OutputTuple = [isEnabled: boolean];
@@ -924,6 +968,18 @@ export namespace newSignerEvent {
   export type OutputTuple = [_signer: string];
   export interface OutputObject {
     _signer: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace withdrawPauseSetEvent {
+  export type InputTuple = [isEnabled: boolean];
+  export type OutputTuple = [isEnabled: boolean];
+  export interface OutputObject {
+    isEnabled: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -983,6 +1039,8 @@ export interface EnderBond extends BaseContract {
   >;
 
   bondFeeEnabled: TypedContractMethod<[], [boolean], "view">;
+
+  bondPause: TypedContractMethod<[], [boolean], "view">;
 
   bondYieldBaseRate: TypedContractMethod<[], [bigint], "view">;
 
@@ -1140,6 +1198,8 @@ export interface EnderBond extends BaseContract {
 
   isWhitelisted: TypedContractMethod<[], [boolean], "view">;
 
+  isWithdrawPause: TypedContractMethod<[], [boolean], "view">;
+
   keeper: TypedContractMethod<[], [string], "view">;
 
   lastDay: TypedContractMethod<[], [bigint], "view">;
@@ -1212,6 +1272,8 @@ export interface EnderBond extends BaseContract {
     "nonpayable"
   >;
 
+  setBondPause: TypedContractMethod<[_enabled: boolean], [void], "nonpayable">;
+
   setBondYieldBaseRate: TypedContractMethod<
     [_bondYieldBaseRate: BigNumberish],
     [void],
@@ -1256,6 +1318,12 @@ export interface EnderBond extends BaseContract {
   >;
 
   setTxFees: TypedContractMethod<[_txFees: BigNumberish], [void], "nonpayable">;
+
+  setWithdrawPause: TypedContractMethod<
+    [_enabled: boolean],
+    [void],
+    "nonpayable"
+  >;
 
   setsigner: TypedContractMethod<[_signer: AddressLike], [void], "nonpayable">;
 
@@ -1309,6 +1377,9 @@ export interface EnderBond extends BaseContract {
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "bondFeeEnabled"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "bondPause"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
     nameOrSignature: "bondYieldBaseRate"
@@ -1465,6 +1536,9 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "isWhitelisted"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
+    nameOrSignature: "isWithdrawPause"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
     nameOrSignature: "keeper"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -1535,6 +1609,9 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "setBondFeeEnabled"
   ): TypedContractMethod<[_enabled: boolean], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setBondPause"
+  ): TypedContractMethod<[_enabled: boolean], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "setBondYieldBaseRate"
   ): TypedContractMethod<
     [_bondYieldBaseRate: BigNumberish],
@@ -1575,6 +1652,9 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "setTxFees"
   ): TypedContractMethod<[_txFees: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setWithdrawPause"
+  ): TypedContractMethod<[_enabled: boolean], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setsigner"
   ): TypedContractMethod<[_signer: AddressLike], [void], "nonpayable">;
@@ -1760,6 +1840,13 @@ export interface EnderBond extends BaseContract {
     WithdrawalEvent.OutputObject
   >;
   getEvent(
+    key: "bondPauseSet"
+  ): TypedContractEvent<
+    bondPauseSetEvent.InputTuple,
+    bondPauseSetEvent.OutputTuple,
+    bondPauseSetEvent.OutputObject
+  >;
+  getEvent(
     key: "depositEnableSet"
   ): TypedContractEvent<
     depositEnableSetEvent.InputTuple,
@@ -1772,6 +1859,13 @@ export interface EnderBond extends BaseContract {
     newSignerEvent.InputTuple,
     newSignerEvent.OutputTuple,
     newSignerEvent.OutputObject
+  >;
+  getEvent(
+    key: "withdrawPauseSet"
+  ): TypedContractEvent<
+    withdrawPauseSetEvent.InputTuple,
+    withdrawPauseSetEvent.OutputTuple,
+    withdrawPauseSetEvent.OutputObject
   >;
 
   filters: {
@@ -1995,6 +2089,17 @@ export interface EnderBond extends BaseContract {
       WithdrawalEvent.OutputObject
     >;
 
+    "bondPauseSet(bool)": TypedContractEvent<
+      bondPauseSetEvent.InputTuple,
+      bondPauseSetEvent.OutputTuple,
+      bondPauseSetEvent.OutputObject
+    >;
+    bondPauseSet: TypedContractEvent<
+      bondPauseSetEvent.InputTuple,
+      bondPauseSetEvent.OutputTuple,
+      bondPauseSetEvent.OutputObject
+    >;
+
     "depositEnableSet(bool)": TypedContractEvent<
       depositEnableSetEvent.InputTuple,
       depositEnableSetEvent.OutputTuple,
@@ -2015,6 +2120,17 @@ export interface EnderBond extends BaseContract {
       newSignerEvent.InputTuple,
       newSignerEvent.OutputTuple,
       newSignerEvent.OutputObject
+    >;
+
+    "withdrawPauseSet(bool)": TypedContractEvent<
+      withdrawPauseSetEvent.InputTuple,
+      withdrawPauseSetEvent.OutputTuple,
+      withdrawPauseSetEvent.OutputObject
+    >;
+    withdrawPauseSet: TypedContractEvent<
+      withdrawPauseSetEvent.InputTuple,
+      withdrawPauseSetEvent.OutputTuple,
+      withdrawPauseSetEvent.OutputObject
     >;
   };
 }

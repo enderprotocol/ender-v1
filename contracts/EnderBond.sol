@@ -121,8 +121,10 @@ contract EnderBond is
     IEnderOracle private enderOracle;
     IEnderStaking private endStaking;
 
-    bool public depositEnable;  // status of deposit-feature feature (enabled/disabled)
+    bool public depositEnable;  // status of deposit-feature (enabled/disabled)
+    bool public isWithdrawPause;   // status of withdraw-pause
     bool public bondFeeEnabled; // status of bond-fee feature (enabled/disabled)
+    bool public bondPause; // status of bond-contract pause/unpause
 
     struct Bond {
         bool withdrawn; // The withdrawn status of the bond
@@ -153,6 +155,8 @@ event TxFeesSet(uint256 indexed newTxFees);
 event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
 event BondFeeEnabledSet(bool indexed isEnabled);
 event depositEnableSet(bool indexed isEnabled);
+event withdrawPauseSet(bool indexed isEnabled);
+event bondPauseSet(bool indexed isEnabled);
 event BondableTokensSet(address indexed token, bool indexed isEnabled);
 event Deposit(address indexed sender, uint256 indexed tokenId, uint256 principal, uint256 maturity, address token);
 event Withdrawal(address indexed sender, uint256 indexed tokenId);
@@ -195,6 +199,16 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
 
     modifier depositEnabled() {
         if (depositEnable != true) revert NotAllowed();
+        _;
+    }
+
+    modifier withdrawEnabled() {
+        if (isWithdrawPause != true) revert NotAllowed();
+        _;
+    }
+
+    modifier bondPaused() {
+        if (isWithdrawPause != true) revert NotAllowed();
         _;
     }
 
@@ -278,6 +292,24 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
     }
 
     /**
+     * @notice Update the withdraw-pause status
+     * @param _enabled status
+     */
+    function setWithdrawPause(bool _enabled) public onlyOwner {
+        isWithdrawPause = _enabled;
+        emit withdrawPauseSet(_enabled);
+    }
+
+    /**
+     * @notice Update the bondContract-pause status
+     * @param _enabled status
+     */
+    function setBondPause(bool _enabled) public onlyOwner {
+        bondPause = _enabled;
+        emit bondPauseSet(_enabled);
+    }
+
+    /**
      * @notice Updates the bondable status for a list of tokens.
      * @dev Sets the bondable status of a list of tokens. Only callable by the contract owner.
      * @param tokens The addresses of the tokens to be updated.
@@ -341,7 +373,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 bondFee,
         address token,
         signData memory userSign
-    ) public payable nonReentrant depositEnabled returns (uint256 tokenId) {
+    ) public payable nonReentrant depositEnabled bondPaused returns (uint256 tokenId) {
         console.log("\nDeposited Amount:- ", principal);
         console.log("Maturity:- ", maturity);
         console.log("Bond Fees:- ", bondFee);
@@ -429,7 +461,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      *       plus interest is transferred to the sender.
      * @param tokenId The ID of the token to be withdrawn.
      */
-    function withdraw(uint256 tokenId) external nonReentrant {
+    function withdraw(uint256 tokenId) external nonReentrant withdrawEnabled bondPaused{
         _withdraw(tokenId);
         emit Withdrawal(msg.sender, tokenId);
     }

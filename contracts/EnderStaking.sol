@@ -28,7 +28,10 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     address public keeper;
     address public stEth;
     bool public isWhitelisted;
-    bool public stakingEnable;  // status of staking-feature feature (enabled/disabled)
+    bool public stakingEnable;  // status of staking-pause feature (enabled/disabled)
+    bool public unstakeEnable;  // status of unstake-pause feature (enabled/disabled)
+    bool public stakingContractPause; // status of stakingContract-pause feature (enabled/disabled)
+
     struct signData {
         address user;
         string key;
@@ -38,8 +41,10 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     event AddressUpdated(address indexed addr, uint256 indexed addrType);
     event PercentUpdated(uint256 percent);
     event stakingEnableSet(bool indexed isEnable);
+    event unstakeEnableSet(bool indexed isEnable);
+    event stakingContractPauseSet(bool indexed isEnable);
     event Stake(address indexed staker, uint256 amount);
-    event Withdraw(address indexed withdrawer, uint256 amount);
+    event unStake(address indexed withdrawer, uint256 amount);
     event EpochStakingReward(address indexed asset, uint256 totalReward, uint256 rw2, uint256 sendTokens);
     event WhitelistChanged(bool indexed action);
     event newSigner(address _signer);
@@ -59,9 +64,29 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         _;
     }
 
+    modifier unstakeEnabled() {
+        if (unstakeEnable != true) revert NotAllowed();
+        _;
+    }
+
+    modifier stakingContractPaused() {
+        if (stakingContractPause != true) revert NotAllowed();
+        _; 
+    }
+
     function setStakingEnable(bool _enable) external onlyOwner{
         stakingEnable = _enable;
         emit stakingEnableSet(_enable);
+    }
+
+    function setUnstakeEnable(bool _enable) external onlyOwner{
+        unstakeEnable = _enable;
+        emit unstakeEnableSet(_enable);
+    }
+
+    function setStakingPause(bool _enable) external onlyOwner{
+        stakingContractPause = _enable;
+        emit stakingContractPauseSet(_enable);
     }
 
     function setsigner(address _signer) external onlyOwner {
@@ -103,7 +128,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
      * @notice Users do stake
      * @param amount  stake amount
      */
-    function stake(uint256 amount, signData memory userSign) external stakingEnabled {
+    function stake(uint256 amount, signData memory userSign) external stakingEnabled stakingContractPaused{
         if (amount == 0) revert InvalidAmount();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
@@ -127,10 +152,10 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     }
 
     /**
-     * @notice Users can withdraw
-     * @param amount  withdraw amount
+     * @notice Users can unstake
+     * @param amount  unstake amount
      */
-    function withdraw(uint256 amount) external {
+    function unstake(uint256 amount) external unstakeEnabled stakingContractPaused{
         if (amount == 0) revert InvalidAmount();
         if (ISEndToken(sEndToken).balanceOf(msg.sender) < amount) revert InvalidAmount();
         // add reward
@@ -140,7 +165,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         // transfer token
         ISEndToken(endToken).transfer(msg.sender, reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
-        emit Withdraw(msg.sender, amount);
+        emit unStake(msg.sender, amount);
 
 
      

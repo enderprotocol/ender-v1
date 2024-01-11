@@ -57,14 +57,18 @@ export interface EnderStakingInterface extends Interface {
       | "setAddress"
       | "setBondRewardPercentage"
       | "setStakingEnable"
+      | "setStakingPause"
+      | "setUnstakeEnable"
       | "setsigner"
       | "signer"
       | "stEth"
       | "stake"
+      | "stakingContractPause"
       | "stakingEnable"
       | "transferOwnership"
+      | "unstake"
+      | "unstakeEnable"
       | "whitelist"
-      | "withdraw"
   ): FunctionFragment;
 
   getEvent(
@@ -77,9 +81,11 @@ export interface EnderStakingInterface extends Interface {
       | "PercentUpdated"
       | "Stake"
       | "WhitelistChanged"
-      | "Withdraw"
       | "newSigner"
+      | "stakingContractPauseSet"
       | "stakingEnableSet"
+      | "unStake"
+      | "unstakeEnableSet"
   ): EventFragment;
 
   encodeFunctionData(
@@ -136,6 +142,14 @@ export interface EnderStakingInterface extends Interface {
     values: [boolean]
   ): string;
   encodeFunctionData(
+    functionFragment: "setStakingPause",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setUnstakeEnable",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setsigner",
     values: [AddressLike]
   ): string;
@@ -146,6 +160,10 @@ export interface EnderStakingInterface extends Interface {
     values: [BigNumberish, EnderStaking.SignDataStruct]
   ): string;
   encodeFunctionData(
+    functionFragment: "stakingContractPause",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "stakingEnable",
     values?: undefined
   ): string;
@@ -153,11 +171,15 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "whitelist", values: [boolean]): string;
   encodeFunctionData(
-    functionFragment: "withdraw",
+    functionFragment: "unstake",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "unstakeEnable",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "whitelist", values: [boolean]): string;
 
   decodeFunctionResult(
     functionFragment: "bondRewardPercentage",
@@ -206,10 +228,22 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "setStakingEnable",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "setStakingPause",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setUnstakeEnable",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "setsigner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "signer", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "stEth", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "stake", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "stakingContractPause",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "stakingEnable",
     data: BytesLike
@@ -218,8 +252,12 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "unstake", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "unstakeEnable",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "whitelist", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 }
 
 export namespace AddressUpdatedEvent {
@@ -332,19 +370,6 @@ export namespace WhitelistChangedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace WithdrawEvent {
-  export type InputTuple = [withdrawer: AddressLike, amount: BigNumberish];
-  export type OutputTuple = [withdrawer: string, amount: bigint];
-  export interface OutputObject {
-    withdrawer: string;
-    amount: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
 export namespace newSignerEvent {
   export type InputTuple = [_signer: AddressLike];
   export type OutputTuple = [_signer: string];
@@ -357,7 +382,44 @@ export namespace newSignerEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace stakingContractPauseSetEvent {
+  export type InputTuple = [isEnable: boolean];
+  export type OutputTuple = [isEnable: boolean];
+  export interface OutputObject {
+    isEnable: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace stakingEnableSetEvent {
+  export type InputTuple = [isEnable: boolean];
+  export type OutputTuple = [isEnable: boolean];
+  export interface OutputObject {
+    isEnable: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace unStakeEvent {
+  export type InputTuple = [withdrawer: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [withdrawer: string, amount: bigint];
+  export interface OutputObject {
+    withdrawer: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace unstakeEnableSetEvent {
   export type InputTuple = [isEnable: boolean];
   export type OutputTuple = [isEnable: boolean];
   export interface OutputObject {
@@ -484,6 +546,18 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
 
+  setStakingPause: TypedContractMethod<
+    [_enable: boolean],
+    [void],
+    "nonpayable"
+  >;
+
+  setUnstakeEnable: TypedContractMethod<
+    [_enable: boolean],
+    [void],
+    "nonpayable"
+  >;
+
   setsigner: TypedContractMethod<[_signer: AddressLike], [void], "nonpayable">;
 
   stEth: TypedContractMethod<[], [string], "view">;
@@ -494,6 +568,8 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
 
+  stakingContractPause: TypedContractMethod<[], [boolean], "view">;
+
   stakingEnable: TypedContractMethod<[], [boolean], "view">;
 
   transferOwnership: TypedContractMethod<
@@ -502,9 +578,11 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
 
-  whitelist: TypedContractMethod<[_action: boolean], [void], "nonpayable">;
+  unstake: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
 
-  withdraw: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  unstakeEnable: TypedContractMethod<[], [boolean], "view">;
+
+  whitelist: TypedContractMethod<[_action: boolean], [void], "nonpayable">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -584,6 +662,12 @@ export interface EnderStaking extends BaseContract {
     nameOrSignature: "setStakingEnable"
   ): TypedContractMethod<[_enable: boolean], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setStakingPause"
+  ): TypedContractMethod<[_enable: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setUnstakeEnable"
+  ): TypedContractMethod<[_enable: boolean], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "setsigner"
   ): TypedContractMethod<[_signer: AddressLike], [void], "nonpayable">;
   getFunction(
@@ -600,17 +684,23 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "stakingContractPause"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
     nameOrSignature: "stakingEnable"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "unstake"
+  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unstakeEnable"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
     nameOrSignature: "whitelist"
   ): TypedContractMethod<[_action: boolean], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "withdraw"
-  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
 
   getEvent(
     key: "AddressUpdated"
@@ -669,13 +759,6 @@ export interface EnderStaking extends BaseContract {
     WhitelistChangedEvent.OutputObject
   >;
   getEvent(
-    key: "Withdraw"
-  ): TypedContractEvent<
-    WithdrawEvent.InputTuple,
-    WithdrawEvent.OutputTuple,
-    WithdrawEvent.OutputObject
-  >;
-  getEvent(
     key: "newSigner"
   ): TypedContractEvent<
     newSignerEvent.InputTuple,
@@ -683,11 +766,32 @@ export interface EnderStaking extends BaseContract {
     newSignerEvent.OutputObject
   >;
   getEvent(
+    key: "stakingContractPauseSet"
+  ): TypedContractEvent<
+    stakingContractPauseSetEvent.InputTuple,
+    stakingContractPauseSetEvent.OutputTuple,
+    stakingContractPauseSetEvent.OutputObject
+  >;
+  getEvent(
     key: "stakingEnableSet"
   ): TypedContractEvent<
     stakingEnableSetEvent.InputTuple,
     stakingEnableSetEvent.OutputTuple,
     stakingEnableSetEvent.OutputObject
+  >;
+  getEvent(
+    key: "unStake"
+  ): TypedContractEvent<
+    unStakeEvent.InputTuple,
+    unStakeEvent.OutputTuple,
+    unStakeEvent.OutputObject
+  >;
+  getEvent(
+    key: "unstakeEnableSet"
+  ): TypedContractEvent<
+    unstakeEnableSetEvent.InputTuple,
+    unstakeEnableSetEvent.OutputTuple,
+    unstakeEnableSetEvent.OutputObject
   >;
 
   filters: {
@@ -779,17 +883,6 @@ export interface EnderStaking extends BaseContract {
       WhitelistChangedEvent.OutputObject
     >;
 
-    "Withdraw(address,uint256)": TypedContractEvent<
-      WithdrawEvent.InputTuple,
-      WithdrawEvent.OutputTuple,
-      WithdrawEvent.OutputObject
-    >;
-    Withdraw: TypedContractEvent<
-      WithdrawEvent.InputTuple,
-      WithdrawEvent.OutputTuple,
-      WithdrawEvent.OutputObject
-    >;
-
     "newSigner(address)": TypedContractEvent<
       newSignerEvent.InputTuple,
       newSignerEvent.OutputTuple,
@@ -801,6 +894,17 @@ export interface EnderStaking extends BaseContract {
       newSignerEvent.OutputObject
     >;
 
+    "stakingContractPauseSet(bool)": TypedContractEvent<
+      stakingContractPauseSetEvent.InputTuple,
+      stakingContractPauseSetEvent.OutputTuple,
+      stakingContractPauseSetEvent.OutputObject
+    >;
+    stakingContractPauseSet: TypedContractEvent<
+      stakingContractPauseSetEvent.InputTuple,
+      stakingContractPauseSetEvent.OutputTuple,
+      stakingContractPauseSetEvent.OutputObject
+    >;
+
     "stakingEnableSet(bool)": TypedContractEvent<
       stakingEnableSetEvent.InputTuple,
       stakingEnableSetEvent.OutputTuple,
@@ -810,6 +914,28 @@ export interface EnderStaking extends BaseContract {
       stakingEnableSetEvent.InputTuple,
       stakingEnableSetEvent.OutputTuple,
       stakingEnableSetEvent.OutputObject
+    >;
+
+    "unStake(address,uint256)": TypedContractEvent<
+      unStakeEvent.InputTuple,
+      unStakeEvent.OutputTuple,
+      unStakeEvent.OutputObject
+    >;
+    unStake: TypedContractEvent<
+      unStakeEvent.InputTuple,
+      unStakeEvent.OutputTuple,
+      unStakeEvent.OutputObject
+    >;
+
+    "unstakeEnableSet(bool)": TypedContractEvent<
+      unstakeEnableSetEvent.InputTuple,
+      unstakeEnableSetEvent.OutputTuple,
+      unstakeEnableSetEvent.OutputObject
+    >;
+    unstakeEnableSet: TypedContractEvent<
+      unstakeEnableSetEvent.InputTuple,
+      unstakeEnableSetEvent.OutputTuple,
+      unstakeEnableSetEvent.OutputObject
     >;
   };
 }
