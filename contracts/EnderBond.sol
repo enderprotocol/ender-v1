@@ -653,7 +653,9 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 _bondfee
     ) internal returns (uint256 avgRefractionIndex, uint256 rewardPrinciple) {
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
-        avgRefractionIndex = 100 + ((rateOfChange * _bondfee * (_maturity - 1)) / (2 * 1000000));
+        avgRefractionIndex = _bondfee != 0 ? 
+            100 + ((rateOfChange * _bondfee * (_maturity - 1)) / (2 * 1000000)) :
+            100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
         console.log("avgRefractionIndex---->",avgRefractionIndex);
         rewardPrinciple = (_principle * avgRefractionIndex) / 100;
         console.log("rewardPrinciple---->",rewardPrinciple);
