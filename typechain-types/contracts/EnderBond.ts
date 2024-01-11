@@ -27,8 +27,8 @@ export interface EnderBondInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "SECONDS_IN_DAY"
-      | "availableFundsAtMaturity"
       | "bondFeeEnabled"
+      | "bondIdAtMaturity"
       | "bondYieldBaseRate"
       | "bondYieldShareIndex"
       | "bondableTokens"
@@ -41,7 +41,6 @@ export interface EnderBondInterface extends Interface {
       | "dayToRewardShareIndex"
       | "deductFeesFromTransfer"
       | "deposit"
-      | "depositPrincipalAtMaturity"
       | "eip712Domain"
       | "endMint"
       | "epochBondYieldShareIndex"
@@ -65,7 +64,6 @@ export interface EnderBondInterface extends Interface {
       | "owner"
       | "performUpkeep"
       | "rateOfChange"
-      | "refractionPrincipalAtMaturity"
       | "renounceOwnership"
       | "resetEndMint"
       | "rewardShareIndex"
@@ -91,7 +89,6 @@ export interface EnderBondInterface extends Interface {
       | "totalRewardPrincipal"
       | "transferOwnership"
       | "txFees"
-      | "userBondPrincipalAmount"
       | "userBondYieldShareIndex"
       | "userInfoDepositContract"
       | "whitelist"
@@ -127,12 +124,12 @@ export interface EnderBondInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "availableFundsAtMaturity",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "bondFeeEnabled",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "bondIdAtMaturity",
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "bondYieldBaseRate",
@@ -178,10 +175,6 @@ export interface EnderBondInterface extends Interface {
   encodeFunctionData(
     functionFragment: "deposit",
     values: [AddressLike, BigNumberish, BigNumberish, BigNumberish, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "depositPrincipalAtMaturity",
-    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "eip712Domain",
@@ -253,10 +246,6 @@ export interface EnderBondInterface extends Interface {
   encodeFunctionData(
     functionFragment: "rateOfChange",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "refractionPrincipalAtMaturity",
-    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -350,10 +339,6 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "txFees", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "userBondPrincipalAmount",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "userBondYieldShareIndex",
     values: [BigNumberish]
   ): string;
@@ -375,11 +360,11 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "availableFundsAtMaturity",
+    functionFragment: "bondFeeEnabled",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "bondFeeEnabled",
+    functionFragment: "bondIdAtMaturity",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -424,10 +409,6 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "depositPrincipalAtMaturity",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "eip712Domain",
     data: BytesLike
@@ -488,10 +469,6 @@ export interface EnderBondInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "rateOfChange",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "refractionPrincipalAtMaturity",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -579,10 +556,6 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "txFees", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "userBondPrincipalAmount",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "userBondYieldShareIndex",
     data: BytesLike
@@ -924,13 +897,13 @@ export interface EnderBond extends BaseContract {
 
   SECONDS_IN_DAY: TypedContractMethod<[], [bigint], "view">;
 
-  availableFundsAtMaturity: TypedContractMethod<
-    [arg0: BigNumberish],
+  bondFeeEnabled: TypedContractMethod<[], [boolean], "view">;
+
+  bondIdAtMaturity: TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
     [bigint],
     "view"
   >;
-
-  bondFeeEnabled: TypedContractMethod<[], [boolean], "view">;
 
   bondYieldBaseRate: TypedContractMethod<[], [bigint], "view">;
 
@@ -1024,12 +997,6 @@ export interface EnderBond extends BaseContract {
     "payable"
   >;
 
-  depositPrincipalAtMaturity: TypedContractMethod<
-    [arg0: BigNumberish],
-    [bigint],
-    "view"
-  >;
-
   eip712Domain: TypedContractMethod<
     [],
     [
@@ -1101,12 +1068,6 @@ export interface EnderBond extends BaseContract {
   performUpkeep: TypedContractMethod<[arg0: BytesLike], [void], "nonpayable">;
 
   rateOfChange: TypedContractMethod<[], [bigint], "view">;
-
-  refractionPrincipalAtMaturity: TypedContractMethod<
-    [arg0: BigNumberish],
-    [bigint],
-    "view"
-  >;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -1215,12 +1176,6 @@ export interface EnderBond extends BaseContract {
 
   txFees: TypedContractMethod<[], [bigint], "view">;
 
-  userBondPrincipalAmount: TypedContractMethod<
-    [arg0: BigNumberish],
-    [bigint],
-    "view"
-  >;
-
   userBondYieldShareIndex: TypedContractMethod<
     [arg0: BigNumberish],
     [bigint],
@@ -1249,11 +1204,15 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "SECONDS_IN_DAY"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "availableFundsAtMaturity"
-  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
-  getFunction(
     nameOrSignature: "bondFeeEnabled"
   ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "bondIdAtMaturity"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "bondYieldBaseRate"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -1343,9 +1302,6 @@ export interface EnderBond extends BaseContract {
     "payable"
   >;
   getFunction(
-    nameOrSignature: "depositPrincipalAtMaturity"
-  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
-  getFunction(
     nameOrSignature: "eip712Domain"
   ): TypedContractMethod<
     [],
@@ -1432,9 +1388,6 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "rateOfChange"
   ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "refractionPrincipalAtMaturity"
-  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -1531,9 +1484,6 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "txFees"
   ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "userBondPrincipalAmount"
-  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "userBondYieldShareIndex"
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
