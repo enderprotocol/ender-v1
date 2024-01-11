@@ -121,6 +121,7 @@ contract EnderBond is
     IEnderOracle private enderOracle;
     IEnderStaking private endStaking;
 
+    bool public depositEnable;  // status of deposit-feature feature (enabled/disabled)
     bool public bondFeeEnabled; // status of bond-fee feature (enabled/disabled)
 
     struct Bond {
@@ -151,6 +152,7 @@ event MinDepAmountSet(uint256 indexed newAmount);
 event TxFeesSet(uint256 indexed newTxFees);
 event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
 event BondFeeEnabledSet(bool indexed isEnabled);
+event depositEnableSet(bool indexed isEnabled);
 event BondableTokensSet(address indexed token, bool indexed isEnabled);
 event Deposit(address indexed sender, uint256 indexed tokenId, uint256 principal, uint256 maturity, address token);
 event Withdrawal(address indexed sender, uint256 indexed tokenId);
@@ -189,6 +191,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
 
         //this function is not used
         setBondFeeEnabled(true);
+    }
+
+    modifier depositEnabled() {
+        if (depositEnable != true) revert NotAllowed();
+        _;
     }
 
     function setInterval(uint256 _interval) public onlyOwner {
@@ -258,6 +265,15 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      */
     function setBondFeeEnabled(bool _enabled) public onlyOwner {
         bondFeeEnabled = _enabled;
+        emit depositEnableSet(_enabled);
+    }
+
+    /**
+     * @notice Update the deposit-function status
+     * @param _enabled status
+     */
+    function setDepositEnable(bool _enabled) public onlyOwner {
+        depositEnable = _enabled;
         emit BondFeeEnabledSet(_enabled);
     }
 
@@ -325,7 +341,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 bondFee,
         address token,
         signData memory userSign
-    ) public payable nonReentrant returns (uint256 tokenId) {
+    ) public payable nonReentrant depositEnabled returns (uint256 tokenId) {
         console.log("\nDeposited Amount:- ", principal);
         console.log("Maturity:- ", maturity);
         console.log("Bond Fees:- ", bondFee);
@@ -338,7 +354,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
         }
         IEndToken(endToken).distributeRefractionFees();
-
+        uint256 beforeBalance = IERC20(stEth).balanceOf(address(endTreasury));
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount();
@@ -349,6 +365,8 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
+        uint256 afterBalance = IERC20(stEth).balanceOf(address(endTreasury));
+        principal = afterBalance - beforeBalance;
         tokenId = _deposit(user, principal, maturity, token, bondFee);
         epochBondYieldShareIndex();
         // IEnderStaking(endStaking).epochStakingReward(stEth);

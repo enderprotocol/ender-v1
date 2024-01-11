@@ -13,6 +13,7 @@ import "hardhat/console.sol";
 error ZeroAddress();
 error InvalidAmount();
 error NotKeeper();
+error NotAllowed();
 
 contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     string private constant SIGNING_DOMAIN = "stakingContract";
@@ -27,7 +28,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     address public keeper;
     address public stEth;
     bool public isWhitelisted;
-
+    bool public stakingEnable;  // status of staking-feature feature (enabled/disabled)
     struct signData {
         address user;
         string key;
@@ -36,6 +37,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
 
     event AddressUpdated(address indexed addr, uint256 indexed addrType);
     event PercentUpdated(uint256 percent);
+    event stakingEnableSet(bool indexed isEnable);
     event Stake(address indexed staker, uint256 amount);
     event Withdraw(address indexed withdrawer, uint256 amount);
     event EpochStakingReward(address indexed asset, uint256 totalReward, uint256 rw2, uint256 sendTokens);
@@ -50,6 +52,16 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         setAddress(_end, 3);
         setAddress(_sEnd, 4);
         bondRewardPercentage = 10;
+    }
+
+    modifier stakingEnabled() {
+        if (stakingEnable != true) revert NotAllowed();
+        _;
+    }
+
+    function setStakingEnable(bool _enable) external onlyOwner{
+        stakingEnable = _enable;
+        emit stakingEnableSet(_enable);
     }
 
     function setsigner(address _signer) external onlyOwner {
@@ -91,7 +103,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
      * @notice Users do stake
      * @param amount  stake amount
      */
-    function stake(uint256 amount, signData memory userSign) external {
+    function stake(uint256 amount, signData memory userSign) external stakingEnabled {
         if (amount == 0) revert InvalidAmount();
         if(isWhitelisted){
             address signAddress = _verify(userSign);

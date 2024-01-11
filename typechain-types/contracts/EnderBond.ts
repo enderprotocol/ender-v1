@@ -55,6 +55,7 @@ export interface EnderBondInterface extends Interface {
       | "dayToRewardShareIndex"
       | "deductFeesFromTransfer"
       | "deposit"
+      | "depositEnable"
       | "depositPrincipalAtMaturity"
       | "eip712Domain"
       | "endMint"
@@ -93,6 +94,7 @@ export interface EnderBondInterface extends Interface {
       | "setBondYieldBaseRate"
       | "setBondableTokens"
       | "setBool"
+      | "setDepositEnable"
       | "setIndexesOfUser"
       | "setInterval"
       | "setMinDepAmount"
@@ -134,6 +136,7 @@ export interface EnderBondInterface extends Interface {
       | "TxFeesSet"
       | "WhitelistChanged"
       | "Withdrawal"
+      | "depositEnableSet"
       | "newSigner"
   ): EventFragment;
 
@@ -200,6 +203,10 @@ export interface EnderBondInterface extends Interface {
       AddressLike,
       EnderBond.SignDataStruct
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "depositEnable",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "depositPrincipalAtMaturity",
@@ -330,6 +337,10 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "setBool", values: [boolean]): string;
   encodeFunctionData(
+    functionFragment: "setDepositEnable",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setIndexesOfUser",
     values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
   ): string;
@@ -440,6 +451,10 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "depositEnable",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "depositPrincipalAtMaturity",
     data: BytesLike
@@ -556,6 +571,10 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setBool", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setDepositEnable",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "setIndexesOfUser",
     data: BytesLike
@@ -888,6 +907,18 @@ export namespace WithdrawalEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace depositEnableSetEvent {
+  export type InputTuple = [isEnabled: boolean];
+  export type OutputTuple = [isEnabled: boolean];
+  export interface OutputObject {
+    isEnabled: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace newSignerEvent {
   export type InputTuple = [_signer: AddressLike];
   export type OutputTuple = [_signer: string];
@@ -1046,6 +1077,8 @@ export interface EnderBond extends BaseContract {
     "payable"
   >;
 
+  depositEnable: TypedContractMethod<[], [boolean], "view">;
+
   depositPrincipalAtMaturity: TypedContractMethod<
     [arg0: BigNumberish],
     [bigint],
@@ -1192,6 +1225,12 @@ export interface EnderBond extends BaseContract {
   >;
 
   setBool: TypedContractMethod<[_bool: boolean], [void], "nonpayable">;
+
+  setDepositEnable: TypedContractMethod<
+    [_enabled: boolean],
+    [void],
+    "nonpayable"
+  >;
 
   setIndexesOfUser: TypedContractMethod<
     [
@@ -1361,6 +1400,9 @@ export interface EnderBond extends BaseContract {
     "payable"
   >;
   getFunction(
+    nameOrSignature: "depositEnable"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
     nameOrSignature: "depositPrincipalAtMaturity"
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
@@ -1509,6 +1551,9 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "setBool"
   ): TypedContractMethod<[_bool: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setDepositEnable"
+  ): TypedContractMethod<[_enabled: boolean], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setIndexesOfUser"
   ): TypedContractMethod<
@@ -1713,6 +1758,13 @@ export interface EnderBond extends BaseContract {
     WithdrawalEvent.InputTuple,
     WithdrawalEvent.OutputTuple,
     WithdrawalEvent.OutputObject
+  >;
+  getEvent(
+    key: "depositEnableSet"
+  ): TypedContractEvent<
+    depositEnableSetEvent.InputTuple,
+    depositEnableSetEvent.OutputTuple,
+    depositEnableSetEvent.OutputObject
   >;
   getEvent(
     key: "newSigner"
@@ -1941,6 +1993,17 @@ export interface EnderBond extends BaseContract {
       WithdrawalEvent.InputTuple,
       WithdrawalEvent.OutputTuple,
       WithdrawalEvent.OutputObject
+    >;
+
+    "depositEnableSet(bool)": TypedContractEvent<
+      depositEnableSetEvent.InputTuple,
+      depositEnableSetEvent.OutputTuple,
+      depositEnableSetEvent.OutputObject
+    >;
+    depositEnableSet: TypedContractEvent<
+      depositEnableSetEvent.InputTuple,
+      depositEnableSetEvent.OutputTuple,
+      depositEnableSetEvent.OutputObject
     >;
 
     "newSigner(address)": TypedContractEvent<
