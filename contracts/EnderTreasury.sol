@@ -400,5 +400,13 @@ event MintEndToUser(address indexed to, uint256 amount);
 
     } 
 
+    function withdrawBondFee(address stETH, uint amount)external onlyOwner{
+        (uint stETHPoolAmount, uint ENDSupply) = ETHDenomination(stETH);
+        if(((stETHPoolAmount * 1000) - ENDSupply) > amount && IEnderBond(enderBond).availableBondFee() >= amount){
+            IEnderBond(enderBond).setAvailableBondFee(amount);
+            IERC20(stETH).transfer(owner(), amount);
+        }
+    }
+
     receive() external payable virtual override {}
 }

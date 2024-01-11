@@ -16,4 +16,8 @@ interface IEnderBond {
 
     function resetEndMint() external;
 
+    function setAvailableBondFee(uint amount) external;
+
+    function availableBondFee() external view returns(uint256);
+
 }

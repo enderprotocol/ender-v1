@@ -90,6 +90,7 @@ export interface EnderTreasuryInterface extends Interface {
       | "transferOwnership"
       | "treasury"
       | "withdraw"
+      | "withdrawBondFee"
       | "withdrawFromStrategy"
       | "withdrawRequest"
       | "withdrawStEth"
@@ -311,6 +312,10 @@ export interface EnderTreasuryInterface extends Interface {
     values: [IEnderBase.EndRequestStruct, BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "withdrawBondFee",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "withdrawFromStrategy",
     values: [AddressLike, AddressLike, BigNumberish]
   ): string;
@@ -481,6 +486,10 @@ export interface EnderTreasuryInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "treasury", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawBondFee",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "withdrawFromStrategy",
     data: BytesLike
@@ -919,6 +928,12 @@ export interface EnderTreasury extends BaseContract {
     "nonpayable"
   >;
 
+  withdrawBondFee: TypedContractMethod<
+    [stETH: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   withdrawFromStrategy: TypedContractMethod<
     [_asset: AddressLike, _strategy: AddressLike, _withdrawAmt: BigNumberish],
     [bigint],
@@ -1154,6 +1169,13 @@ export interface EnderTreasury extends BaseContract {
     nameOrSignature: "withdraw"
   ): TypedContractMethod<
     [param: IEnderBase.EndRequestStruct, amountRequired: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawBondFee"
+  ): TypedContractMethod<
+    [stETH: AddressLike, amount: BigNumberish],
     [void],
     "nonpayable"
   >;

@@ -74,6 +74,7 @@ export interface EnderBondInterface extends Interface {
       | "secondsRefractionShareIndex"
       | "secondsRefractionShareIndexSend"
       | "setAddress"
+      | "setAvailableBondFee"
       | "setBondFeeEnabled"
       | "setBondYieldBaseRate"
       | "setBondableTokens"
@@ -286,6 +287,10 @@ export interface EnderBondInterface extends Interface {
   encodeFunctionData(
     functionFragment: "setAddress",
     values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setAvailableBondFee",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setBondFeeEnabled",
@@ -508,6 +513,10 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setAddress", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setAvailableBondFee",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "setBondFeeEnabled",
     data: BytesLike
@@ -1113,6 +1122,12 @@ export interface EnderBond extends BaseContract {
     "nonpayable"
   >;
 
+  setAvailableBondFee: TypedContractMethod<
+    [amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   setBondFeeEnabled: TypedContractMethod<
     [_enabled: boolean],
     [void],
@@ -1422,6 +1437,9 @@ export interface EnderBond extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "setAvailableBondFee"
+  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setBondFeeEnabled"
   ): TypedContractMethod<[_enabled: boolean], [void], "nonpayable">;

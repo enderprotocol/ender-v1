@@ -23,6 +23,7 @@ import type {
 export interface IEnderBondInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "availableBondFee"
       | "calculateBondRewardAmount"
       | "deductFeesFromTransfer"
       | "endMint"
@@ -30,8 +31,13 @@ export interface IEnderBondInterface extends Interface {
       | "epochRewardShareIndexForSend"
       | "getLoopCount"
       | "resetEndMint"
+      | "setAvailableBondFee"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "availableBondFee",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "calculateBondRewardAmount",
     values: [BigNumberish]
@@ -57,7 +63,15 @@ export interface IEnderBondInterface extends Interface {
     functionFragment: "resetEndMint",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "setAvailableBondFee",
+    values: [BigNumberish]
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "availableBondFee",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "calculateBondRewardAmount",
     data: BytesLike
@@ -81,6 +95,10 @@ export interface IEnderBondInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "resetEndMint",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setAvailableBondFee",
     data: BytesLike
   ): Result;
 }
@@ -128,6 +146,8 @@ export interface IEnderBond extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  availableBondFee: TypedContractMethod<[], [bigint], "view">;
+
   calculateBondRewardAmount: TypedContractMethod<
     [_tokenId: BigNumberish],
     [bigint],
@@ -158,10 +178,19 @@ export interface IEnderBond extends BaseContract {
 
   resetEndMint: TypedContractMethod<[], [void], "nonpayable">;
 
+  setAvailableBondFee: TypedContractMethod<
+    [amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "availableBondFee"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "calculateBondRewardAmount"
   ): TypedContractMethod<[_tokenId: BigNumberish], [bigint], "nonpayable">;
@@ -183,6 +212,9 @@ export interface IEnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "resetEndMint"
   ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setAvailableBondFee"
+  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
 
   filters: {};
 }
