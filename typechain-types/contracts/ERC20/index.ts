@@ -3,5 +3,7 @@
 /* eslint-disable */
 import type * as stEthSol from "./StEth.sol";
 export type { stEthSol };
+import type * as mockStEthSol from "./mockStEth.sol";
+export type { mockStEthSol };
 export type { EndToken } from "./EndToken";
 export type { SEndToken } from "./SEndToken";

@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/ISEndToken.sol";
@@ -13,33 +13,86 @@ import "hardhat/console.sol";
 error ZeroAddress();
 error InvalidAmount();
 error NotKeeper();
+error NotAllowed();
 
-contract EnderStaking is Initializable, OwnableUpgradeable {
+contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
+    string private constant SIGNING_DOMAIN = "stakingContract";
+    string private constant SIGNATURE_VERSION = "1";
     uint public bondRewardPercentage;
     uint public rebasingIndex;
-
+    address public signer;
     address public endToken;
     address public sEndToken;
     address public enderTreasury;
     address public enderBond;
     address public keeper;
     address public stEth;
-    mapping(address => bool) public isWhitelisted;
+    bool public isWhitelisted;
+    bool public stakingEnable;  // status of staking-pause feature (enabled/disabled)
+    bool public unstakeEnable;  // status of unstake-pause feature (enabled/disabled)
+    bool public stakingContractPause; // status of stakingContract-pause feature (enabled/disabled)
+
+    struct signData {
+        address user;
+        string key;
+        bytes signature;
+    }
 
     event AddressUpdated(address indexed addr, uint256 indexed addrType);
     event PercentUpdated(uint256 percent);
+    event stakingEnableSet(bool indexed isEnable);
+    event unstakeEnableSet(bool indexed isEnable);
+    event stakingContractPauseSet(bool indexed isEnable);
     event Stake(address indexed staker, uint256 amount);
-    event Withdraw(address indexed withdrawer, uint256 amount);
+    event unStake(address indexed withdrawer, uint256 amount);
     event EpochStakingReward(address indexed asset, uint256 totalReward, uint256 rw2, uint256 sendTokens);
-    event WhitelistChanged(address indexed whitelistingAddress, bool indexed action);
+    event WhitelistChanged(bool indexed action);
+    event newSigner(address _signer);
   
-    function initialize(address _end, address _sEnd) external initializer {
+    function initialize(address _end, address _sEnd, address _signer) external initializer {
         __Ownable_init();
+        signer = _signer;
         // setAddress(_enderBond, 1);
         // setAddress(_enderTreasury, 2);
         setAddress(_end, 3);
         setAddress(_sEnd, 4);
         bondRewardPercentage = 10;
+    }
+
+    modifier stakingEnabled() {
+        if (stakingEnable != true) revert NotAllowed();
+        _;
+    }
+
+    modifier unstakeEnabled() {
+        if (unstakeEnable != true) revert NotAllowed();
+        _;
+    }
+
+    modifier stakingContractPaused() {
+        if (stakingContractPause != true) revert NotAllowed();
+        _; 
+    }
+
+    function setStakingEnable(bool _enable) external onlyOwner{
+        stakingEnable = _enable;
+        emit stakingEnableSet(_enable);
+    }
+
+    function setUnstakeEnable(bool _enable) external onlyOwner{
+        unstakeEnable = _enable;
+        emit unstakeEnableSet(_enable);
+    }
+
+    function setStakingPause(bool _enable) external onlyOwner{
+        stakingContractPause = _enable;
+        emit stakingContractPauseSet(_enable);
+    }
+
+    function setsigner(address _signer) external onlyOwner {
+        require(_signer != address(0), "Address can't be zero");
+        signer = _signer;
+        emit newSigner(signer);
     }
 
     function setAddress(address _addr, uint256 _type) public onlyOwner {
@@ -66,17 +119,21 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         
     }
 
-    function whitelist(address _whitelistingAddress, bool _action) external onlyOwner{
-        isWhitelisted[_whitelistingAddress] = _action;
-        emit WhitelistChanged(_whitelistingAddress, _action);
+    function whitelist(bool _action) external onlyOwner{
+        isWhitelisted = _action;
+        emit WhitelistChanged(_action);
     }
 
     /**
      * @notice Users do stake
      * @param amount  stake amount
      */
-    function stake(uint256 amount) external {
+    function stake(uint256 amount, signData memory userSign) external stakingEnabled stakingContractPaused{
         if (amount == 0) revert InvalidAmount();
+        if(isWhitelisted){
+            address signAddress = _verify(userSign);
+            require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
+        }
         console.log("\nEnd token deposit:- ", amount);
         if(ISEndToken(endToken).balanceOf(address(this)) == 0){
             epochStakingReward(stEth);
@@ -95,10 +152,10 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     }
 
     /**
-     * @notice Users can withdraw
-     * @param amount  withdraw amount
+     * @notice Users can unstake
+     * @param amount  unstake amount
      */
-    function withdraw(uint256 amount) external {
+    function unstake(uint256 amount) external unstakeEnabled stakingContractPaused{
         if (amount == 0) revert InvalidAmount();
         if (ISEndToken(sEndToken).balanceOf(msg.sender) < amount) revert InvalidAmount();
         // add reward
@@ -108,7 +165,7 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
         // transfer token
         ISEndToken(endToken).transfer(msg.sender, reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
-        emit Withdraw(msg.sender, amount);
+        emit unStake(msg.sender, amount);
 
 
      
@@ -150,5 +207,26 @@ contract EnderStaking is Initializable, OwnableUpgradeable {
     function claimRebaseValue(uint256 _sendAmount) internal view returns (uint256 reward) {
         console.log("rebasingIndex:- ", rebasingIndex);
         reward = (_sendAmount * rebasingIndex) / 10e18;
+    }
+
+    function _hash(signData memory userSign) internal view returns (bytes32) {
+        return
+            _hashTypedDataV4(
+                keccak256(
+                    abi.encode(
+                        keccak256("userSign(address user,string key)"),
+                        userSign.user,
+                        keccak256(bytes(userSign.key))
+                    )
+                )
+            );
+    }
+
+    /**
+     * @notice verifying the owner signature to check whether the user is whitelisted or not
+     */
+    function _verify(signData memory userSign) internal view returns (address) {
+        bytes32 digest = _hash(userSign);
+        return ECDSAUpgradeable.recover(digest, userSign.signature);
     }
 }

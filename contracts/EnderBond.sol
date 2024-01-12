@@ -52,12 +52,14 @@ contract EnderBond is
     EIP712Upgradeable,
     KeeperCompatibleInterface
 {
+    string private constant SIGNING_DOMAIN = "bondContract";
+    string private constant SIGNATURE_VERSION = "1";
     /// @notice A mapping that indicates whether a token is bondable.
     mapping(address => bool) public bondableTokens;
 
     /// @notice A mapping of bonds by token ID.
     mapping(uint256 => Bond) public bonds;
-    mapping(address => bool) public isWhitelisted;
+    // mapping(address => bool) public isWhitelisted;
     mapping(uint256 => uint256) public rewardSharePerUserIndex;
     mapping(uint256 => uint256) public rewardSharePerUserIndexSend;
 
@@ -106,13 +108,13 @@ contract EnderBond is
     uint public lastTimeStamp;
     uint public lastSecOfRefraction;
     uint public lastSecOfSendReward;
-
-
+    bool public isWhitelisted;
     bool public isSet;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
 
+    address public signer;
     address private endSignature;
     address private endToken;
     address private sEndToken;
@@ -127,7 +129,10 @@ contract EnderBond is
     IEnderOracle private enderOracle;
     IEnderStaking private endStaking;
 
+    bool public depositEnable;  // status of deposit-feature (enabled/disabled)
+    bool public isWithdrawPause;   // status of withdraw-pause
     bool public bondFeeEnabled; // status of bond-fee feature (enabled/disabled)
+    bool public bondPause; // status of bond-contract pause/unpause
 
     struct Bond {
         bool withdrawn; // The withdrawn status of the bond
@@ -144,6 +149,12 @@ contract EnderBond is
         uint256 YieldIndex;
     }
 
+    struct signData {
+        address user;
+        string key;
+        bytes signature;
+    }
+
 event IntervalSet(uint256 indexed newInterval);
 event BoolSet(bool indexed newValue);
 event AddressSet(uint256 indexed addrType, address indexed newAddress);
@@ -151,6 +162,9 @@ event MinDepAmountSet(uint256 indexed newAmount);
 event TxFeesSet(uint256 indexed newTxFees);
 event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
 event BondFeeEnabledSet(bool indexed isEnabled);
+event depositEnableSet(bool indexed isEnabled);
+event withdrawPauseSet(bool indexed isEnabled);
+event bondPauseSet(bool indexed isEnabled);
 event BondableTokensSet(address indexed token, bool indexed isEnabled);
 event Deposit(address indexed sender, uint256 indexed tokenId, uint256 principal, uint256 maturity, address token);
 event Withdrawal(address indexed sender, uint256 indexed tokenId);
@@ -159,7 +173,8 @@ event StakingRewardsClaimed(address indexed sender, uint256 indexed tokenId, uin
 event RewardShareIndexUpdated(uint256 indexed newRewardShareIndex);
 event BondYieldShareIndexUpdated(uint256 indexed newBondYieldShareIndex);
 event EndMintReset();
-event WhitelistChanged(address indexed whitelistingAddress, bool indexed action);
+event newSigner(address _signer);
+event WhitelistChanged(bool indexed action);
 event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRewardSharePerUserIndex);
     
 
@@ -167,7 +182,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @dev Initializes the contract
      * @param endToken_ The address of the END token
      */
-    function initialize(address endToken_, address _lido, address _oracle) public initializer {
+    function initialize(address endToken_, address _lido, address _oracle, address _signer) public initializer {
         __Ownable_init();
         __EIP712_init("EnderBond", "1");
         rateOfChange = 100;
@@ -176,6 +191,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         // todo set the value according to doc
         minDepositAmount = 1000000000000000;
         txFees = 200;
+        signer = _signer;
         enderOracle = IEnderOracle(_oracle);
         bondYieldBaseRate = 100;
         SECONDS_IN_DAY = 600; // note for testing purpose we have set it to 10 mint
@@ -187,6 +203,21 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
 
         //this function is not used
         setBondFeeEnabled(true);
+    }
+
+    modifier depositEnabled() {
+        if (depositEnable != true) revert NotAllowed();
+        _;
+    }
+
+    modifier withdrawEnabled() {
+        if (isWithdrawPause != true) revert NotAllowed();
+        _;
+    }
+
+    modifier bondPaused() {
+        if (isWithdrawPause != true) revert NotAllowed();
+        _;
     }
 
     function setInterval(uint256 _interval) public onlyOwner {
@@ -221,6 +252,12 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         emit AddressSet(_type, _addr);
     }
 
+    function setsigner(address _signer) external onlyOwner {
+        require(_signer != address(0), "Address can't be zero");
+        signer = _signer;
+        emit newSigner(signer);
+    }
+
     function setMinDepAmount(uint256 _amt) public onlyOwner {
         minDepositAmount = _amt;
         emit MinDepAmountSet(_amt);
@@ -250,7 +287,34 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      */
     function setBondFeeEnabled(bool _enabled) public onlyOwner {
         bondFeeEnabled = _enabled;
+        emit depositEnableSet(_enabled);
+    }
+
+    /**
+     * @notice Update the deposit-function status
+     * @param _enabled status
+     */
+    function setDepositEnable(bool _enabled) public onlyOwner {
+        depositEnable = _enabled;
         emit BondFeeEnabledSet(_enabled);
+    }
+
+    /**
+     * @notice Update the withdraw-pause status
+     * @param _enabled status
+     */
+    function setWithdrawPause(bool _enabled) public onlyOwner {
+        isWithdrawPause = _enabled;
+        emit withdrawPauseSet(_enabled);
+    }
+
+    /**
+     * @notice Update the bondContract-pause status
+     * @param _enabled status
+     */
+    function setBondPause(bool _enabled) public onlyOwner {
+        bondPause = _enabled;
+        emit bondPauseSet(_enabled);
     }
 
     /**
@@ -289,16 +353,16 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         }
     }
 
-    function whitelist(address _whitelistingAddress, bool _action) external onlyOwner{
-        isWhitelisted[_whitelistingAddress] = _action;
-        emit WhitelistChanged(_whitelistingAddress, _action);
+    function whitelist(bool _action) external onlyOwner{
+        isWhitelisted = _action;
+        emit WhitelistChanged(_action);
     }
 
-    function userInfoDepositContract(uint256[] memory index) external onlyOwner{
+    function userInfoDepositContract(uint256[] memory index, signData memory userSign) external onlyOwner{
         if (index.length > 0){
             for (uint256 i = index[0]; i <= index.length; i++){
                 (address user, uint256 principal, uint256 bondFees, uint256 maturity) = depositContract.depositedIntoBond(index[i], address(this));
-                deposit(user, principal, maturity, bondFees, stEth);
+                deposit(user, principal, maturity, bondFees, stEth, userSign);
             }
         }
     }
@@ -315,8 +379,9 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 principal,
         uint256 maturity,
         uint256 bondFee,
-        address token
-    ) public payable nonReentrant returns (uint256 tokenId) {
+        address token,
+        signData memory userSign
+    ) public payable nonReentrant depositEnabled bondPaused returns (uint256 tokenId) {
         console.log("\nDeposited Amount:- ", principal);
         console.log("Maturity:- ", maturity);
         console.log("Bond Fees:- ", bondFee);
@@ -324,8 +389,12 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee <= 0 || bondFee > 10000) revert InvalidBondFee();
+        if(isWhitelisted){
+            address signAddress = _verify(userSign);
+            require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
+        }
         IEndToken(endToken).distributeRefractionFees();
-
+        uint256 beforeBalance = IERC20(stEth).balanceOf(address(endTreasury));
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount();
@@ -336,6 +405,8 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
         }
+        uint256 afterBalance = IERC20(stEth).balanceOf(address(endTreasury));
+        principal = afterBalance - beforeBalance;
         tokenId = _deposit(user, principal, maturity, token, bondFee);
         epochBondYieldShareIndex();
         // IEnderStaking(endStaking).epochStakingReward(stEth);
@@ -400,7 +471,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      *       plus interest is transferred to the sender.
      * @param tokenId The ID of the token to be withdrawn.
      */
-    function withdraw(uint256 tokenId) external nonReentrant {
+    function withdraw(uint256 tokenId) external nonReentrant withdrawEnabled bondPaused{
         _withdraw(tokenId);
         emit Withdrawal(msg.sender, tokenId);
     }
@@ -880,6 +951,27 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
     function setAvailableBondFee(uint amount) external {
         if(msg.sender != address(endTreasury)) revert NoTreasury();
         availableBondFee -= amount;
+    }
+    
+    function _hash(signData memory userSign) internal view returns (bytes32) {
+        return
+            _hashTypedDataV4(
+                keccak256(
+                    abi.encode(
+                        keccak256("userSign(address user,string key)"),
+                        userSign.user,
+                        keccak256(bytes(userSign.key))
+                    )
+                )
+            );
+    }
+
+    /**
+     * @notice verifying the owner signature to check whether the user is whitelisted or not
+     */
+    function _verify(signData memory userSign) internal view returns (address) {
+        bytes32 digest = _hash(userSign);
+        return ECDSAUpgradeable.recover(digest, userSign.signature);
     }
 
     receive() external payable {}

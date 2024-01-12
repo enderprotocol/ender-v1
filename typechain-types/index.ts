@@ -72,6 +72,8 @@ export type { EnderTreasury } from "./contracts/EnderTreasury";
 export { EnderTreasury__factory } from "./factories/contracts/EnderTreasury__factory";
 export type { EndToken } from "./contracts/ERC20/EndToken";
 export { EndToken__factory } from "./factories/contracts/ERC20/EndToken__factory";
+export type { StETH } from "./contracts/ERC20/mockStEth.sol/StETH";
+export { StETH__factory } from "./factories/contracts/ERC20/mockStEth.sol/StETH__factory";
 export type { SEndToken } from "./contracts/ERC20/SEndToken";
 export { SEndToken__factory } from "./factories/contracts/ERC20/SEndToken__factory";
 export type { MockStEth } from "./contracts/ERC20/StEth.sol/MockStEth";

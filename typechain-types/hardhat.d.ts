@@ -142,6 +142,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.EndToken__factory>;
     getContractFactory(
+      name: "StETH",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.StETH__factory>;
+    getContractFactory(
       name: "SEndToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.SEndToken__factory>;
@@ -455,6 +459,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.EndToken>;
     getContractAt(
+      name: "StETH",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.StETH>;
+    getContractAt(
       name: "SEndToken",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -774,6 +783,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EndToken>;
     deployContract(
+      name: "StETH",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.StETH>;
+    deployContract(
       name: "SEndToken",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.SEndToken>;
@@ -1086,6 +1099,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EndToken>;
+    deployContract(
+      name: "StETH",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.StETH>;
     deployContract(
       name: "SEndToken",
       args: any[],

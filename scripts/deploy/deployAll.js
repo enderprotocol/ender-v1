@@ -11,8 +11,9 @@ function sleep(ms)
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 async function main() {
+
     const weth = await ethers.getContractFactory("mockWETH")
-    const StEth = await ethers.getContractFactory("MockStEth");
+    const StEth = await ethers.getContractFactory("StETH");
     const InstaDapp = await ethers.getContractFactory("StinstaToken");
     const SEndToken = await ethers.getContractFactory("SEndToken");
     const EndToken = await ethers.getContractFactory("EndToken");
@@ -89,10 +90,10 @@ async function main() {
     // console.log("wEthAddress--> ", wEthAddress);
     // await sleep(9000);
 
-    // stEth = await StEth.deploy(wEthAddress, "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9");
-    // stEthAddress = await stEth.getAddress();
-    // console.log("stEthAddress-->", stEthAddress)
-    // await sleep(9000);
+    stEth = await StEth.deploy();
+    stEthAddress = await stEth.getAddress();
+    console.log("stEthAddress-->", stEthAddress)
+    await sleep(9000);
 
     // depositContract = await upgrades.deployProxy(DepositContract, ["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0x8feF51D82E188B4cB41dcF6b23DA22284E28c835", "0x6965C9b015AfC8FbF088936614d40877E3f058Ae"], {
     //     initializer: "initialize",
@@ -112,12 +113,12 @@ async function main() {
     Impl = await impl.getAddress();
     console.log(Impl);
     
-    // initializeData = DepositContract.interface.encodeFunctionData('initialize',["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0x8feF51D82E188B4cB41dcF6b23DA22284E28c835", "0x6965C9b015AfC8FbF088936614d40877E3f058Ae"]);
-    // Proxy = await proxy.deploy();
-    // await sleep(9000);
-    // console.log(await Proxy.getAddress());       
-    // // console.log("Proxy",Proxy);
-    // await Proxy.upgradeToAndCall("0x4527386134Da524e28E428cb7F0809C44780a574",initializeData);
+    initializeData = DepositContract.interface.encodeFunctionData('initialize',[stEthAddress, stEthAddress, "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"]);
+    Proxy = await proxy.deploy();
+    await sleep(9000);
+    console.log(await Proxy.getAddress());       
+    console.log("Proxy",Proxy);
+    await Proxy.upgradeToAndCall(Impl, initializeData);
     // await sleep(9000);
     // await Proxy.transferProxyOwnership("0x6965C9b015AfC8FbF088936614d40877E3f058Ae");
 
