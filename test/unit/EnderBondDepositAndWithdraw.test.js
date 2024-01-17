@@ -19,8 +19,8 @@ function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
 
-describe("EnderBond Deposit and Withdraw", function () {
-  let owner, signer1, signer2, signer3, signer4;
+describe.only("EnderBond Deposit and Withdraw", function () {
+  let owner, signer,  signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
     enderTreasuryAddress,
@@ -44,7 +44,7 @@ describe("EnderBond Deposit and Withdraw", function () {
 
   before(async function () {
     const wETH = await ethers.getContractFactory("mockWETH");
-    const StEth = await ethers.getContractFactory("MockStEth");
+    const StEth = await ethers.getContractFactory("StETH");
     const InstadappLite = await ethers.getContractFactory("StinstaToken");
     const EndToken = await ethers.getContractFactory("EndToken");
     const EnderBond = await ethers.getContractFactory("EnderBond");
@@ -53,12 +53,9 @@ describe("EnderBond Deposit and Withdraw", function () {
     const SEnd = await ethers.getContractFactory("SEndToken");
     const Oracle = await ethers.getContractFactory("EnderOracle");
  
-    [owner, wallet1, signer1, signer2, signer3, signer4] = await ethers.getSigners();
+    [owner, signer, wallet1, signer1, signer2, signer3, signer4] = await ethers.getSigners();
  
-    WETH = await wETH.connect(owner).deploy("wrappedETH", "weth", owner.address);
-    mockWETHAddress = await WETH.getAddress();
- 
-    stEth = await StEth.deploy(mockWETHAddress ,owner.address);
+    stEth = await StEth.deploy();
     stEthAddress = await stEth.getAddress();
 
     // sEnd = await SEnd.connect(owner).deploy();
@@ -82,7 +79,7 @@ describe("EnderBond Deposit and Withdraw", function () {
 
     enderBond = await upgrades.deployProxy(
       EnderBond,
-      [endTokenAddress, ethers.ZeroAddress, oracleAddress],
+      [endTokenAddress, ethers.ZeroAddress, oracleAddress, signer.address],
       {
         initializer: "initialize",
       }
@@ -94,7 +91,7 @@ describe("EnderBond Deposit and Withdraw", function () {
 
     enderStaking = await upgrades.deployProxy(
       EnderStaking,
-      [endTokenAddress, sEndTokenAddress],
+      [endTokenAddress, sEndTokenAddress, signer.address],
       {
         initializer: "initialize",
       }
@@ -189,8 +186,8 @@ describe("EnderBond Deposit and Withdraw", function () {
       // ).to.be.revertedWithCustomError(enderBond, "WaitForFirstDeposit");
 
       expect(await enderBond.rewardShareIndex()).to.be.equal(0);
-      await WETH.mint(signer1.address, depositPrincipalStEth);
-      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      //await WETH.mint(signer1.address, depositPrincipalStEth);
+      // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).mintShare(depositPrincipalStEth);
       
       await stEth
@@ -211,8 +208,8 @@ describe("EnderBond Deposit and Withdraw", function () {
         );
         
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
-      await WETH.mint(signer2.address, depositPrincipalStEth);
-      await WETH.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
+      // await WETH.mint(signer2.address, depositPrincipalStEth);
+      // await WETH.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer2).mintShare(depositPrincipalStEth);
 
       await stEth
@@ -257,8 +254,8 @@ describe("EnderBond Deposit and Withdraw", function () {
       );
 
       //for depositing second time by the same user
-      await WETH.mint(signer1.address, depositPrincipalStEth);
-      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      // await WETH.mint(signer1.address, depositPrincipalStEth);
+      // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).mintShare(depositPrincipalStEth);
 
       await stEth
@@ -322,8 +319,8 @@ describe("EnderBond Deposit and Withdraw", function () {
       await sEnd.connect(owner).whitelist(enderStakingAddress, true);
       await sEnd.connect(owner).setStatus(2);
 
-      await WETH.mint(signer1.address, depositPrincipalStEth);
-      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      // await WETH.mint(signer1.address, depositPrincipalStEth);
+      // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).mintShare(depositPrincipalStEth);
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       await enderStaking.connect(signer3).stake(depositAmountEnd);
@@ -336,8 +333,8 @@ describe("EnderBond Deposit and Withdraw", function () {
 
       //   await endToken.distributeRefractionFees();
 
-      await WETH.mint(signer1.address, depositPrincipalStEth);
-      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      // await WETH.mint(signer1.address, depositPrincipalStEth);
+      // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).mintShare(depositPrincipalStEth);
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth)
       await withdrawAndSetup(signer1, tokenId);
@@ -348,7 +345,7 @@ describe("EnderBond Deposit and Withdraw", function () {
         expandTo18Decimals(1.9)
       );
     });
-    it("complete Ender protocol scenario 1", async () => {
+    it.only("complete Ender protocol scenario 1", async () => {
       const maturity = 90;
       const bondFee = 500;
       const depositAmountEnd = expandTo18Decimals(5);
@@ -369,9 +366,11 @@ describe("EnderBond Deposit and Withdraw", function () {
       expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
 
       expect(await enderBond.rewardShareIndex()).to.be.equal(0);
-      await WETH.mint(signer1.address, depositPrincipalStEth);
-      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
-      await stEth.connect(signer1).mintShare(depositPrincipalStEth);
+      // await WETH.mint(signer1.address, depositPrincipalStEth);
+      //await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      signer1 = ethers.utils.parseUnits(expandTo18Decimals(1), "ether")
+      await stEth.connect(signer1).submit(depositPrincipalStEth);
+      console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
       
       await stEth
       .connect(signer1)
@@ -387,8 +386,8 @@ describe("EnderBond Deposit and Withdraw", function () {
         );
         
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
-      await WETH.mint(signer2.address, depositPrincipalStEth);
-      await WETH.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
+      // await WETH.mint(signer2.address, depositPrincipalStEth);
+      // await WETH.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer2).mintShare(depositPrincipalStEth);
 
       await stEth
@@ -417,8 +416,8 @@ describe("EnderBond Deposit and Withdraw", function () {
       // await enderBond.connect(signer1).claimRefractionRewards(tokenId,0);
 
       //for depositing second time by the same user
-      await WETH.mint(signer1.address, depositPrincipalStEth);
-      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      // await WETH.mint(signer1.address, depositPrincipalStEth);
+      // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).mintShare(depositPrincipalStEth);
 
       await stEth
@@ -479,8 +478,8 @@ describe("EnderBond Deposit and Withdraw", function () {
       await sEnd.connect(owner).whitelist(enderStakingAddress, true);
       await sEnd.connect(owner).setStatus(2);
 
-      await WETH.mint(signer1.address, depositPrincipalStEth);
-      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      // await WETH.mint(signer1.address, depositPrincipalStEth);
+      // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).mintShare(depositPrincipalStEth);
       // await enderStaking.connect(signer3).stake(depositAmountEnd);
       
@@ -493,8 +492,8 @@ describe("EnderBond Deposit and Withdraw", function () {
 
       //   await endToken.distributeRefractionFees();
 
-      await WETH.mint(signer1.address, depositPrincipalStEth);
-      await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+      // await WETH.mint(signer1.address, depositPrincipalStEth);
+      // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).mintShare(depositPrincipalStEth);
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth)
       await withdrawAndSetup(signer1, tokenId);

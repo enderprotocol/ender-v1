@@ -22,7 +22,7 @@ function expandTo16Decimals(n) {
     return ethers.parseUnits(n.toString(), 16);
 }
 
-describe.only("enderBondLiquidityDeposit testing", function () {
+describe("enderBondLiquidityDeposit testing", function () {
     let admin, owner, signer1, signer2, signer3, signer4;
 
     let wEthAddress;
@@ -97,7 +97,7 @@ describe.only("enderBondLiquidityDeposit testing", function () {
         await enderBondLiquidityDeposit.setDepositEnable(true);
     });
 
-    it.only("Bond Fees:- bondfees and maturity checks", async() => {
+    it("Bond Fees:- bondfees and maturity checks", async() => {
         const maturity = 365;
         const bondFee = 10000;
         const depositPrincipalStEth = expandTo17Decimals(1);

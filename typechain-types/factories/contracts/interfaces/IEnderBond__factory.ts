@@ -10,6 +10,19 @@ import type {
 
 const _abi = [
   {
+    inputs: [],
+    name: "availableBondFee",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "uint256",
@@ -96,6 +109,19 @@ const _abi = [
   {
     inputs: [],
     name: "resetEndMint",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "setAvailableBondFee",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

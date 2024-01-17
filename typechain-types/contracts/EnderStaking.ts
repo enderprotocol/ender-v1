@@ -23,11 +23,26 @@ import type {
   TypedContractMethod,
 } from "../common";
 
+export declare namespace EnderStaking {
+  export type SignDataStruct = {
+    user: AddressLike;
+    key: string;
+    signature: BytesLike;
+  };
+
+  export type SignDataStructOutput = [
+    user: string,
+    key: string,
+    signature: string
+  ] & { user: string; key: string; signature: string };
+}
+
 export interface EnderStakingInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "bondRewardPercentage"
       | "calculateSEndTokens"
+      | "eip712Domain"
       | "endToken"
       | "enderBond"
       | "enderTreasury"
@@ -41,23 +56,36 @@ export interface EnderStakingInterface extends Interface {
       | "sEndToken"
       | "setAddress"
       | "setBondRewardPercentage"
+      | "setStakingEnable"
+      | "setStakingPause"
+      | "setUnstakeEnable"
+      | "setsigner"
+      | "signer"
       | "stEth"
       | "stake"
+      | "stakingContractPause"
+      | "stakingEnable"
       | "transferOwnership"
+      | "unstake"
+      | "unstakeEnable"
       | "whitelist"
-      | "withdraw"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
       | "AddressUpdated"
+      | "EIP712DomainChanged"
       | "EpochStakingReward"
       | "Initialized"
       | "OwnershipTransferred"
       | "PercentUpdated"
       | "Stake"
       | "WhitelistChanged"
-      | "Withdraw"
+      | "newSigner"
+      | "stakingContractPauseSet"
+      | "stakingEnableSet"
+      | "unStake"
+      | "unstakeEnableSet"
   ): EventFragment;
 
   encodeFunctionData(
@@ -67,6 +95,10 @@ export interface EnderStakingInterface extends Interface {
   encodeFunctionData(
     functionFragment: "calculateSEndTokens",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "eip712Domain",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "endToken", values?: undefined): string;
   encodeFunctionData(functionFragment: "enderBond", values?: undefined): string;
@@ -80,11 +112,11 @@ export interface EnderStakingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "isWhitelisted",
-    values: [AddressLike]
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "keeper", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -105,20 +137,49 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "setBondRewardPercentage",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "setStakingEnable",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setStakingPause",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setUnstakeEnable",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setsigner",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(functionFragment: "signer", values?: undefined): string;
   encodeFunctionData(functionFragment: "stEth", values?: undefined): string;
-  encodeFunctionData(functionFragment: "stake", values: [BigNumberish]): string;
+  encodeFunctionData(
+    functionFragment: "stake",
+    values: [BigNumberish, EnderStaking.SignDataStruct]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "stakingContractPause",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "stakingEnable",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "whitelist",
-    values: [AddressLike, boolean]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "withdraw",
+    functionFragment: "unstake",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "unstakeEnable",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "whitelist", values: [boolean]): string;
 
   decodeFunctionResult(
     functionFragment: "bondRewardPercentage",
@@ -126,6 +187,10 @@ export interface EnderStakingInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "calculateSEndTokens",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "eip712Domain",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "endToken", data: BytesLike): Result;
@@ -159,14 +224,40 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "setBondRewardPercentage",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "setStakingEnable",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setStakingPause",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setUnstakeEnable",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "setsigner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "signer", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "stEth", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "stake", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "stakingContractPause",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "stakingEnable",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "unstake", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "unstakeEnable",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "whitelist", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 }
 
 export namespace AddressUpdatedEvent {
@@ -176,6 +267,16 @@ export namespace AddressUpdatedEvent {
     addr: string;
     addrType: bigint;
   }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace EIP712DomainChangedEvent {
+  export type InputTuple = [];
+  export type OutputTuple = [];
+  export interface OutputObject {}
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
   export type Log = TypedEventLog<Event>;
@@ -258,10 +359,9 @@ export namespace StakeEvent {
 }
 
 export namespace WhitelistChangedEvent {
-  export type InputTuple = [whitelistingAddress: AddressLike, action: boolean];
-  export type OutputTuple = [whitelistingAddress: string, action: boolean];
+  export type InputTuple = [action: boolean];
+  export type OutputTuple = [action: boolean];
   export interface OutputObject {
-    whitelistingAddress: string;
     action: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -270,12 +370,60 @@ export namespace WhitelistChangedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace WithdrawEvent {
+export namespace newSignerEvent {
+  export type InputTuple = [_signer: AddressLike];
+  export type OutputTuple = [_signer: string];
+  export interface OutputObject {
+    _signer: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace stakingContractPauseSetEvent {
+  export type InputTuple = [isEnable: boolean];
+  export type OutputTuple = [isEnable: boolean];
+  export interface OutputObject {
+    isEnable: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace stakingEnableSetEvent {
+  export type InputTuple = [isEnable: boolean];
+  export type OutputTuple = [isEnable: boolean];
+  export interface OutputObject {
+    isEnable: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace unStakeEvent {
   export type InputTuple = [withdrawer: AddressLike, amount: BigNumberish];
   export type OutputTuple = [withdrawer: string, amount: bigint];
   export interface OutputObject {
     withdrawer: string;
     amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace unstakeEnableSetEvent {
+  export type InputTuple = [isEnable: boolean];
+  export type OutputTuple = [isEnable: boolean];
+  export interface OutputObject {
+    isEnable: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -334,6 +482,22 @@ export interface EnderStaking extends BaseContract {
     "view"
   >;
 
+  eip712Domain: TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+
   endToken: TypedContractMethod<[], [string], "view">;
 
   enderBond: TypedContractMethod<[], [string], "view">;
@@ -347,12 +511,12 @@ export interface EnderStaking extends BaseContract {
   >;
 
   initialize: TypedContractMethod<
-    [_end: AddressLike, _sEnd: AddressLike],
+    [_end: AddressLike, _sEnd: AddressLike, _signer: AddressLike],
     [void],
     "nonpayable"
   >;
 
-  isWhitelisted: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+  isWhitelisted: TypedContractMethod<[], [boolean], "view">;
 
   keeper: TypedContractMethod<[], [string], "view">;
 
@@ -376,9 +540,37 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
 
+  setStakingEnable: TypedContractMethod<
+    [_enable: boolean],
+    [void],
+    "nonpayable"
+  >;
+
+  setStakingPause: TypedContractMethod<
+    [_enable: boolean],
+    [void],
+    "nonpayable"
+  >;
+
+  setUnstakeEnable: TypedContractMethod<
+    [_enable: boolean],
+    [void],
+    "nonpayable"
+  >;
+
+  setsigner: TypedContractMethod<[_signer: AddressLike], [void], "nonpayable">;
+
   stEth: TypedContractMethod<[], [string], "view">;
 
-  stake: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  stake: TypedContractMethod<
+    [amount: BigNumberish, userSign: EnderStaking.SignDataStruct],
+    [void],
+    "nonpayable"
+  >;
+
+  stakingContractPause: TypedContractMethod<[], [boolean], "view">;
+
+  stakingEnable: TypedContractMethod<[], [boolean], "view">;
 
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
@@ -386,13 +578,11 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
 
-  whitelist: TypedContractMethod<
-    [_whitelistingAddress: AddressLike, _action: boolean],
-    [void],
-    "nonpayable"
-  >;
+  unstake: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
 
-  withdraw: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  unstakeEnable: TypedContractMethod<[], [boolean], "view">;
+
+  whitelist: TypedContractMethod<[_action: boolean], [void], "nonpayable">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -404,6 +594,23 @@ export interface EnderStaking extends BaseContract {
   getFunction(
     nameOrSignature: "calculateSEndTokens"
   ): TypedContractMethod<[_endAmount: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "eip712Domain"
+  ): TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "endToken"
   ): TypedContractMethod<[], [string], "view">;
@@ -419,13 +626,13 @@ export interface EnderStaking extends BaseContract {
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [_end: AddressLike, _sEnd: AddressLike],
+    [_end: AddressLike, _sEnd: AddressLike, _signer: AddressLike],
     [void],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "isWhitelisted"
-  ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+  ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
     nameOrSignature: "keeper"
   ): TypedContractMethod<[], [string], "view">;
@@ -452,24 +659,48 @@ export interface EnderStaking extends BaseContract {
     nameOrSignature: "setBondRewardPercentage"
   ): TypedContractMethod<[percent: BigNumberish], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setStakingEnable"
+  ): TypedContractMethod<[_enable: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setStakingPause"
+  ): TypedContractMethod<[_enable: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setUnstakeEnable"
+  ): TypedContractMethod<[_enable: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setsigner"
+  ): TypedContractMethod<[_signer: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "signer"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "stEth"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "stake"
-  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "transferOwnership"
-  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "whitelist"
   ): TypedContractMethod<
-    [_whitelistingAddress: AddressLike, _action: boolean],
+    [amount: BigNumberish, userSign: EnderStaking.SignDataStruct],
     [void],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "withdraw"
+    nameOrSignature: "stakingContractPause"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "stakingEnable"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unstake"
   ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unstakeEnable"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "whitelist"
+  ): TypedContractMethod<[_action: boolean], [void], "nonpayable">;
 
   getEvent(
     key: "AddressUpdated"
@@ -477,6 +708,13 @@ export interface EnderStaking extends BaseContract {
     AddressUpdatedEvent.InputTuple,
     AddressUpdatedEvent.OutputTuple,
     AddressUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "EIP712DomainChanged"
+  ): TypedContractEvent<
+    EIP712DomainChangedEvent.InputTuple,
+    EIP712DomainChangedEvent.OutputTuple,
+    EIP712DomainChangedEvent.OutputObject
   >;
   getEvent(
     key: "EpochStakingReward"
@@ -521,11 +759,39 @@ export interface EnderStaking extends BaseContract {
     WhitelistChangedEvent.OutputObject
   >;
   getEvent(
-    key: "Withdraw"
+    key: "newSigner"
   ): TypedContractEvent<
-    WithdrawEvent.InputTuple,
-    WithdrawEvent.OutputTuple,
-    WithdrawEvent.OutputObject
+    newSignerEvent.InputTuple,
+    newSignerEvent.OutputTuple,
+    newSignerEvent.OutputObject
+  >;
+  getEvent(
+    key: "stakingContractPauseSet"
+  ): TypedContractEvent<
+    stakingContractPauseSetEvent.InputTuple,
+    stakingContractPauseSetEvent.OutputTuple,
+    stakingContractPauseSetEvent.OutputObject
+  >;
+  getEvent(
+    key: "stakingEnableSet"
+  ): TypedContractEvent<
+    stakingEnableSetEvent.InputTuple,
+    stakingEnableSetEvent.OutputTuple,
+    stakingEnableSetEvent.OutputObject
+  >;
+  getEvent(
+    key: "unStake"
+  ): TypedContractEvent<
+    unStakeEvent.InputTuple,
+    unStakeEvent.OutputTuple,
+    unStakeEvent.OutputObject
+  >;
+  getEvent(
+    key: "unstakeEnableSet"
+  ): TypedContractEvent<
+    unstakeEnableSetEvent.InputTuple,
+    unstakeEnableSetEvent.OutputTuple,
+    unstakeEnableSetEvent.OutputObject
   >;
 
   filters: {
@@ -538,6 +804,17 @@ export interface EnderStaking extends BaseContract {
       AddressUpdatedEvent.InputTuple,
       AddressUpdatedEvent.OutputTuple,
       AddressUpdatedEvent.OutputObject
+    >;
+
+    "EIP712DomainChanged()": TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
+    >;
+    EIP712DomainChanged: TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
     >;
 
     "EpochStakingReward(address,uint256,uint256,uint256)": TypedContractEvent<
@@ -595,7 +872,7 @@ export interface EnderStaking extends BaseContract {
       StakeEvent.OutputObject
     >;
 
-    "WhitelistChanged(address,bool)": TypedContractEvent<
+    "WhitelistChanged(bool)": TypedContractEvent<
       WhitelistChangedEvent.InputTuple,
       WhitelistChangedEvent.OutputTuple,
       WhitelistChangedEvent.OutputObject
@@ -606,15 +883,59 @@ export interface EnderStaking extends BaseContract {
       WhitelistChangedEvent.OutputObject
     >;
 
-    "Withdraw(address,uint256)": TypedContractEvent<
-      WithdrawEvent.InputTuple,
-      WithdrawEvent.OutputTuple,
-      WithdrawEvent.OutputObject
+    "newSigner(address)": TypedContractEvent<
+      newSignerEvent.InputTuple,
+      newSignerEvent.OutputTuple,
+      newSignerEvent.OutputObject
     >;
-    Withdraw: TypedContractEvent<
-      WithdrawEvent.InputTuple,
-      WithdrawEvent.OutputTuple,
-      WithdrawEvent.OutputObject
+    newSigner: TypedContractEvent<
+      newSignerEvent.InputTuple,
+      newSignerEvent.OutputTuple,
+      newSignerEvent.OutputObject
+    >;
+
+    "stakingContractPauseSet(bool)": TypedContractEvent<
+      stakingContractPauseSetEvent.InputTuple,
+      stakingContractPauseSetEvent.OutputTuple,
+      stakingContractPauseSetEvent.OutputObject
+    >;
+    stakingContractPauseSet: TypedContractEvent<
+      stakingContractPauseSetEvent.InputTuple,
+      stakingContractPauseSetEvent.OutputTuple,
+      stakingContractPauseSetEvent.OutputObject
+    >;
+
+    "stakingEnableSet(bool)": TypedContractEvent<
+      stakingEnableSetEvent.InputTuple,
+      stakingEnableSetEvent.OutputTuple,
+      stakingEnableSetEvent.OutputObject
+    >;
+    stakingEnableSet: TypedContractEvent<
+      stakingEnableSetEvent.InputTuple,
+      stakingEnableSetEvent.OutputTuple,
+      stakingEnableSetEvent.OutputObject
+    >;
+
+    "unStake(address,uint256)": TypedContractEvent<
+      unStakeEvent.InputTuple,
+      unStakeEvent.OutputTuple,
+      unStakeEvent.OutputObject
+    >;
+    unStake: TypedContractEvent<
+      unStakeEvent.InputTuple,
+      unStakeEvent.OutputTuple,
+      unStakeEvent.OutputObject
+    >;
+
+    "unstakeEnableSet(bool)": TypedContractEvent<
+      unstakeEnableSetEvent.InputTuple,
+      unstakeEnableSetEvent.OutputTuple,
+      unstakeEnableSetEvent.OutputObject
+    >;
+    unstakeEnableSet: TypedContractEvent<
+      unstakeEnableSetEvent.InputTuple,
+      unstakeEnableSetEvent.OutputTuple,
+      unstakeEnableSetEvent.OutputObject
     >;
   };
 }

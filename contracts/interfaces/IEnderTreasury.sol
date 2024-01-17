@@ -14,5 +14,5 @@ interface IEnderTreasury is IEnderBase {
 
     function stakeRebasingReward(address _asset) external returns (uint256 rebaseReward);
 
-    function ETHDenomination(address _stEthAddress) external view returns (uint stETHPoolAmount, uint ENDSupply)
+    function ETHDenomination(address _stEthAddress) external view returns (uint stETHPoolAmount, uint ENDSupply);
 }
