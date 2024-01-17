@@ -374,7 +374,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @param maturity The maturity date of the bond (lock time)
      * @param bondFee Self-set bond fee
      * @param token The address of the token (if token is zero address, then depositing ETH)
-     * @notice @Todo for testing purpose maturity is set to 2 to 90 days from 7 to 365
+     * @notice @Todo for testing purpose maturity is set to 5-90 days from 7-365
      */
     function deposit(
         address user,
