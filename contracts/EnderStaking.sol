@@ -139,18 +139,17 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         }
         console.log("\nEnd token deposit:- ", amount);
         if(ISEndToken(endToken).balanceOf(address(this)) == 0){
-            epochStakingReward(stEth);
-            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
             uint256 sEndAmount = calculateSEndTokens(amount);
             console.log("Receipt token:- ", sEndAmount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
+            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
         } else {
             ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
             uint256 sEndAmount = calculateSEndTokens(amount);
             console.log("Receipt token:- ", sEndAmount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
-            epochStakingReward(stEth);
         }
+        epochStakingReward(stEth);
         emit Stake(msg.sender, amount);
     }
 
