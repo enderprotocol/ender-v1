@@ -314,7 +314,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee <= 0 || bondFee > 10000) revert InvalidBondFee();
+        if (bondFee < 0 || bondFee > 10000) revert InvalidBondFee();
         IEndToken(endToken).distributeRefractionFees();
 
         // token transfer
@@ -352,7 +352,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         (, uint256 rewardPrinciple) = calculateRefractionData(principal, maturity, tokenId, bondFee);
 
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;
-         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
+        rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;
 
         console.log("Yield Multiplier", 10000 + (bondFee));
@@ -406,7 +406,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         if (block.timestamp <= bond.startTime + (bond.maturity * SECONDS_IN_DAY)) revert BondNotMatured();
-        // require(block.timestamp >= bond.startTime + (bond.maturity * SECONDS_IN_DAY), "Bond is not matured");
+        // require(block.timestamp >= bond.startTime + (bond.maturity * SECONDS_IN_DAY), "Bond is not matured");     
         IEndToken(endToken).distributeRefractionFees();
         console.log("User withdraw is amount from bond contract:- ", userBondPrincipalAmount[_tokenId]);
         // update current bond 
@@ -419,7 +419,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         endTreasury.mintEndToUser(msg.sender, reward);
         if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
         if(rewardShareIndexSend != rewardSharePerUserIndexSend[_tokenId]) claimStakingReward(_tokenId, bond.stakingSendIndex);
-        totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];
+        totalBondPrincipalAmount -= userBondPrincipalAmount[_tokenId];              
 
         userBondPrincipalAmount[_tokenId] == 0;
         delete userBondYieldShareIndex[_tokenId];
@@ -465,11 +465,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             revert NotBondUser();
         }
         console.log("\nNft trading fees:- ", txFees);
-        uint deductAmount = (bonds[_tokenId].principal * txFees) / 1000000;
+        uint deductAmount = (bonds[_tokenId].principal * txFees) / 10000;
         console.log("Amount deduct from Nft Trading:- ", deductAmount);
         bonds[_tokenId].principal -= deductAmount;
         console.log("Ater deduct Nft Trading User Principal Amount:- ", bonds[_tokenId].principal);
-        userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 1000000;
+        userBondPrincipalAmount[_tokenId] -= (userBondPrincipalAmount[_tokenId] * txFees) / 10000;
         // console.log(availableFundsAtMaturity[(block.timestamp + ((bonds[_tokenId].maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY], "availableFundsAtMaturity[bonds[_tokenId].maturity]");
         availableFundsAtMaturity[(block.timestamp + ((bonds[_tokenId].maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] -= deductAmount;
     }
