@@ -397,17 +397,19 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount();
-            (bool suc, ) = payable(lido).call{value: msg.value}(abi.encodeWithSignature("submit()"));
-            require(suc, "lido eth deposit failed");
-            IERC20(stEth).transfer(address(endTreasury), IERC20(stEth).balanceOf(address(this)));
-        } else {
+            (bool suc, ) = payable(lido).call{value: msg.value}(
+                abi.encodeWithSignature("submit(address)", address(this))
+            );             
+            require(suc, "lido eth deposit failed");                                                                
+            IERC20(stEth).transfer(address(endTreasury), IERC20(stEth).balanceOf(address(this)));                  
+        } else {                                                                                                   
             // send directly to the ender treasury
-            IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);
+            IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);                                
         }
-        uint256 afterBalance = IERC20(stEth).balanceOf(address(endTreasury));
-        principal = afterBalance - beforeBalance;
-        tokenId = _deposit(user, principal, maturity, token, bondFee);
-        epochBondYieldShareIndex();
+        uint256 afterBalance = IERC20(stEth).balanceOf(address(endTreasury));                                                  
+        principal = afterBalance - beforeBalance;                                                                                
+        tokenId = _deposit(user, principal, maturity, token, bondFee);                                                              
+        epochBondYieldShareIndex();                                                                                                 
         // IEnderStaking(endStaking).epochStakingReward(stEth);
         emit Deposit(msg.sender, tokenId, principal, maturity, token);
     }

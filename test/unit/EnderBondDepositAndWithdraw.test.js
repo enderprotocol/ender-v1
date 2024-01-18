@@ -917,7 +917,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await withdrawAndSetup(signer4, tokenId2);
     });
 
-    it.only("Ender protocol scenario 5:- BondFee is 0.01% and maturity is 90 days", async () => {
+    it.only("Ender protocol scenario 5:- Multiple deposit with different-different bond fees and maturity", async () => {
       let maturity = 90;
       let bondFee = 1;
       const depositAmountEnd = expandTo18Decimals(5);
@@ -937,7 +937,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
       expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
 
-      expect(await enderBond.rewardShareIndex()).to.be.equal(0);
+      expect(await enderBond.rewardShareIndex()).to.be.equal(0);                                                   
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
 
