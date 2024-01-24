@@ -425,16 +425,16 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         principal = (principal * (10000 - bondFee)) / 10000;
         // uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         // dayToBondYieldShareUpdation[timeNow].push(block.timestamp + (maturity * SECONDS_IN_DAY));
-
-        // mint bond nft
-        tokenId = bondNFT.mint(user);
+                                                                                      
+        // mint bond nft                                                                                                                      
+        tokenId = bondNFT.mint(user);                                                                              
         // availableFundsAtMaturity[(block.timestamp + ((maturity - 4) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += principal;
         bondIdAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY].push(tokenId);
-        uint256 refractionPrincipal = calculateRefractionData(principal, maturity, tokenId, bondFee);
+        uint256 refractionPrincipal = calculateRefractionData(principal, maturity, tokenId, bondFee);          
 
-        rewardSharePerUserIndex[tokenId] = rewardShareIndex;
-        rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
-        userBondYieldShareIndex[tokenId] = bondYieldShareIndex;
+        rewardSharePerUserIndex[tokenId] = rewardShareIndex;                                         
+        rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;                                                                                      
+        userBondYieldShareIndex[tokenId] = bondYieldShareIndex;                                                                                                                                 
 
         uint256 depositPrincipal = (getInterest(maturity) * (10000 + (bondFee)) * principal) / (365 * 100000000);
         // depositPrincipalAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY] += depositPrincipal;

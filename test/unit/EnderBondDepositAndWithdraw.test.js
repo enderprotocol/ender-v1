@@ -19,10 +19,11 @@ function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
 
-describe.only("EnderBond Deposit and Withdraw", function () {
+describe("EnderBond Deposit and Withdraw", function () {
   let owner, signer, signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
+    enderBondLiquidityDepositAddress,
     enderTreasuryAddress,
     enderStakingAddress,
     mockWETHAddress,
@@ -30,6 +31,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
   let endToken,
     enderBond,
+    enderBondLiquidityDeposit,
     enderTreasury,
     enderELStrategy,
     enderStaking,
@@ -47,6 +49,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     const StEth = await ethers.getContractFactory("StETH");
     const InstadappLite = await ethers.getContractFactory("StinstaToken");
     const EndToken = await ethers.getContractFactory("EndToken");
+    const EnderBondLiquidityBond = await ethers.getContractFactory("EnderBondLiquidityDeposit");
     const EnderBond = await ethers.getContractFactory("EnderBond");
     const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
     const EnderStaking = await ethers.getContractFactory("EnderStaking");
@@ -63,6 +66,14 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       initializer: "initialize",
     });
     sEndTokenAddress = await sEnd.connect(owner).getAddress();
+
+    enderBondLiquidityDeposit = await upgrades.deployProxy(
+      EnderBondLiquidityBond,
+      [stEthAddress, stEthAddress, signer.address, owner.address],
+      {
+        initializer: "initialize",
+      }
+    );
 
     instadappLitelidoStaking = await InstadappLite.deploy("InstaToken", "Inst", owner.address, stEthAddress);
     instadappLiteAddress = await instadappLitelidoStaking.getAddress();
@@ -917,7 +928,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await withdrawAndSetup(signer4, tokenId2);
     });
 
-    it.only("Ender protocol scenario 5:- Multiple deposit with different-different bond fees and maturity", async () => {
+    it("Ender protocol scenario 5:- Multiple deposit with different-different bond fees and maturity", async () => {
       let maturity = 90;
       let bondFee = 1;
       const depositAmountEnd = expandTo18Decimals(5);
@@ -1026,6 +1037,30 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       console.log("Withdraw");
       await withdrawAndSetup(signer4, tokenId2);
     });
+    
+    it("Ender bond :- deposit early bond contract funds into ender bond testing", async () => {
+      const maturity = 90;
+      const bondFee = 500;
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      console.log(signer4.address, owner.address, "admin");
+      await enderBondLiquidityDeposit.setDepositEnable(true);
+      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+      let signature = await signatureDigestOfEarlyBond();
+      // await stEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
+      await enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]);
+      console.log("ddddd");
+        
+        // await WETH.mint(signer1.address, depositPrincipalStEth);
+        // await WETH.connect(signer1).transfer(stEthAddress, depositPrincipalStEth);
+
+        await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
+        
+        let signature1 = await signatureDigestOfEarlyBond1();
+        await stEth.connect(signer2).approve(enderBondLiquidityDepositAddress, 1500000000000000000n);
+        await enderBondLiquidityDeposit.connect(signer2).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer2.address, "0", signature1]);
+
+
+    });
 
 
 
@@ -1051,6 +1086,63 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
     await enderBond.connect(signer).withdraw(tokenId);
   }
+
+
+  async function signatureDigestOfEarlyBond() { 
+    let sig = await signer.signTypedData(
+        {
+            name: "depositContract",
+            version: "1",
+            chainId: 31337,
+            verifyingContract: enderBondLiquidityDepositAddress,
+        },
+        {
+            userSign: [
+                {
+                    name: 'user',
+                    type: 'address',
+                },
+                {
+                    name: 'key',
+                    type: 'string',
+                },
+            ],
+        },
+        {
+            user: signer1.address,
+            key: "0",
+        }
+    )
+    return sig;
+};
+
+async function signatureDigestOfEarlyBond1() { 
+    let sig = await signer.signTypedData(
+        {
+            name: "depositContract",
+            version: "1",
+            chainId: 31337,
+            verifyingContract: enderBondLiquidityDepositAddress,
+        },
+        {
+            userSign: [
+                {
+                    name: 'user',
+                    type: 'address',
+                },
+                {
+                    name: 'key',
+                    type: 'string',
+                },
+            ],
+        },
+        {
+            user: signer2.address,
+            key: "0",
+        }
+    )
+    return sig;
+};
 
   async function signatureDigest() {
     let sig = await signer.signTypedData(
