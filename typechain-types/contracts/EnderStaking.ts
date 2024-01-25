@@ -49,7 +49,6 @@ export interface EnderStakingInterface extends Interface {
       | "epochStakingReward"
       | "initialize"
       | "isWhitelisted"
-      | "keeper"
       | "owner"
       | "rebasingIndex"
       | "renounceOwnership"
@@ -118,7 +117,6 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "isWhitelisted",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "keeper", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "rebasingIndex",
@@ -208,7 +206,6 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "isWhitelisted",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "keeper", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "rebasingIndex",
@@ -518,8 +515,6 @@ export interface EnderStaking extends BaseContract {
 
   isWhitelisted: TypedContractMethod<[], [boolean], "view">;
 
-  keeper: TypedContractMethod<[], [string], "view">;
-
   owner: TypedContractMethod<[], [string], "view">;
 
   rebasingIndex: TypedContractMethod<[], [bigint], "view">;
@@ -633,9 +628,6 @@ export interface EnderStaking extends BaseContract {
   getFunction(
     nameOrSignature: "isWhitelisted"
   ): TypedContractMethod<[], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "keeper"
-  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;

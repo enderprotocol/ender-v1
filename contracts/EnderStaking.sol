@@ -50,8 +50,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     function initialize(address _end, address _sEnd, address _signer) external initializer {
         __Ownable_init();
         signer = _signer;
-        // setAddress(_enderBond, 1);
-        // setAddress(_enderTreasury, 2);
         stakingEnable = true; // for testing purpose
         unstakeEnable = true;   // for testing purpose
         stakingContractPause = true; // for testing purpose
