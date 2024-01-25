@@ -651,10 +651,9 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
     function epochBondYieldShareIndex() public {
 
         if(totalBondPrincipalAmount - depositAmountRequired != 0){
-            (uint stETHPool, uint ENDSupply) = endTreasury.ETHDenomination(stEth);
             uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
             uint256 finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired);
-            uint256 _endMint = (finalRewardPrincipal * stETHPool * 1000) / ENDSupply;
+            uint256 _endMint = (finalRewardPrincipal * 1000);
             endMint += _endMint;
             bondYieldShareIndex = bondYieldShareIndex + ((_endMint) / finalRewardPrincipal);
             dayBondYieldShareIndex[timeNow] = bondYieldShareIndex;
