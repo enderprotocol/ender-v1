@@ -419,7 +419,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 bondFee
     ) private returns (uint256 tokenId) {
         endTreasury.depositTreasury(IEnderBase.EndRequest(user, token, principal), getLoopCount());
-        principal = (principal * (10000 - bondFee)) / 10000;
+        // principal = (principal * (10000 - bondFee)) / 10000;
         // uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
         // dayToBondYieldShareUpdation[timeNow].push(block.timestamp + (maturity * SECONDS_IN_DAY));
                                                                                       
@@ -487,7 +487,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         IEndToken(endToken).distributeRefractionFees();
         // update current bond 
         bond.withdrawn = true;
-        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, bond.principal), getLoopCount());
+        endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, (bond.principal * (10000 - bond.bondFee)) / 10000 ), getLoopCount());
         uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
         dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId]; 
 
