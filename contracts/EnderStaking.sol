@@ -12,7 +12,6 @@ import "hardhat/console.sol";
 
 error ZeroAddress();
 error InvalidAmount();
-error NotKeeper();
 error NotAllowed();
 
 contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
@@ -25,7 +24,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     address public sEndToken;
     address public enderTreasury;
     address public enderBond;
-    address public keeper;
     address public stEth;
     bool public isWhitelisted;
     bool public stakingEnable;  // status of staking-pause feature (enabled/disabled)
@@ -105,7 +103,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         else if (_type == 2) enderTreasury = _addr;
         else if (_type == 3) endToken = _addr;
         else if (_type == 4) sEndToken = _addr;
-        else if (_type == 5) keeper = _addr;
         else if (_type == 6) stEth = _addr;
 
          emit AddressUpdated(_addr, _type);
@@ -174,7 +171,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     }
 
     function epochStakingReward(address _asset) public  {
-        // if (msg.sender != keeper) revert NotKeeper();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
         console.log("Rebase reward for bond holder's:- ", rw2);

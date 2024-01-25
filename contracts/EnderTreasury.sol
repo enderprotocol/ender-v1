@@ -5,13 +5,11 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
 
 import "./strategy/eigenlayer/EnderELStrategy.sol";
 
 // Interfaces
 import "./interfaces/IEndToken.sol";
-import "./interfaces/IEnderOracle.sol";
 import "./interfaces/IInstadappLite.sol";
 import "./interfaces/ILybraFinance.sol";
 import "./interfaces/IEnderBond.sol";
@@ -44,8 +42,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     address public lybraFinance;
     address public eigenLayer;
     address public priorityStrategy;
-    // address public stEthELS;
-    IEnderOracle private enderOracle;
 
     uint256 public bondYieldBaseRate;
     uint256 public balanceLastEpoch;
@@ -88,13 +84,11 @@ event MintEndToUser(address indexed to, uint256 amount);
         address _lybraFinance,
         address _eigenLayer,
         uint256 _availableFundsPercentage,
-        uint256 _reserveFundsPercentage,
-        address _oracle
+        uint256 _reserveFundsPercentage
     ) external initializer {
         if (_availableFundsPercentage != 70 && _reserveFundsPercentage != 30) revert InvalidRatio();
         __Ownable_init();
         enderStaking = _enderStaking;
-        enderOracle = IEnderOracle(_oracle);
         instadapp = _instadapp;
         lybraFinance = _lybraFinance;
         eigenLayer = _eigenLayer;
@@ -136,7 +130,6 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_type == 1) endToken = _addr;
         else if (_type == 2) enderBond = _addr;
         else if (_type == 3) enderDepositor = _addr;
-        else if (_type == 4) enderOracle = IEnderOracle(_addr);
 
         else if (_type == 5) strategyToReceiptToken[instadapp] = _addr;
         else if (_type == 6) strategyToReceiptToken[lybraFinance] = _addr;
@@ -165,7 +158,6 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_type == 1) addr = endToken;
         else if (_type == 2) addr = enderBond;
         else if (_type == 3) addr = enderDepositor;
-        else if (_type == 4) addr = address(enderOracle);
     }
 
     /**

@@ -14,7 +14,6 @@ import "hardhat/console.sol";
 import "./interfaces/IBondNFT.sol";
 import "./interfaces/IEnderBondLiquidityDeposit.sol";
 import "./interfaces/IEnderTreasury.sol";
-import "./interfaces/IEnderOracle.sol";
 import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEndToken.sol";
 import "./interfaces/IEnderStaking.sol";
@@ -126,7 +125,6 @@ contract EnderBond is
     IBondNFT private bondNFT;
     IEnderBondLiquidityDeposit private depositContract;
     IEnderTreasury private endTreasury;
-    IEnderOracle private enderOracle;
     IEnderStaking private endStaking;
 
     bool public depositEnable;  // status of deposit-feature (enabled/disabled)
@@ -182,7 +180,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @dev Initializes the contract
      * @param endToken_ The address of the END token
      */
-    function initialize(address endToken_, address _lido, address _oracle, address _signer) public initializer {
+    function initialize(address endToken_, address _lido, address _signer) public initializer {
         __Ownable_init();
         __EIP712_init("EnderBond", "1");
         rateOfChange = 100;
@@ -192,7 +190,6 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         minDepositAmount = 1000000000000000;
         txFees = 200;
         signer = _signer;
-        enderOracle = IEnderOracle(_oracle);
         bondYieldBaseRate = 100;
         SECONDS_IN_DAY = 600; // note for testing purpose we have set it to 10 mint
         interval = 10 * 60; // note for testing purpose we have set it to 10 mint
@@ -576,7 +573,6 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @param _reward The reward to be added to the reward share.
      */
     function epochRewardShareIndex(uint256 _reward) external {
-        // if (msg.sender != keeper) revert NotKeeper();
         // if (totalRewardPrincipal == 0) revert WaitForFirstDeposit();
         if(msg.sender != endToken) revert NotEndToken();
 
@@ -624,7 +620,6 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      */
 
     function epochRewardShareIndexForSend(uint256 _reward) public {
-        // if (msg.sender != keeper) revert NotKeeper();
         if(msg.sender != address(endStaking)) revert NotEnderStaking();
         if (totalDeposit - amountRequired != 0) {
             uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
@@ -699,7 +694,6 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */ 
     function epochBondYieldShareIndex() public {
-        // if (msg.sender != keeper) revert NotKeeper();
 
         // (uint256 priceEth, uint256 ethDecimal) = enderOracle.getPrice(address(0));
         // (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
