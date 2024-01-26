@@ -45,7 +45,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
     uint256 public bondYieldBaseRate;
     uint256 public balanceLastEpoch;
-    uint256 public nominalYield;
+    int256 public nominalYield;
     uint256 public availableFundsPercentage;
     uint256 public reserveFundsPercentage;
     uint256 public epochDeposit;
@@ -57,7 +57,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
   event StrategyUpdated(address indexed strategy, bool isActive);
 event PriorityStrategyUpdated(address indexed priorityStrategy);
-event NominalYieldUpdated(uint256 nominalYield);
+event NominalYieldUpdated(int256 nominalYield);
 event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
 event TreasuryDeposit(address indexed asset, uint256 amount);
 event TreasuryWithdraw(address indexed asset, uint256 amount);
@@ -175,7 +175,7 @@ event MintEndToUser(address indexed to, uint256 amount);
          emit PriorityStrategyUpdated(_priorityStrategy);
     }
 
-    function setNominalYield(uint256 _nominalYield) public onlyOwner {
+    function setNominalYield(int256 _nominalYield) public onlyOwner {
         nominalYield = _nominalYield;
          emit NominalYieldUpdated(_nominalYield);
     }
@@ -198,9 +198,9 @@ event MintEndToUser(address indexed to, uint256 amount);
     }
 
     function stakeRebasingReward(address _tokenAddress) public onlyStaking returns (uint256 rebaseReward) {
-        uint256 bondReturn = IEnderBond(enderBond).endMint();
-        console.log("Bond return:- ", bondReturn);
-        uint256 depositReturn = calculateDepositReturn(_tokenAddress);
+        int256 bondReturn = int256(IEnderBond(enderBond).endMint());
+        // console.log("Bond return:- ", bondReturn);
+        int256 depositReturn = int256(calculateDepositReturn(_tokenAddress));
         balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
         if (depositReturn == 0) {
             epochWithdrawl = 0;
@@ -214,10 +214,10 @@ event MintEndToUser(address indexed to, uint256 amount);
         } else {
             
             (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);
-            depositReturn = (depositReturn * stETHPool * 1000) / ENDSupply;
-            console.log("Deposit return in Dollar:- ", depositReturn);
-            console.log("Bond return in Dollar:- ", bondReturn);
-            rebaseReward = ((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));
+            depositReturn = (depositReturn * int256(stETHPool) * 1000) / int256(ENDSupply);
+            // console.log("Deposit return in Dollar:- ", depositReturn);
+            // console.log("Bond return in Dollar:- ", bondReturn);
+            rebaseReward = uint256((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));
             console.log("Rebase reward in dollar:- ", rebaseReward);
             console.log("Rebase reward:- ", rebaseReward);
             epochWithdrawl = 0;

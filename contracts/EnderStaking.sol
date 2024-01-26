@@ -170,14 +170,16 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
 
     function epochStakingReward(address _asset) public  {
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
-        uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
-        console.log("Rebase reward for bond holder's:- ", rw2);
-        uint256 sendTokens = calculateSEndTokens(rw2);
-        ISEndToken(sEndToken).mint(enderBond, sendTokens);
-        ISEndToken(endToken).mint(address(this), totalReward);
-        IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
-        calculateRebaseIndex();
-         emit EpochStakingReward(_asset, totalReward, rw2, sendTokens);  
+        if(totalReward > 0) {
+            uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
+            console.log("Rebase reward for bond holder's:- ", rw2);
+            uint256 sendTokens = calculateSEndTokens(rw2);
+            ISEndToken(sEndToken).mint(enderBond, sendTokens);
+            ISEndToken(endToken).mint(address(this), totalReward);
+            IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
+            calculateRebaseIndex();
+            emit EpochStakingReward(_asset, totalReward, rw2, sendTokens);  
+        }
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {
