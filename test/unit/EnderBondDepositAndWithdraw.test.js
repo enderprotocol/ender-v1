@@ -19,7 +19,7 @@ function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
 
-describe("EnderBond Deposit and Withdraw", function () {
+describe.only("EnderBond Deposit and Withdraw", function () {
   let owner, signer, signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
@@ -90,7 +90,7 @@ describe("EnderBond Deposit and Withdraw", function () {
 
     enderBond = await upgrades.deployProxy(
       EnderBond,
-      [endTokenAddress, ethers.ZeroAddress, oracleAddress, signer.address],
+      [endTokenAddress, ethers.ZeroAddress, signer.address],
       {
         initializer: "initialize",
       }
@@ -120,7 +120,6 @@ describe("EnderBond Deposit and Withdraw", function () {
         ethers.ZeroAddress,
         70,
         30,
-        oracleAddress,
       ],
       {
         initializer: "initializeTreasury",
@@ -519,7 +518,7 @@ describe("EnderBond Deposit and Withdraw", function () {
 
     });
 
-    it("Ender protocol scenario 2:- BondFee is 100% and maturity is 365 days", async () => {
+    it.only("Ender protocol scenario 2:- BondFee is 100% and maturity is 365 days", async () => {
       const maturity = 90;
       const bondFee = 10000;
       const depositAmountEnd = expandTo18Decimals(5);

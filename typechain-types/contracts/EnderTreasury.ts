@@ -199,8 +199,7 @@ export interface EnderTreasuryInterface extends Interface {
       AddressLike,
       AddressLike,
       BigNumberish,
-      BigNumberish,
-      AddressLike
+      BigNumberish
     ]
   ): string;
   encodeFunctionData(
@@ -801,8 +800,7 @@ export interface EnderTreasury extends BaseContract {
       _lybraFinance: AddressLike,
       _eigenLayer: AddressLike,
       _availableFundsPercentage: BigNumberish,
-      _reserveFundsPercentage: BigNumberish,
-      _oracle: AddressLike
+      _reserveFundsPercentage: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -1052,8 +1050,7 @@ export interface EnderTreasury extends BaseContract {
       _lybraFinance: AddressLike,
       _eigenLayer: AddressLike,
       _availableFundsPercentage: BigNumberish,
-      _reserveFundsPercentage: BigNumberish,
-      _oracle: AddressLike
+      _reserveFundsPercentage: BigNumberish
     ],
     [void],
     "nonpayable"

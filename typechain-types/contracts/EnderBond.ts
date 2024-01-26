@@ -246,7 +246,7 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "interval", values?: undefined): string;
   encodeFunctionData(functionFragment: "isSet", values?: undefined): string;
@@ -1176,12 +1176,7 @@ export interface EnderBond extends BaseContract {
   getLoopCount: TypedContractMethod<[], [bigint], "nonpayable">;
 
   initialize: TypedContractMethod<
-    [
-      endToken_: AddressLike,
-      _lido: AddressLike,
-      _oracle: AddressLike,
-      _signer: AddressLike
-    ],
+    [endToken_: AddressLike, _lido: AddressLike, _signer: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -1514,12 +1509,7 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [
-      endToken_: AddressLike,
-      _lido: AddressLike,
-      _oracle: AddressLike,
-      _signer: AddressLike
-    ],
+    [endToken_: AddressLike, _lido: AddressLike, _signer: AddressLike],
     [void],
     "nonpayable"
   >;
