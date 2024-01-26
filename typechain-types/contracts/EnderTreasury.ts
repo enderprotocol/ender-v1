@@ -1346,7 +1346,7 @@ export interface EnderTreasury extends BaseContract {
       MintEndToUserEvent.OutputObject
     >;
 
-    "NominalYieldUpdated(uint256)": TypedContractEvent<
+    "NominalYieldUpdated(int256)": TypedContractEvent<
       NominalYieldUpdatedEvent.InputTuple,
       NominalYieldUpdatedEvent.OutputTuple,
       NominalYieldUpdatedEvent.OutputObject

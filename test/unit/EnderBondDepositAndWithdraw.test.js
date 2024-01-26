@@ -6,6 +6,7 @@ const { EigenLayerStrategyManagerAddress } = require("../utils/common");
 const exp = require("constants");
 const { sign } = require("crypto");
 const { log } = require("console");
+// const { describe, it } = require('mocha');
 // const { describe } = require("node:test");
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
 const baseURI =
@@ -40,7 +41,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     instadappLitelidoStaking,
     WETH,
     stEth,
-    bondNFT,
+    bondNFT
     oracle,
     oracleAddress;
 
@@ -119,7 +120,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         ethers.ZeroAddress,
         ethers.ZeroAddress,
         70,
-        30,
+        30
       ],
       {
         initializer: "initializeTreasury",
