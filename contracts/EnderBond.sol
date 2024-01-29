@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
-import "hardhat/console.sol";
 
 // Interfaces
 import "./interfaces/IBondNFT.sol";
@@ -121,7 +120,6 @@ contract EnderBond is
 
     bool public depositEnable;  // status of deposit-feature (enabled/disabled)
     bool public isWithdrawPause;   // status of withdraw-pause
-    bool public bondFeeEnabled; // status of bond-fee feature (enabled/disabled)
     bool public bondPause; // status of bond-contract pause/unpause
 
     struct Bond {
@@ -150,7 +148,6 @@ event AddressSet(uint256 indexed addrType, address indexed newAddress);
 event MinDepAmountSet(uint256 indexed newAmount);
 event TxFeesSet(uint256 indexed newTxFees);
 event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
-event BondFeeEnabledSet(bool indexed isEnabled);
 event depositEnableSet(bool indexed isEnabled);
 event withdrawPauseSet(bool indexed isEnabled);
 event bondPauseSet(bool indexed isEnabled);
@@ -188,8 +185,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         lastDay = block.timestamp / SECONDS_IN_DAY;
         lastSecOfRefraction = block.timestamp;
         lastSecOfSendReward = block.timestamp;
-        //this function is not used
-        setBondFeeEnabled(true);
+
     }
 
     modifier depositEnabled() {
@@ -266,15 +262,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         else if (_type == 3) addr = address(bondNFT);
         else if (_type == 4) addr = endSignature;
         else if (_type == 5) addr = lido;
-    }
-
-    /**
-     * @notice Update the bond-fee status
-     * @param _enabled status
-     */
-    function setBondFeeEnabled(bool _enabled) public onlyOwner {
-        bondFeeEnabled = _enabled;
-        emit depositEnableSet(_enabled);
+        else if (_type == 6) addr = stEth;
+        else if (_type == 7) addr = keeper;
+        else if (_type == 8) addr = address(endStaking);
+        else if (_type == 9) addr = sEndToken;
+        else if (_type == 10) addr = address(depositContract);
     }
 
     /**
@@ -283,7 +275,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      */
     function setDepositEnable(bool _enabled) public onlyOwner {
         depositEnable = _enabled;
-        emit BondFeeEnabledSet(_enabled);
+        emit depositEnableSet(_enabled);
     }
 
     /**
@@ -339,7 +331,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         }
     }
 
-    function whitelist(bool _action) external onlyOwner{
+    function setWhitelist(bool _action) external onlyOwner{
         isWhitelisted = _action;
         emit WhitelistChanged(_action);
     }
@@ -606,7 +598,6 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             }else{
                 uint day = lastSecOfSendReward / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii", i, timeNow);
                     dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
                 }
             }

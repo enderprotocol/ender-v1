@@ -47,6 +47,7 @@ export interface EnderStakingInterface extends Interface {
       | "enderBond"
       | "enderTreasury"
       | "epochStakingReward"
+      | "getAddress"
       | "initialize"
       | "isWhitelisted"
       | "owner"
@@ -58,6 +59,7 @@ export interface EnderStakingInterface extends Interface {
       | "setStakingEnable"
       | "setStakingPause"
       | "setUnstakeEnable"
+      | "setWhitelist"
       | "setsigner"
       | "signer"
       | "stEth"
@@ -67,7 +69,6 @@ export interface EnderStakingInterface extends Interface {
       | "transferOwnership"
       | "unstake"
       | "unstakeEnable"
-      | "whitelist"
   ): FunctionFragment;
 
   getEvent(
@@ -110,6 +111,10 @@ export interface EnderStakingInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "getAddress",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "initialize",
     values: [AddressLike, AddressLike, AddressLike]
   ): string;
@@ -148,6 +153,10 @@ export interface EnderStakingInterface extends Interface {
     values: [boolean]
   ): string;
   encodeFunctionData(
+    functionFragment: "setWhitelist",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setsigner",
     values: [AddressLike]
   ): string;
@@ -177,7 +186,6 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "unstakeEnable",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "whitelist", values: [boolean]): string;
 
   decodeFunctionResult(
     functionFragment: "bondRewardPercentage",
@@ -201,6 +209,7 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "epochStakingReward",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getAddress", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isWhitelisted",
@@ -233,6 +242,10 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "setUnstakeEnable",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "setWhitelist",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "setsigner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "signer", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "stEth", data: BytesLike): Result;
@@ -254,7 +267,6 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "unstakeEnable",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "whitelist", data: BytesLike): Result;
 }
 
 export namespace AddressUpdatedEvent {
@@ -507,6 +519,8 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
 
+  getAddress: TypedContractMethod<[_type: BigNumberish], [string], "view">;
+
   initialize: TypedContractMethod<
     [_end: AddressLike, _sEnd: AddressLike, _signer: AddressLike],
     [void],
@@ -553,6 +567,8 @@ export interface EnderStaking extends BaseContract {
     "nonpayable"
   >;
 
+  setWhitelist: TypedContractMethod<[_action: boolean], [void], "nonpayable">;
+
   setsigner: TypedContractMethod<[_signer: AddressLike], [void], "nonpayable">;
 
   stEth: TypedContractMethod<[], [string], "view">;
@@ -576,8 +592,6 @@ export interface EnderStaking extends BaseContract {
   unstake: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
 
   unstakeEnable: TypedContractMethod<[], [boolean], "view">;
-
-  whitelist: TypedContractMethod<[_action: boolean], [void], "nonpayable">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -618,6 +632,9 @@ export interface EnderStaking extends BaseContract {
   getFunction(
     nameOrSignature: "epochStakingReward"
   ): TypedContractMethod<[_asset: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "getAddress"
+  ): TypedContractMethod<[_type: BigNumberish], [string], "view">;
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
@@ -660,6 +677,9 @@ export interface EnderStaking extends BaseContract {
     nameOrSignature: "setUnstakeEnable"
   ): TypedContractMethod<[_enable: boolean], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setWhitelist"
+  ): TypedContractMethod<[_action: boolean], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "setsigner"
   ): TypedContractMethod<[_signer: AddressLike], [void], "nonpayable">;
   getFunction(
@@ -690,9 +710,6 @@ export interface EnderStaking extends BaseContract {
   getFunction(
     nameOrSignature: "unstakeEnable"
   ): TypedContractMethod<[], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "whitelist"
-  ): TypedContractMethod<[_action: boolean], [void], "nonpayable">;
 
   getEvent(
     key: "AddressUpdated"

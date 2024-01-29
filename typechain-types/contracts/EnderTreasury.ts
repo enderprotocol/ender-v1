@@ -50,7 +50,6 @@ export interface EnderTreasuryInterface extends Interface {
       | "deposit"
       | "depositInStrategy"
       | "depositTreasury"
-      | "eigenLayer"
       | "enderStaking"
       | "epochDeposit"
       | "epochWithdrawl"
@@ -64,7 +63,6 @@ export interface EnderTreasuryInterface extends Interface {
       | "instaDappLastValuation"
       | "instaDappWithdrawlValuations"
       | "instadapp"
-      | "lybraFinance"
       | "mintEndToUser"
       | "nominalYield"
       | "owner"
@@ -154,10 +152,6 @@ export interface EnderTreasuryInterface extends Interface {
     values: [IEnderBase.EndRequestStruct, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "eigenLayer",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "enderStaking",
     values?: undefined
   ): string;
@@ -196,8 +190,6 @@ export interface EnderTreasuryInterface extends Interface {
       AddressLike,
       AddressLike,
       AddressLike,
-      AddressLike,
-      AddressLike,
       BigNumberish,
       BigNumberish
     ]
@@ -215,10 +207,6 @@ export interface EnderTreasuryInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "instadapp", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "lybraFinance",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "mintEndToUser",
     values: [AddressLike, BigNumberish]
@@ -361,7 +349,6 @@ export interface EnderTreasuryInterface extends Interface {
     functionFragment: "depositTreasury",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "eigenLayer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "enderStaking",
     data: BytesLike
@@ -399,10 +386,6 @@ export interface EnderTreasuryInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "instadapp", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "lybraFinance",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "mintEndToUser",
     data: BytesLike
@@ -769,8 +752,6 @@ export interface EnderTreasury extends BaseContract {
     "nonpayable"
   >;
 
-  eigenLayer: TypedContractMethod<[], [string], "view">;
-
   enderStaking: TypedContractMethod<[], [string], "view">;
 
   epochDeposit: TypedContractMethod<[], [bigint], "view">;
@@ -797,8 +778,6 @@ export interface EnderTreasury extends BaseContract {
       _enderStaking: AddressLike,
       _bond: AddressLike,
       _instadapp: AddressLike,
-      _lybraFinance: AddressLike,
-      _eigenLayer: AddressLike,
       _availableFundsPercentage: BigNumberish,
       _reserveFundsPercentage: BigNumberish
     ],
@@ -813,8 +792,6 @@ export interface EnderTreasury extends BaseContract {
   instaDappWithdrawlValuations: TypedContractMethod<[], [bigint], "view">;
 
   instadapp: TypedContractMethod<[], [string], "view">;
-
-  lybraFinance: TypedContractMethod<[], [string], "view">;
 
   mintEndToUser: TypedContractMethod<
     [_to: AddressLike, _amount: BigNumberish],
@@ -1009,9 +986,6 @@ export interface EnderTreasury extends BaseContract {
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "eigenLayer"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "enderStaking"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -1047,8 +1021,6 @@ export interface EnderTreasury extends BaseContract {
       _enderStaking: AddressLike,
       _bond: AddressLike,
       _instadapp: AddressLike,
-      _lybraFinance: AddressLike,
-      _eigenLayer: AddressLike,
       _availableFundsPercentage: BigNumberish,
       _reserveFundsPercentage: BigNumberish
     ],
@@ -1066,9 +1038,6 @@ export interface EnderTreasury extends BaseContract {
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "instadapp"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "lybraFinance"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "mintEndToUser"
