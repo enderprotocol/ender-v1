@@ -182,15 +182,12 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         txFees = 200;
         signer = _signer;
         bondYieldBaseRate = 100;
-        SECONDS_IN_DAY = 600; // note for testing purpose we have set it to 10 mint
-        interval = 10 * 60; // note for testing purpose we have set it to 10 mint
+        SECONDS_IN_DAY = 86400; 
+        interval = 86400; 
         lastTimeStamp = block.timestamp;
         lastDay = block.timestamp / SECONDS_IN_DAY;
         lastSecOfRefraction = block.timestamp;
         lastSecOfSendReward = block.timestamp;
-        depositEnable = true; // for testing purpose
-        isWithdrawPause = true; // for testing purpose
-        bondPause = true; // for testing purpose
         //this function is not used
         setBondFeeEnabled(true);
     }

@@ -198,9 +198,8 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     /**
      * @notice Mints a specified amount of tokens to the treasury
      * @param amount The amount of tokens to mint
-     * Note deleted the minter role for testing
      */
-    function mint(address to, uint256 amount) public{
+    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE){
         if (to == address(0)) revert ZeroAddress();
 
         _mint(to, amount);
@@ -225,9 +224,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         }
     }
 
-    // function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
     function distributeRefractionFees() external onlyRole(ENDERBOND_ROLE) {
-        // if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
         uint256 feesToTransfer = refractionFeeTotal;
         if (feesToTransfer != 0) {
             refractionFeeTotal = 0;
@@ -235,7 +232,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
             lastEpoch = block.timestamp;
             _approve(address(this), enderBond, feesToTransfer);
             IEnderBond(enderBond).epochRewardShareIndex(feesToTransfer);
-            // _transfer(address(this), enderBond, feesToTransfer);
             emit RefractionFeesDistributed(enderBond, feesToTransfer);
         }
         console.log("Total Refraction fees outside if block:- ", feesToTransfer);

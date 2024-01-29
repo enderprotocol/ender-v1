@@ -84,8 +84,7 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
         emit WhitelistChanged(_whitelistingAddress, _action);
     }
 
-    ///for testing purpose
-    function mint(address to, uint256 amount) public {
+    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE){
         _mint(to, amount);
     }
 }
