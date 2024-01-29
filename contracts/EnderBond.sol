@@ -425,7 +425,6 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         totalRewardPrincipal += depositPrincipal;
         totalRefractionPrincipal += refractionPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
-
         // save bond info
         bonds[tokenId] = Bond(
             false,
@@ -499,7 +498,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
                         Bond memory bond = bonds[bondIdAtMaturity[i][j]];
                         depositAmountRequired += bond.depositPrincipal;
                         refractionAmountRequired += bond.refractionPrincipal;
-                        availableBondFee += bond.bondFee;
+                        availableBondFee += (bond.principal * bond.bondFee) / 10000;
                     }
                 }
                 if(bondIdAtMaturity[i+4].length > 0){
@@ -526,9 +525,11 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (msg.sender != address(bondNFT)) {
             revert NotBondNFT();
         }
-        uint deductAmount = (bonds[_tokenId].principal * txFees) / 10000;
-        bonds[_tokenId].principal -= deductAmount;
-        bonds[_tokenId].bondFee += deductAmount;
+        if(bonds[_tokenId].bondFee != 10000){
+            uint deductAmount = (bonds[_tokenId].principal * txFees) / 10000;
+            bonds[_tokenId].principal -= deductAmount;
+            bonds[_tokenId].bondFee += txFees;
+        }
     }
 
     /**

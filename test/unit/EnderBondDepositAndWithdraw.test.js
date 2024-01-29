@@ -41,9 +41,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     instadappLitelidoStaking,
     WETH,
     stEth,
-    bondNFT
-    oracle,
-    oracleAddress;
+    bondNFT;
+    // oracle,
+    // oracleAddress;
 
   before(async function () {
     const wETH = await ethers.getContractFactory("mockWETH");
@@ -55,7 +55,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
     const EnderStaking = await ethers.getContractFactory("EnderStaking");
     const SEnd = await ethers.getContractFactory("SEndToken");
-    const Oracle = await ethers.getContractFactory("EnderOracle");
+    // const Oracle = await ethers.getContractFactory("EnderOracle");
 
     [owner, signer, wallet1, signer1, signer2, signer3, signer4] = await ethers.getSigners();
 
@@ -83,11 +83,11 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     });
     endTokenAddress = await endToken.getAddress();
 
-    oracle = await upgrades.deployProxy(Oracle, [], {
-      initializer: "initialize",
-    });
+    // oracle = await upgrades.deployProxy(Oracle, [], {
+    //   initializer: "initialize",
+    // });
 
-    oracleAddress = await oracle.getAddress();
+    // oracleAddress = await oracle.getAddress();
 
     enderBond = await upgrades.deployProxy(
       EnderBond,
