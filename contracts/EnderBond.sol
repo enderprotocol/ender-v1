@@ -191,6 +191,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         depositEnable = true; // for testing purpose
         isWithdrawPause = true; // for testing purpose
         bondPause = true; // for testing purpose
+        isWhitelisted = true; // for testing purpose
         //this function is not used
         setBondFeeEnabled(true);
     }
@@ -378,8 +379,12 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (bondFee <= 0 || bondFee > 10000) revert InvalidBondFee();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
+            console.log("sign addresses:- ", signAddress, signer);
             require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
         }
+        console.log("user principal amount:- ", principal);
+        console.log("user maturity time:- ", maturity);
+        console.log("user bond fees:- ", bondFee);
         IEndToken(endToken).distributeRefractionFees();
         uint256 beforeBalance = IERC20(stEth).balanceOf(address(endTreasury));
         // token transfer
@@ -410,12 +415,12 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         uint256 bondFee
     ) private returns (uint256 tokenId) {
         endTreasury.depositTreasury(IEnderBase.EndRequest(user, token, principal), getLoopCount());
-                                                                                      
-        // mint bond nft                                                                                                                      
+        console.log("Amount required to withdraw from st:- ",amountRequired);    
+        // mint bond nft                                                                      
         tokenId = bondNFT.mint(user);                                                                              
         bondIdAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY].push(tokenId);
         uint256 refractionPrincipal = calculateRefractionData(principal, maturity, tokenId, bondFee);          
-
+        console.log("refractionPrincipal:- ", refractionPrincipal);
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;                                         
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;                                                                                      
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;                                                                                                                                 
