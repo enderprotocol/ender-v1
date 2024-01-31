@@ -395,7 +395,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "1234", sig1]
+        [signer1.address, "0", sig1]
       );
 
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
@@ -412,7 +412,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer2.address, "1234", sig2]
+        [signer2.address, "0", sig2]
       );
       increaseTime(6000);
       // await enderBond.epochBondYieldShareIndex();
@@ -448,7 +448,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity * 2,
         bondFee,
-        [signer1.address, "12345", sig1]
+        [signer1.address, "0", sig1]
       );
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       // //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
@@ -497,7 +497,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       let sig3 = signatureDigest2();
-      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "12345", sig3]);
+      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
 
       // Wait for the bond to mature
       await increaseTime(180 * 600);
@@ -549,12 +549,13 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await enderTreasury.setAddress(instadappLiteAddress, 5);
       await sleep(1200);
       let sig1 = signatureDigest();
+      console.log("signer address:- ", signer.address);
       const tokenId = await depositAndSetup(
         signer1,
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "1234", sig1]
+        [signer1.address, "0", sig1]
       );
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
       await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
@@ -567,7 +568,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer2.address, "1234", sig2]
+        [signer2.address, "0", sig2]
       );
       increaseTime(6000);
       await endToken.distributeRefractionFees();
@@ -586,7 +587,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "12345", sig1]
+        [signer1.address, "0", sig1]
       );
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       console.log("---------------------------------------------------3rd-deposit-----------------------------------");
@@ -608,7 +609,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await sEnd.connect(owner).setStatus(2);
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       let sig3 = signatureDigest2();
-      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "12345", sig3]);
+      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
       await increaseTime(90 * 600);
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
@@ -657,7 +658,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "1234", sig1]
+        [signer1.address, "0", sig1]
       );
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
       await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
@@ -670,7 +671,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer2.address, "1234", sig2]
+        [signer2.address, "0", sig2]
       );
       increaseTime(6000);
       await endToken.distributeRefractionFees();
@@ -689,7 +690,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "12345", sig1]
+        [signer1.address, "0", sig1]
       );
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       console.log("---------------------------------------------------3rd-deposit-----------------------------------");
@@ -711,7 +712,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await sEnd.connect(owner).setStatus(2);
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       let sig3 = signatureDigest2();
-      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "12345", sig3]);
+      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
       await increaseTime(90 * 600);
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
@@ -760,7 +761,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "1234", sig1]
+        [signer1.address, "0", sig1]
       );
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
       await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
@@ -773,7 +774,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer2.address, "1234", sig2]
+        [signer2.address, "0", sig2]
       );
       increaseTime(6000);
       await endToken.distributeRefractionFees();
@@ -792,7 +793,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "12345", sig1]
+        [signer1.address, "0", sig1]
       );
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       console.log("---------------------------------------------------3rd-deposit-----------------------------------");
@@ -814,7 +815,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await sEnd.connect(owner).setStatus(2);
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       let sig3 = signatureDigest2();
-      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "12345", sig3]);
+      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
       await increaseTime(90 * 600);
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
@@ -862,7 +863,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "1234", sig1]
+        [signer1.address, "0", sig1]
       );
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
       await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
@@ -875,7 +876,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer2.address, "1234", sig2]
+        [signer2.address, "0", sig2]
       );
       increaseTime(6000);
       await endToken.distributeRefractionFees();
@@ -894,7 +895,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "12345", sig1]
+        [signer1.address, "0", sig1]
       );
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       console.log("---------------------------------------------------3rd-deposit-----------------------------------");
@@ -916,7 +917,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await sEnd.connect(owner).setStatus(2);
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       let sig3 = signatureDigest2();
-      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "12345", sig3]);
+      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
       await increaseTime(90 * 600);
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
@@ -963,7 +964,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "1234", sig1]
+        [signer1.address, "0", sig1]
       );
       await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
       await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
@@ -981,7 +982,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer2.address, "1234", sig2]
+        [signer2.address, "0", sig2]
       );
       increaseTime(6000);
       await endToken.distributeRefractionFees();
@@ -1004,7 +1005,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
         depositPrincipalStEth,
         maturity,
         bondFee,
-        [signer1.address, "12345", sig1]
+        [signer1.address, "0", sig1]
       );
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
       console.log("---------------------------------------------------3rd-deposit-----------------------------------");
@@ -1026,7 +1027,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await sEnd.connect(owner).setStatus(2);
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       let sig3 = signatureDigest2();
-      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "12345", sig3]);
+      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
       await increaseTime(90 * 600);
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);

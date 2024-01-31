@@ -173,7 +173,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      */
     function initialize(address endToken_, address _lido, address _signer) public initializer {
         __Ownable_init();
-        __EIP712_init("EnderBond", "1");
+        __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         rateOfChange = 100;
         lido = _lido;
         setAddress(endToken_, 2);
