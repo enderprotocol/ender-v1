@@ -376,7 +376,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 5 || maturity > 90) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee <= 0 || bondFee > 10000) revert InvalidBondFee();
+        if (bondFee > 10000) revert InvalidBondFee();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
             console.log("sign addresses:- ", signAddress, signer);
