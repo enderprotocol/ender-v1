@@ -447,7 +447,6 @@ contract StETH is IERC20 {
         // _whenNotStopped();
 
         uint256 currentSenderShares = shares[_sender];
-        console.log(_sharesAmount, currentSenderShares, "---------------------------------------------------------------");
         require(_sharesAmount <= currentSenderShares, "BALANCE_EXCEEDED");
 
         shares[_sender] = currentSenderShares - (_sharesAmount);
