@@ -193,7 +193,22 @@ await sleep(9000);
 await endToken.setExclude([enderBondAddress, enderStakingAddress, enderTreasuryAddress], true);
 
 await sleep(9000);
+await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953", enderBondAddress);
+
+await sleep(9000);
+await endToken.grantRole("0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84");
+
+await sleep(9000);
+await endToken.grantRole("0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84");
+
+await sleep(9000);
+await endToken.grantRole("0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6", enderStakingAddress);
+
+await sleep(9000);
 await enderBond.setAddress(enderStakingAddress,8);
+
+await sleep(9000);
+await enderStaking.setAddress(stEthAddress, 6);
 
 await sleep(9000);
 await enderBond.setAddress(stEthAddress,6);

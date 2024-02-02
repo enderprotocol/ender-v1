@@ -84,7 +84,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ENDERBOND_ROLE, enderBond);
-        admin = msg.sender;
+        admin = msg.sender; 
         // add exclude wallets
         excludeWallets[address(this)] = true;
         excludeWallets[msg.sender] = true;
