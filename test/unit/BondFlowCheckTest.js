@@ -358,7 +358,7 @@ const tokenId = await depositAndSetup(
 it.only("Withdraw senerio 1 Matuarity 5 days and bondFee 0 ", async () => {
 
   console.log("Inside my First Test Case ");
-const maturity = 5;
+const maturity = 7;
 const bondFee = 9999;
 const depositAmountEnd = expandTo18Decimals(5);
 const depositPrincipalStEth = expandTo18Decimals(1);
@@ -393,7 +393,7 @@ const tokenId = await depositAndSetup(
 
 
 
-await increaseTime(3000);
+await increaseTime(4200);
 await enderBond.connect(signer1).withdraw(tokenId);
 balanceOfstEth = await stEth.balanceOf(signer1.address);
 console.log("balanceOfstEth",balanceOfstEth);

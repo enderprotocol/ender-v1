@@ -488,6 +488,8 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
 
     function claimRewards(uint256 _tokenId) public {
         epochRewardShareIndexByPass();
+        console.log("epoch");
+        epochBondYieldShareIndex();
         epochRewardShareIndexSendByPass();
         Bond storage bond = bonds[_tokenId];
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
@@ -665,7 +667,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */ 
     function epochBondYieldShareIndex() public {
-
+        console.log("totalBondPrincipalAmount - depositAmountRequired",totalBondPrincipalAmount ,depositAmountRequired);
         if(totalBondPrincipalAmount - depositAmountRequired != 0){
             uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
             uint256 finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired);
