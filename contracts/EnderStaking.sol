@@ -129,6 +129,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
      * @param amount  stake amount
      */
     function stake(uint256 amount, signData memory userSign) external stakingEnabled stakingContractPaused{
+        console.log("Inside Stake");
         if (amount == 0) revert InvalidAmount();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
@@ -170,6 +171,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
      
     }
 
+    // Here in the asset we are adding stEth
     function epochStakingReward(address _asset) public  {
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         if(totalReward > 0) {

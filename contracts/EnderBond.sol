@@ -400,7 +400,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
             // send directly to the ender treasury
             IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);                                
         }
-        uint256 afterBalance = IERC20(stEth).balanceOf(address(endTreasury));                                                  
+        uint256 afterBalance = IERC20(stEth).balanceOf(address(endTreasury)); 
         principal = afterBalance - beforeBalance;                                                                                
         tokenId = _deposit(user, principal, maturity, token, bondFee);                                                              
         // IEnderStaking(endStaking).epochStakingReward(stEth);
@@ -483,15 +483,19 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         totalRefractionPrincipal -= bond.refractionPrincipal;                         
         totalDeposit -= bond.principal;
         amountRequired -= bond.principal; 
+
     }
 
     function claimRewards(uint256 _tokenId) public {
         epochRewardShareIndexByPass();
+        console.log("epoch");
+        epochBondYieldShareIndex();
         epochRewardShareIndexSendByPass();
         Bond storage bond = bonds[_tokenId];
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         IEndToken(endToken).distributeRefractionFees();
         uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
+        console.log("userReward:- ", reward);
         endTreasury.mintEndToUser(msg.sender, reward);
         if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
         if(rewardShareIndexSend != rewardSharePerUserIndexSend[_tokenId]) claimStakingReward(_tokenId, bond.stakingSendIndex);
@@ -663,7 +667,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */ 
     function epochBondYieldShareIndex() public {
-
+        console.log("totalBondPrincipalAmount - depositAmountRequired",totalBondPrincipalAmount ,depositAmountRequired);
         if(totalBondPrincipalAmount - depositAmountRequired != 0){
             uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
             uint256 finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired);
@@ -801,11 +805,13 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
      */
     function calculateBondRewardAmount(uint256 _tokenId, uint256 precalUsers) internal view returns (uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
+        console.log("is Set:- ", isSet);
         if (precalUsers != 0) {
             _reward = (bond.depositPrincipal * (precalUsers - userBondYieldShareIndex[_tokenId]));
         } else {
             if (isSet) {
                 if (dayBondYieldShareIndex[bonds[_tokenId].maturity] == 0) {
+                    console.log("calculateBondRewardAmount:- ", _reward, bondYieldShareIndex, userBondYieldShareIndex[_tokenId]);
                     _reward = (bond.depositPrincipal *
                         (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
                 } else {

@@ -176,7 +176,7 @@ describe("enderBondLiquidityDeposit testing", function () {
         await enderBondLiquidityDeposit.depositedIntoBond(2);
     });
 
-    it.only("enderBondLiquidityDeposit testing for mainnet:- multiple deposit", async() => {
+    it("enderBondLiquidityDeposit testing for mainnet:- multiple deposit", async() => {
         const maturity = 90;
         const bondFee = 500;
         const depositPrincipalStEth = expandTo18Decimals(1);
