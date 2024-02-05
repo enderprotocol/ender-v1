@@ -1,15 +1,15 @@
-const EndToken =  "0xC360b6BE3Fa856e8CC7caA02e33A0C8bF8874eB7"
-const EnderBond =   "0xB798B45909F9F2876723424959441cEFdeD87cf5"
-const SEndToken ="0x69C4D0FCB3204028A394d18A6afB8823799aFea2"
-const BondNFT =   "0xa760f4caf70b14c3d3fa03317b6a93ac973486d1"
-const EnderTreasury =   "0x67560B51aaE7D733318548FcaaAFB48D4e2d52F2"
-const EnderStaking =   "0xC0caf486959BFf758bD1Aad92Be35CBc3F191a38"
+const EndToken =  "0x9eabef7d4feeac6d1af17b1fa56ff26da4460582"
+const EnderBond =   "0x7776791b0b2ca8e066066024bc83e33a0ac857dc"
+const SEndToken ="0x69c4d0fcb3204028a394d18a6afb8823799afea2"
+const BondNFT =   "0x3CD2ba6b28Af2A79f1c652f8832Fa0Ef0aA7a781"
+const EnderTreasury =   "0x3af9da308ba49323ef0a9be1a055726265b412e1"
+const EnderStaking =   "0xcded02edbf7806c4ca1a84ae92fcc56c3fc00df4"
 const Weth =   "0x94D818e0B85F7b1D3D38871C0D58758A23FF9CcB"
 const MockStEth = "0xaE46bd402a3bd35B7A3Fb931E66833a560b32d21"
 const EnderLidoStrategy =   "0x9F306B7119F24e78A286265905E80af7a318f3AD"
 const EnderOracle = "0x4CE5090196f000C6C486af65af8b55A98bBC728a"
 const depositContract = "0xCcb2374039fB1937A65a2233a130391A1643EbE5"
-const InstaDapp = "0x3Dd8Baaa49Df4fA5EA771EDF2DB175bbFc73fa67"
+const InstaDapp = "0xC6Aa9df2E12fB4D2bDDde7A6Db5015dD480F1512"
  
 async function main() {
     try {
@@ -19,7 +19,7 @@ async function main() {
         // contract: "contracts/ERC20/StEth.sol:mockWETH",
         // });  
         await hre.run("verify:verify", {
-            address: "0x6BE65FA5114826a40fCa65ebe8d9930De4de405c",
+            address: "0x8511f897eFbba051b4D7c8AbaDEBc5FeA6a1F838",
             constructorArguments: [],
             contract: "contracts/ERC20/mockStEth.sol:StETH",
         });

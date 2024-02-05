@@ -225,6 +225,22 @@ await enderTreasury.setStrategy([InstaDappAddress], true);
 
 await sleep(9000);
 await enderTreasury.setPriorityStrategy(InstaDappAddress);
+
+
+await sleep(9000);
+await sEnd.setAddress(enderStakingAddress, 1);
+
+await sleep(9000);
+await enderBond.setAddress(sEndTokenAddress, 9);
+
+await sleep(9000);
+await sEnd.setStatus(2);
+
+await sleep(9000);
+await sEnd.whitelist(enderBondAddress, true);
+
+
+
 }
 
 
