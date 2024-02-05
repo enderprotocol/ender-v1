@@ -5,13 +5,11 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
 
 import "./strategy/eigenlayer/EnderELStrategy.sol";
 
 // Interfaces
 import "./interfaces/IEndToken.sol";
-import "./interfaces/IEnderOracle.sol";
 import "./interfaces/IInstadappLite.sol";
 import "./interfaces/ILybraFinance.sol";
 import "./interfaces/IEnderBond.sol";
@@ -44,12 +42,10 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     address public lybraFinance;
     address public eigenLayer;
     address public priorityStrategy;
-    // address public stEthELS;
-    IEnderOracle private enderOracle;
 
     uint256 public bondYieldBaseRate;
     uint256 public balanceLastEpoch;
-    uint256 public nominalYield;
+    int256 public nominalYield;
     uint256 public availableFundsPercentage;
     uint256 public reserveFundsPercentage;
     uint256 public epochDeposit;
@@ -58,15 +54,10 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public instaDappWithdrawlValuations;
     uint256 public instaDappDepositValuations;
     uint256 public totalDepositInStrategy;
-    /* Use an interval in seconds and a timestamp to slow execution of Upkeep */
-
-    // uint256 public stEthBalBeforeStDep;
-    // uint256 public totalEthStakedInStrategy;
-    // uint256 public totalDeposit
 
   event StrategyUpdated(address indexed strategy, bool isActive);
 event PriorityStrategyUpdated(address indexed priorityStrategy);
-event NominalYieldUpdated(uint256 nominalYield);
+event NominalYieldUpdated(int256 nominalYield);
 event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
 event TreasuryDeposit(address indexed asset, uint256 amount);
 event TreasuryWithdraw(address indexed asset, uint256 amount);
@@ -88,13 +79,11 @@ event MintEndToUser(address indexed to, uint256 amount);
         address _lybraFinance,
         address _eigenLayer,
         uint256 _availableFundsPercentage,
-        uint256 _reserveFundsPercentage,
-        address _oracle
+        uint256 _reserveFundsPercentage
     ) external initializer {
         if (_availableFundsPercentage != 70 && _reserveFundsPercentage != 30) revert InvalidRatio();
         __Ownable_init();
         enderStaking = _enderStaking;
-        enderOracle = IEnderOracle(_oracle);
         instadapp = _instadapp;
         lybraFinance = _lybraFinance;
         eigenLayer = _eigenLayer;
@@ -136,7 +125,6 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_type == 1) endToken = _addr;
         else if (_type == 2) enderBond = _addr;
         else if (_type == 3) enderDepositor = _addr;
-        else if (_type == 4) enderOracle = IEnderOracle(_addr);
 
         else if (_type == 5) strategyToReceiptToken[instadapp] = _addr;
         else if (_type == 6) strategyToReceiptToken[lybraFinance] = _addr;
@@ -165,7 +153,6 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_type == 1) addr = endToken;
         else if (_type == 2) addr = enderBond;
         else if (_type == 3) addr = enderDepositor;
-        else if (_type == 4) addr = address(enderOracle);
     }
 
     /**
@@ -188,7 +175,7 @@ event MintEndToUser(address indexed to, uint256 amount);
          emit PriorityStrategyUpdated(_priorityStrategy);
     }
 
-    function setNominalYield(uint256 _nominalYield) public onlyOwner {
+    function setNominalYield(int256 _nominalYield) public onlyOwner {
         nominalYield = _nominalYield;
          emit NominalYieldUpdated(_nominalYield);
     }
@@ -211,9 +198,9 @@ event MintEndToUser(address indexed to, uint256 amount);
     }
 
     function stakeRebasingReward(address _tokenAddress) public onlyStaking returns (uint256 rebaseReward) {
-        uint256 bondReturn = IEnderBond(enderBond).endMint();
-        console.log("Bond return:- ", bondReturn);
-        uint256 depositReturn = calculateDepositReturn(_tokenAddress);
+        int256 bondReturn = int256(IEnderBond(enderBond).endMint());
+        // console.log("Bond return:- ", bondReturn);
+        int256 depositReturn = int256(calculateDepositReturn(_tokenAddress));
         balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
         if (depositReturn == 0) {
             epochWithdrawl = 0;
@@ -225,21 +212,12 @@ event MintEndToUser(address indexed to, uint256 amount);
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
         } else {
-            //we get the eth price in 8 decimal and  depositReturn= 18 decimal  bondReturn = 18decimal
-            // (uint256 ethPrice, uint256 ethDecimal) = enderOracle.getPrice(address(0));
-            // console.log("Price of Eth:- ", ethPrice);
-            // (uint256 priceEnd, uint256 endDecimal) = enderOracle.getPrice(address(endToken));
-            // console.log("Price of End:- ", priceEnd);
+            
             (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);
-            depositReturn = (depositReturn * stETHPool * 1000) / ENDSupply;
-            // depositReturn = (ethPrice * depositReturn) / (10 ** ethDecimal);
-            // bondReturn = (priceEnd * bondReturn) / (10 ** endDecimal);
-            console.log("Deposit return in Dollar:- ", depositReturn);
-            console.log("Bond return in Dollar:- ", bondReturn);
-            rebaseReward = ((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));
-            console.log("Rebase reward in dollar:- ", rebaseReward);
-            // rebaseReward = ((rebaseReward * 10 ** ethDecimal) / priceEnd);
-            console.log("Rebase reward:- ", rebaseReward);
+            depositReturn = (depositReturn * int256(stETHPool) * 1000) / int256(ENDSupply);
+            rebaseReward = uint256((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));
+            console.log("Rebase Reward in dollar:- ", rebaseReward);
+            console.log("Rebase Reward:- ", rebaseReward);
             epochWithdrawl = 0;
             epochDeposit = 0;
             IEnderBond(enderBond).resetEndMint();
@@ -258,7 +236,6 @@ event MintEndToUser(address indexed to, uint256 amount);
      */
 
     function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
-        // stEthBalBeforeStDep = IERC20(_asset).balanceOf(address(this));
         if (_depositAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
@@ -383,7 +360,6 @@ event MintEndToUser(address indexed to, uint256 amount);
             //here we have to multiply 100000and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
             depositReturn = (totalReturn * fundsInfo[_stEthAddress]) / (fundsInfo[_stEthAddress] + IERC20(_stEthAddress).balanceOf(address(this)));
             console.log("Deposit return:- ", depositReturn);
-            // depositReturn = (totalReturn * ((fundsInfo[_stEthAddress] * 100000) / (IERC20(_stEthAddress).balanceOf(address(this)) + instaDappDepositValuations)/ 100000));
         }
     }
 

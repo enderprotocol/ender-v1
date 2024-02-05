@@ -12,7 +12,6 @@ import "hardhat/console.sol";
 
 error ZeroAddress();
 error InvalidAmount();
-error NotKeeper();
 error NotAllowed();
 
 contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
@@ -25,7 +24,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     address public sEndToken;
     address public enderTreasury;
     address public enderBond;
-    address public keeper;
     address public stEth;
     bool public isWhitelisted;
     bool public stakingEnable;  // status of staking-pause feature (enabled/disabled)
@@ -52,8 +50,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     function initialize(address _end, address _sEnd, address _signer) external initializer {
         __Ownable_init();
         signer = _signer;
-        // setAddress(_enderBond, 1);
-        // setAddress(_enderTreasury, 2);
         stakingEnable = true; // for testing purpose
         unstakeEnable = true;   // for testing purpose
         stakingContractPause = true; // for testing purpose
@@ -105,7 +101,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         else if (_type == 2) enderTreasury = _addr;
         else if (_type == 3) endToken = _addr;
         else if (_type == 4) sEndToken = _addr;
-        else if (_type == 5) keeper = _addr;
         else if (_type == 6) stEth = _addr;
 
          emit AddressUpdated(_addr, _type);
@@ -176,16 +171,17 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
 
     // Here in the asset we are adding stEth
     function epochStakingReward(address _asset) public  {
-        // if (msg.sender != keeper) revert NotKeeper();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
-        uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
-        console.log("Rebase reward for bond holder's:- ", rw2);
-        uint256 sendTokens = calculateSEndTokens(rw2);
-        ISEndToken(sEndToken).mint(enderBond, sendTokens);
-        ISEndToken(endToken).mint(address(this), totalReward);
-        IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
-        calculateRebaseIndex();
-         emit EpochStakingReward(_asset, totalReward, rw2, sendTokens);  
+        if(totalReward > 0) {
+            uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
+            console.log("Rebase reward for bond holder's:- ", rw2);
+            uint256 sendTokens = calculateSEndTokens(rw2);
+            ISEndToken(sEndToken).mint(enderBond, sendTokens);
+            ISEndToken(endToken).mint(address(this), totalReward);
+            IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
+            calculateRebaseIndex();
+            emit EpochStakingReward(_asset, totalReward, rw2, sendTokens);  
+        }
     }
 
     function calculateSEndTokens(uint256 _endAmount) public view returns (uint256 sEndTokens) {

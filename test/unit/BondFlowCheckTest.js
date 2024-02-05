@@ -19,7 +19,7 @@ function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
 
-describe("EnderBond Deposit and Withdraw", function () {
+describe.only("EnderBond Deposit and Withdraw", function () {
   let owner, signer, signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
@@ -79,7 +79,7 @@ describe("EnderBond Deposit and Withdraw", function () {
 
     enderBond = await upgrades.deployProxy(
       EnderBond,
-      [endTokenAddress, ethers.ZeroAddress, oracleAddress, signer.address],
+      [endTokenAddress, ethers.ZeroAddress,signer.address],
       {
         initializer: "initialize",
       }
@@ -89,6 +89,8 @@ describe("EnderBond Deposit and Withdraw", function () {
 
     await endToken.setBond(enderBondAddress);
 
+
+  console.log("Before Staking Deploy Proxy");
     enderStaking = await upgrades.deployProxy(
       EnderStaking,
       [endTokenAddress, sEndTokenAddress, signer.address],
@@ -96,8 +98,9 @@ describe("EnderBond Deposit and Withdraw", function () {
         initializer: "initialize",
       }
     );
+    
     enderStakingAddress = await enderStaking.getAddress();
-
+    
     enderTreasury = await upgrades.deployProxy(
       EnderTreasury,
       [
@@ -109,13 +112,12 @@ describe("EnderBond Deposit and Withdraw", function () {
         ethers.ZeroAddress,
         70,
         30,
-        oracleAddress,
       ],
       {
         initializer: "initializeTreasury",
       }
-    );
-
+      );
+    
     enderTreasuryAddress = await enderTreasury.getAddress();
 
     const BondNFT = await ethers.getContractFactory("BondNFT");
@@ -151,6 +153,7 @@ describe("EnderBond Deposit and Withdraw", function () {
     await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953", owner.address);
 
     await enderBond.setBool(true);
+    await enderBond.whitelist(false);
     // await endToken.grantRole()
   });
 
@@ -396,7 +399,6 @@ balanceOfstEth = await stEth.balanceOf(signer1.address);
 console.log("balanceOfstEth",balanceOfstEth);
 balanceOfEndToken = await endToken.balanceOf(signer1.address);
 console.log("balanceOfEndToken",balanceOfEndToken);
-
 
 });
 

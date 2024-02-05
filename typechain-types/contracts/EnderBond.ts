@@ -49,6 +49,7 @@ export interface EnderBondInterface extends Interface {
       | "bondableTokens"
       | "bonds"
       | "checkUpkeep"
+      | "claimRewards"
       | "dayBondYieldShareIndex"
       | "dayRewardShareIndexForSend"
       | "dayToRefractionShareUpdation"
@@ -177,6 +178,10 @@ export interface EnderBondInterface extends Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "claimRewards",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "dayBondYieldShareIndex",
     values: [BigNumberish]
   ): string;
@@ -246,7 +251,7 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "interval", values?: undefined): string;
   encodeFunctionData(functionFragment: "isSet", values?: undefined): string;
@@ -444,6 +449,10 @@ export interface EnderBondInterface extends Interface {
   decodeFunctionResult(functionFragment: "bonds", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "checkUpkeep",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "claimRewards",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -1086,6 +1095,12 @@ export interface EnderBond extends BaseContract {
     "view"
   >;
 
+  claimRewards: TypedContractMethod<
+    [_tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   dayBondYieldShareIndex: TypedContractMethod<
     [arg0: BigNumberish],
     [bigint],
@@ -1176,12 +1191,7 @@ export interface EnderBond extends BaseContract {
   getLoopCount: TypedContractMethod<[], [bigint], "nonpayable">;
 
   initialize: TypedContractMethod<
-    [
-      endToken_: AddressLike,
-      _lido: AddressLike,
-      _oracle: AddressLike,
-      _signer: AddressLike
-    ],
+    [endToken_: AddressLike, _lido: AddressLike, _signer: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -1431,6 +1441,9 @@ export interface EnderBond extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "claimRewards"
+  ): TypedContractMethod<[_tokenId: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "dayBondYieldShareIndex"
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
@@ -1514,12 +1527,7 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [
-      endToken_: AddressLike,
-      _lido: AddressLike,
-      _oracle: AddressLike,
-      _signer: AddressLike
-    ],
+    [endToken_: AddressLike, _lido: AddressLike, _signer: AddressLike],
     [void],
     "nonpayable"
   >;

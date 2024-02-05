@@ -46,7 +46,7 @@ describe("enderBondLiquidityDeposit testing", function () {
 
     before(async function () {
         const wETH = await ethers.getContractFactory("mockWETH");
-        const stEth = await ethers.getContractFactory("MockStEth");
+        const stEth = await ethers.getContractFactory("StETH");
         const EnderBond = await ethers.getContractFactory("EnderBond");
         const EnderBondLiquidityBond = await ethers.getContractFactory("EnderBondLiquidityDeposit");
         const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
@@ -64,7 +64,7 @@ describe("enderBondLiquidityDeposit testing", function () {
         WETH = await wETH.connect(owner).deploy("wrappedETH", "weth", owner.address);
         mockWETHAddress = await WETH.getAddress();
         
-        StEth = await stEth.deploy(mockWETHAddress ,owner.address);
+        StEth = await stEth.deploy();
         stEthAddress = await StEth.getAddress();
 
         enderBondLiquidityDeposit = await upgrades.deployProxy(
@@ -77,7 +77,7 @@ describe("enderBondLiquidityDeposit testing", function () {
 
         enderBond = await upgrades.deployProxy(
               EnderBond,
-              [endTokenAddress, ethers.ZeroAddress, ethers.ZeroAddress],
+              [endTokenAddress, ethers.ZeroAddress, ethers.ZeroAddress, ethers.ZeroAddress],
               {
                   initializer: "initialize",
                 }
@@ -182,9 +182,7 @@ describe("enderBondLiquidityDeposit testing", function () {
         const depositPrincipalStEth = expandTo18Decimals(1);
         console.log(signer4.address, owner.address, "admin");
         await enderBondLiquidityDeposit.setDepositEnable(true);
-        await WETH.mint(signer1.address, depositPrincipalStEth);
-        await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
-        await StEth.connect(signer1).mintShare(depositPrincipalStEth);
+        await StEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
         let signature = await signatureDigest();
         await StEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
         await enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]);
@@ -192,9 +190,7 @@ describe("enderBondLiquidityDeposit testing", function () {
         // await WETH.mint(signer1.address, depositPrincipalStEth);
         // await WETH.connect(signer1).transfer(stEthAddress, depositPrincipalStEth);
 
-        await WETH.mint(signer2.address, depositPrincipalStEth);
-        await WETH.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
-        await StEth.connect(signer2).mintShare(depositPrincipalStEth);
+        await StEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
         
         let signature1 = await signatureDigest1();
         console.log("ddddd");
