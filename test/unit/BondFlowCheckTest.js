@@ -254,7 +254,7 @@ describe("EnderBond Deposit and Withdraw", function () {
 
   });
 
-  it.only("scenario 2", async () => {
+  it("scenario 3", async () => {
 
     console.log("Inside my First Test Case ");
   const maturity = 90;
@@ -302,6 +302,106 @@ describe("EnderBond Deposit and Withdraw", function () {
 
 
 });
+
+
+it("scenario 4", async () => {
+const maturity = 5;
+const bondFee = 0;
+const depositAmountEnd = expandTo18Decimals(5);
+const depositPrincipalStEth = expandTo18Decimals(1);
+
+const endTransfer = expandTo18Decimals(1);
+await endToken.setFee(20);
+
+//mint to signer1
+//   await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
+
+//first transfer
+//   await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+
+//second transfer
+//   await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+
+expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
+
+expect(await enderBond.rewardShareIndex()).to.be.equal(0);
+await stEth.connect(signer1).submit({ value: ethers.parseEther("1") });
+console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
+await stEth
+  .connect(signer1)
+  .approve(enderBondAddress, depositPrincipalStEth);
+
+await enderTreasury.setAddress(instadappLiteAddress, 5);
+await sleep(1200);
+let sig1 = signatureDigest();
+
+
+await ethers.provider.send('evm_increaseTime', [600]); // 86400 seconds = 1 day
+await ethers.provider.send('evm_mine');
+
+
+const tokenId = await depositAndSetup(
+  signer1,
+  depositPrincipalStEth,
+  maturity,
+  bondFee,
+  [signer1.address, "1234", sig1]
+);
+
+
+});
+
+
+it.only("Withdraw senerio 1 Matuarity 5 days and bondFee 0 ", async () => {
+
+  console.log("Inside my First Test Case ");
+const maturity = 5;
+const bondFee = 9999;
+const depositAmountEnd = expandTo18Decimals(5);
+const depositPrincipalStEth = expandTo18Decimals(1);
+
+const endTransfer = expandTo18Decimals(1);
+await endToken.setFee(20);
+
+expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
+
+expect(await enderBond.rewardShareIndex()).to.be.equal(0);
+await stEth.connect(signer1).submit({ value: ethers.parseEther("1") });
+console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
+await stEth
+  .connect(signer1)
+  .approve(enderBondAddress, depositPrincipalStEth);
+
+await enderTreasury.setAddress(instadappLiteAddress, 5);
+await sleep(1200);
+let sig1 = signatureDigest();
+
+
+await ethers.provider.send('evm_increaseTime', [600]); // 86400 seconds = 1 day
+await ethers.provider.send('evm_mine');
+
+const tokenId = await depositAndSetup(
+  signer1,
+  depositPrincipalStEth,
+  maturity,
+  bondFee,
+  [signer1.address, "1234", sig1]
+);
+
+
+
+await increaseTime(3000);
+await enderBond.connect(signer1).withdraw(tokenId);
+balanceOfstEth = await stEth.balanceOf(signer1.address);
+console.log("balanceOfstEth",balanceOfstEth);
+balanceOfEndToken = await endToken.balanceOf(signer1.address);
+console.log("balanceOfEndToken",balanceOfEndToken);
+
+
+});
+
+
+
 
   
 
