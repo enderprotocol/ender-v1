@@ -55,7 +55,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public instaDappDepositValuations;
     uint256 public totalDepositInStrategy;
 
-  event StrategyUpdated(address indexed strategy, bool isActive);
+event StrategyUpdated(address indexed strategy, bool isActive);
 event PriorityStrategyUpdated(address indexed priorityStrategy);
 event NominalYieldUpdated(int256 nominalYield);
 event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);

@@ -165,6 +165,7 @@ event EndMintReset();
 event newSigner(address _signer);
 event WhitelistChanged(bool indexed action);
 event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRewardSharePerUserIndex);
+event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     
 
     /**
@@ -491,7 +492,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         console.log("epoch");
         epochBondYieldShareIndex();
         epochRewardShareIndexSendByPass();
-        Bond storage bond = bonds[_tokenId];
+        Bond memory bond = bonds[_tokenId];
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         IEndToken(endToken).distributeRefractionFees();
         uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
@@ -499,7 +500,7 @@ event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRew
         endTreasury.mintEndToUser(msg.sender, reward);
         if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
         if(rewardShareIndexSend != rewardSharePerUserIndexSend[_tokenId]) claimStakingReward(_tokenId, bond.stakingSendIndex);
-
+        emit ClaimRewards(msg.sender, reward, _tokenId);
     }
 
     function getLoopCount() public returns (uint256) {
