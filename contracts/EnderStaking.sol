@@ -47,7 +47,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     event WhitelistChanged(bool indexed action);
     event newSigner(address _signer);
   
-    function initialize(address _end, address _sEnd, address _signer) external initializer {
+    function initialize(address _end, address _sEnd, address _stEth, address _signer) external initializer {
         __Ownable_init();
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         signer = _signer;
@@ -57,6 +57,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         isWhitelisted = true; // for testing purpose
         setAddress(_end, 3);
         setAddress(_sEnd, 4);
+        setAddress(_stEth, 5);
         bondRewardPercentage = 10;
     }
 
@@ -103,7 +104,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         else if (_type == 2) enderTreasury = _addr;
         else if (_type == 3) endToken = _addr;
         else if (_type == 4) sEndToken = _addr;
-        else if (_type == 6) stEth = _addr;
+        else if (_type == 5) stEth = _addr;
 
          emit AddressUpdated(_addr, _type);
 
@@ -142,12 +143,12 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
             ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
         } else {
+            epochStakingReward(stEth);
             ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
             uint256 sEndAmount = calculateSEndTokens(amount);
             console.log("Receipt token:- ", sEndAmount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
         }
-        epochStakingReward(stEth);
         emit Stake(msg.sender, amount);
     }
 
@@ -173,6 +174,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
 
     // Here in the asset we are adding stEth
     function epochStakingReward(address _asset) public  {
+        if(_asset != stEth) revert NotAllowed();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         if(totalReward > 0) {
             uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
@@ -191,7 +193,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
             sEndTokens = _endAmount;
             return sEndTokens;
         } else{
-            sEndTokens = (_endAmount/ rebasingIndex); 
+            sEndTokens = (_endAmount * 10e18/ rebasingIndex); 
             return sEndTokens; 
         }
     }

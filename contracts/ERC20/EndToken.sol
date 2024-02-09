@@ -83,12 +83,12 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         __ERC20_init("End Token", "END");
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(ENDERBOND_ROLE, enderBond);
         admin = msg.sender; //todo pass the admin address in parameter
         // add exclude wallets
         excludeWallets[address(this)] = true;
         excludeWallets[msg.sender] = true; //todo pass the admin address in parameter
         mintCount = 4;
+        mintFee = 1500;
         setFee(500);
         unchecked {
             lastTransfer = block.timestamp - (block.timestamp % 1 days);
@@ -109,6 +109,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     function setBond(address addrs) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (addrs == address(0)) revert ZeroAddress();
         enderBond = addrs;
+        _grantRole(ENDERBOND_ROLE, enderBond);
     }
 
     function setFee(uint256 fee) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -135,7 +136,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         if (treasury_ == address(0)) revert ZeroAddress();
 
         treasury = treasury_;
-
+        _grantRole(MINTER_ROLE, treasury);
         emit TreasuryContractChanged(treasury_);
     }
 
@@ -153,7 +154,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         mint(address(this), mintAmount);
 
         if (mintFee != 100) {
-            mintFee -= 10;
+            mintFee -= 100;
         }
         if (lastYear == 0) lastYear = time / 31536000;
         emit MintAndVest(block.timestamp, mintAmount);

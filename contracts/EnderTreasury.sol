@@ -125,14 +125,9 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_type == 1) endToken = _addr;
         else if (_type == 2) enderBond = _addr;
         else if (_type == 3) enderDepositor = _addr;
-
-        else if (_type == 5) strategyToReceiptToken[instadapp] = _addr;
-        else if (_type == 6) strategyToReceiptToken[lybraFinance] = _addr;
-        else if (_type == 7) strategyToReceiptToken[eigenLayer] = _addr;
-        
-
-
-       
+        else if (_type == 4) strategyToReceiptToken[instadapp] = _addr;
+        else if (_type == 5) strategyToReceiptToken[lybraFinance] = _addr;
+        else if (_type == 6) strategyToReceiptToken[eigenLayer] = _addr;     
     }
 
 
@@ -150,9 +145,14 @@ event MintEndToUser(address indexed to, uint256 amount);
     }
 
     function getAddress(uint256 _type) external view returns (address addr) {
+        if (_type == 0) revert ZeroAddress();
+
         if (_type == 1) addr = endToken;
         else if (_type == 2) addr = enderBond;
         else if (_type == 3) addr = enderDepositor;
+        else if (_type == 4) addr = strategyToReceiptToken[instadapp];
+        else if (_type == 5) addr = strategyToReceiptToken[lybraFinance];
+        else if (_type == 6) addr = strategyToReceiptToken[eigenLayer];     
     }
 
     /**

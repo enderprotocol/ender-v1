@@ -266,11 +266,18 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     }
 
     function getAddress(uint256 _type) external view returns (address addr) {
+        if (_type == 0) revert ZeroAddress();
+        
         if (_type == 1) addr = address(endTreasury);
         else if (_type == 2) addr = endToken;
         else if (_type == 3) addr = address(bondNFT);
         else if (_type == 4) addr = endSignature;
         else if (_type == 5) addr = lido;
+        else if (_type == 6) addr = stEth;
+        else if (_type == 7) addr = keeper;
+        else if (_type == 8) addr = address(endStaking);
+        else if (_type == 9) addr = sEndToken;
+        else if (_type == 10) addr = address(depositContract);
     }
 
     /**
@@ -350,7 +357,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     }
 
     function userInfoDepositContract(uint256[] memory index, signData memory userSign) external onlyOwner{
-        if (index.length > 0){
+        if (index.length >= 0){
             for (uint256 i = index[0]; i <= index.length; i++){
                 (address user, uint256 principal, uint256 bondFees, uint256 maturity) = depositContract.depositedIntoBond(index[i], address(this));
                 deposit(user, principal, maturity, bondFees, stEth, userSign);
@@ -399,13 +406,13 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             IERC20(stEth).transfer(address(endTreasury), IERC20(stEth).balanceOf(address(this)));                  
         } else {                                                                                                   
             // send directly to the ender treasury
-            IERC20(token).transferFrom(msg.sender, address(endTreasury), principal);                                
+            IERC20(token).transferFrom(user, address(endTreasury), principal);                                
         }
         uint256 afterBalance = IERC20(stEth).balanceOf(address(endTreasury)); 
         principal = afterBalance - beforeBalance;                                                                                
         tokenId = _deposit(user, principal, maturity, token, bondFee);                                                              
         // IEnderStaking(endStaking).epochStakingReward(stEth);
-        emit Deposit(msg.sender, tokenId, principal, maturity, token);
+        emit Deposit(user, tokenId, principal, maturity, token);
     }
 
     function _deposit(
