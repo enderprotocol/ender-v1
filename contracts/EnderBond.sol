@@ -581,6 +581,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             }
             lastSecOfRefraction = block.timestamp;
             dayToRewardShareIndex[block.timestamp] = rewardShareIndex;
+            secondsRefractionShareIndex[block.timestamp] = rewardShareIndex;
             console.log("new rewardShareIndex",rewardShareIndex);
         }
         emit RewardShareIndexUpdated(rewardShareIndex);
