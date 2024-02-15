@@ -505,6 +505,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
         console.log("userReward:- ", reward);
         endTreasury.mintEndToUser(msg.sender, reward);
+        userBondYieldShareIndex[_tokenId] = bondYieldShareIndex;
         if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
         if(rewardShareIndexSend != rewardSharePerUserIndexSend[_tokenId]) claimStakingReward(_tokenId, bond.stakingSendIndex);
         emit ClaimRewards(msg.sender, reward, _tokenId);
@@ -582,7 +583,6 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             lastSecOfRefraction = block.timestamp;
             dayToRewardShareIndex[block.timestamp] = rewardShareIndex;
             secondsRefractionShareIndex[block.timestamp] = rewardShareIndex;
-            console.log("new rewardShareIndex",rewardShareIndex);
         }
         emit RewardShareIndexUpdated(rewardShareIndex);
     }
@@ -590,11 +590,13 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     function epochRewardShareIndexByPass() internal{
 
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+        console.log("epochRewardShareIndexByPass", lastSecOfRefraction / SECONDS_IN_DAY, dayToRefractionShareUpdation[timeNow].length, timeNow);
         if( lastSecOfRefraction / SECONDS_IN_DAY == timeNow && dayToRefractionShareUpdation[timeNow].length == 0){
                 dayToRefractionShareUpdation[timeNow].push(lastSecOfRefraction);
             }else{
                 uint day = lastSecOfRefraction / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
+                    console.log("i",i);
                     dayToRefractionShareUpdation[i].push(lastSecOfRefraction);
                 }
             }
@@ -653,9 +655,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         uint256 mid;
 
         while (low <= high) {
-            console.log("Low + high", low + high);
             mid = (low + high) / 2;
-            console.log("arr[mid]", arr[mid]);
             if (arr[mid] == _totalMaturity || (arr[mid + 1] > _totalMaturity && arr[mid] < _totalMaturity)) {
                 return arr[mid];
             } else if((arr[mid - 1] < _totalMaturity && arr[mid] > _totalMaturity)){
@@ -791,10 +791,11 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                     );
                 } else {
                     uint256 sTime;
+                    console.log("getLoop", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
                     if(dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)].length == 1){
                         sTime = dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)][0];
                     }else{
-                        console.log("Hello Hi there", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
+                        // console.log("Hello Hi there", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
                         sTime = findClosestS(
                             dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)],
                             ((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)

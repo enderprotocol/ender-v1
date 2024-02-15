@@ -470,20 +470,20 @@ let sig1 = signatureDigest();
         [signer1.address, "1234", sig1]
         );
         // first transfer
-        await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+        // await endToken.connect(signer1).transfer(signer2.address, endTransfer);
       
-        // second transfer
-        await endToken.connect(signer1).transfer(signer2.address, endTransfer);
+        // // second transfer
+        // await endToken.connect(signer1).transfer(signer2.address, endTransfer);
       
-        await endToken.connect(signer1).transfer(signer2.address,endTransfer);
+        // await endToken.connect(signer1).transfer(signer2.address,endTransfer);
       
-        await endToken.connect(signer1).transfer(signer2.address,endTransfer);
+        // await endToken.connect(signer1).transfer(signer2.address,endTransfer);
       
-        await endToken.connect(signer1).transfer(signer2.address,endTransfer);
+        // await endToken.connect(signer1).transfer(signer2.address,endTransfer);
 
 await increaseTime(6000);
 
-// await enderBond.connect(signer1).claimRewards(tokenId);
+await enderBond.connect(signer1).claimRewards(tokenId);
 await enderBond.connect(signer1).claimRewards(tokenId);
 
 
