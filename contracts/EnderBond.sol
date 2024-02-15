@@ -644,6 +644,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
     function findClosestS(uint256[] memory arr, uint256 _totalMaturity) internal pure returns (uint256 _s) {
         uint256 low = 0;
+        console.log("ARRRRRRRRRRRRRRRRRRRRRRRR", arr.length);
         uint256 high = arr.length - 1;
         uint256 mid;
 
@@ -766,6 +767,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
 
     function claimRefractionRewards(uint256 _tokenId, uint256 precalUsers) internal {
+        console.log("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR", isSet);
         Bond memory bond = bonds[_tokenId];
         uint rewardPrincipal = bond.refractionPrincipal;
         if (precalUsers != 0) {
@@ -778,6 +780,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
                 if (rewardShareIndex == rewardSharePerUserIndex[_tokenId]) revert NoRewardCollected();
                 if (dayToRewardShareIndex[(block.timestamp / SECONDS_IN_DAY)] != 0 && block.timestamp / SECONDS_IN_DAY == bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)){ 
+                    console.log("rewardPrincipal * (userS - rewardSharePerUserIndex[_tokenId]", (rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
                     IERC20(endToken).transfer(
                         msg.sender,
                         ((rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
@@ -813,7 +816,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
     function calculateBondRewardAmount(uint256 _tokenId, uint256 precalUsers) internal view returns (uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
-        console.log("is Set:- ", isSet);
+        // console.log("is Set:- ", isSet);
         if (precalUsers != 0) {
             _reward = (bond.depositPrincipal * (precalUsers - userBondYieldShareIndex[_tokenId]));
         } else {
