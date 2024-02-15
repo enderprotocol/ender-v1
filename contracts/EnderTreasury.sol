@@ -207,7 +207,7 @@ event MintEndToUser(address indexed to, uint256 amount);
             epochDeposit = 0;
             rebaseReward = 0;
             console.log("Rebase reward:- ", rebaseReward);
-            address receiptToken = strategyToReceiptToken[instadapp];
+            address receiptToken = instadapp;
             instaDappLastValuation = IInstadappLite(instadapp).viewStinstaTokens(IERC20(receiptToken).balanceOf(address(this)));
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
@@ -221,7 +221,7 @@ event MintEndToUser(address indexed to, uint256 amount);
             epochWithdrawl = 0;
             epochDeposit = 0;
             IEnderBond(enderBond).resetEndMint();
-            address receiptToken = strategyToReceiptToken[instadapp];
+            address receiptToken = instadapp;
             instaDappLastValuation = IInstadappLite(instadapp).viewStinstaTokens(IERC20(receiptToken).balanceOf(address(this)));
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
@@ -268,7 +268,7 @@ event MintEndToUser(address indexed to, uint256 amount);
     ) public validStrategy(_strategy) returns (uint256 _returnAmount) {
         if (_withdrawAmt == 0) revert ZeroAmount();
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
-        address receiptToken = strategyToReceiptToken[_strategy];
+        address receiptToken = _strategy;
         if (_strategy == instadapp) { 
             //Todo set the asset as recipt tokens and need to check the assets ratio while depolying on mainnet
             _withdrawAmt = IInstadappLite(instadapp).viewStinstaTokensValue(_withdrawAmt);
@@ -329,7 +329,8 @@ event MintEndToUser(address indexed to, uint256 amount);
      */
     function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
         uint256  stReturn;
-        address receiptToken = strategyToReceiptToken[instadapp];
+        address receiptToken = instadapp;
+        console.log("receiptToken", instadapp);
         uint256 receiptTokenAmount = IInstadappLite(receiptToken).balanceOf(address(this));
         if(IInstadappLite(receiptToken).balanceOf(address(this)) > 0 ){ 
             stReturn = IInstadappLite(receiptToken).viewStinstaTokens(receiptTokenAmount) +  instaDappWithdrawlValuations
@@ -365,7 +366,7 @@ event MintEndToUser(address indexed to, uint256 amount);
 
     function ETHDenomination(address _stEthAddress) public view returns (uint stETHPoolAmount, uint ENDSupply){
         uint stETHBalance = IERC20(_stEthAddress).balanceOf(address(this)); 
-        address receiptToken = strategyToReceiptToken[instadapp];
+        address receiptToken = instadapp;
         uint256 receiptTokenAmount = IInstadappLite(receiptToken).balanceOf(address(this));
         uint stRewards;
         if(IInstadappLite(receiptToken).balanceOf(address(this)) > 0 )

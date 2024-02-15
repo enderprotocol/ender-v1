@@ -20,7 +20,7 @@ function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
 
-describe("EnderBond Deposit and Withdraw", function () {
+describe.only("EnderBond Deposit and Withdraw", function () {
   let owner, signer, signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
@@ -103,7 +103,7 @@ describe("EnderBond Deposit and Withdraw", function () {
 
     enderStaking = await upgrades.deployProxy(
       EnderStaking,
-      [endTokenAddress, sEndTokenAddress, signer.address],
+      [endTokenAddress, sEndTokenAddress, stEthAddress, signer.address],
       {
         initializer: "initialize",
       }
@@ -930,7 +930,7 @@ describe("EnderBond Deposit and Withdraw", function () {
       await withdrawAndSetup(signer4, tokenId2);
     });
 
-    it("Ender protocol scenario 5:- Multiple deposit with different-different bond fees and maturity", async () => {
+    it.only("Ender protocol scenario 5:- Multiple deposit with different-different bond fees and maturity", async () => {
       let maturity = 90;
       let bondFee = 1;
       const depositAmountEnd = expandTo18Decimals(5);
@@ -1030,11 +1030,11 @@ describe("EnderBond Deposit and Withdraw", function () {
       let sig3 = signatureDigest2();
       await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
       await increaseTime(90 * 600);
-      await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
+      // await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
       await enderStaking.connect(signer3).unstake(sEndAmount);
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-      await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth)
+      // await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth)
       await withdrawAndSetup(signer1, tokenId);
       console.log("Withdraw");
       await withdrawAndSetup(signer4, tokenId2);
