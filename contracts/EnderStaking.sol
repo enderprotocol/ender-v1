@@ -200,8 +200,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     function calculateRebaseIndex() internal {
         uint256 endBalStaking = ISEndToken(endToken).balanceOf(address(this));
         uint256 sEndTotalSupply = ISEndToken(sEndToken).totalSupply();
-            console.log("calculateRebaseIndex", rebasingIndex, sEndTotalSupply);
-            console.log();
         if (endBalStaking == 0 || sEndTotalSupply == 0) {
             rebasingIndex = 1;
         } else {
