@@ -127,6 +127,7 @@ export interface EnderBondInterface extends Interface {
       | "BondYieldShareIndexUpdated"
       | "BondableTokensSet"
       | "BoolSet"
+      | "ClaimRewards"
       | "Deposit"
       | "EIP712DomainChanged"
       | "EndMintReset"
@@ -732,6 +733,24 @@ export namespace BoolSetEvent {
   export type OutputTuple = [newValue: boolean];
   export interface OutputObject {
     newValue: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace ClaimRewardsEvent {
+  export type InputTuple = [
+    account: AddressLike,
+    reward: BigNumberish,
+    tokenId: BigNumberish
+  ];
+  export type OutputTuple = [account: string, reward: bigint, tokenId: bigint];
+  export interface OutputObject {
+    account: string;
+    reward: bigint;
+    tokenId: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -1750,6 +1769,13 @@ export interface EnderBond extends BaseContract {
     BoolSetEvent.OutputObject
   >;
   getEvent(
+    key: "ClaimRewards"
+  ): TypedContractEvent<
+    ClaimRewardsEvent.InputTuple,
+    ClaimRewardsEvent.OutputTuple,
+    ClaimRewardsEvent.OutputObject
+  >;
+  getEvent(
     key: "Deposit"
   ): TypedContractEvent<
     DepositEvent.InputTuple,
@@ -1941,6 +1967,17 @@ export interface EnderBond extends BaseContract {
       BoolSetEvent.InputTuple,
       BoolSetEvent.OutputTuple,
       BoolSetEvent.OutputObject
+    >;
+
+    "ClaimRewards(address,uint256,uint256)": TypedContractEvent<
+      ClaimRewardsEvent.InputTuple,
+      ClaimRewardsEvent.OutputTuple,
+      ClaimRewardsEvent.OutputObject
+    >;
+    ClaimRewards: TypedContractEvent<
+      ClaimRewardsEvent.InputTuple,
+      ClaimRewardsEvent.OutputTuple,
+      ClaimRewardsEvent.OutputObject
     >;
 
     "Deposit(address,uint256,uint256,uint256,address)": TypedContractEvent<

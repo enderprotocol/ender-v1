@@ -267,7 +267,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
     function getAddress(uint256 _type) external view returns (address addr) {
         if (_type == 0) revert ZeroAddress();
-        
+
         if (_type == 1) addr = address(endTreasury);
         else if (_type == 2) addr = endToken;
         else if (_type == 3) addr = address(bondNFT);
@@ -635,7 +635,6 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             }else{
                 uint day = lastSecOfSendReward / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii", i, timeNow);
                     dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
                 }
             }
@@ -645,12 +644,18 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
     function findClosestS(uint256[] memory arr, uint256 _totalMaturity) internal pure returns (uint256 _s) {
         uint256 low = 0;
-        uint256 high = arr.length - 1;
+        uint256 high;
+        if(arr.length == 0){
+            high = 0;
+        }else{
+            high = arr.length - 1;
+        }
         uint256 mid;
 
         while (low <= high) {
+            console.log("Low + high", low + high);
             mid = (low + high) / 2;
-
+            console.log("arr[mid]", arr[mid]);
             if (arr[mid] == _totalMaturity || (arr[mid + 1] > _totalMaturity && arr[mid] < _totalMaturity)) {
                 return arr[mid];
             } else if((arr[mid - 1] < _totalMaturity && arr[mid] > _totalMaturity)){
@@ -662,7 +667,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 high = mid - 1;
             }
         }
-
+        console.log("ARR[LOW]", arr[low]);
         if (arr[low] > _totalMaturity) {
             return arr[low];
         } else if (arr[high] < _totalMaturity) {
@@ -779,6 +784,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
                 if (rewardShareIndex == rewardSharePerUserIndex[_tokenId]) revert NoRewardCollected();
                 if (dayToRewardShareIndex[(block.timestamp / SECONDS_IN_DAY)] != 0 && block.timestamp / SECONDS_IN_DAY == bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)){ 
+                    console.log("rewardPrincipal * (userS - rewardSharePerUserIndex[_tokenId]", (rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
                     IERC20(endToken).transfer(
                         msg.sender,
                         ((rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
@@ -788,6 +794,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                     if(dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)].length == 1){
                         sTime = dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)][0];
                     }else{
+                        console.log("Hello Hi there", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
                         sTime = findClosestS(
                             dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)],
                             ((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)
@@ -814,7 +821,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
     function calculateBondRewardAmount(uint256 _tokenId, uint256 precalUsers) internal view returns (uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
-        console.log("is Set:- ", isSet);
+        // console.log("is Set:- ", isSet);
         if (precalUsers != 0) {
             _reward = (bond.depositPrincipal * (precalUsers - userBondYieldShareIndex[_tokenId]));
         } else {

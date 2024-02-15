@@ -111,7 +111,7 @@ export interface EnderStakingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "isWhitelisted",
@@ -508,7 +508,12 @@ export interface EnderStaking extends BaseContract {
   >;
 
   initialize: TypedContractMethod<
-    [_end: AddressLike, _sEnd: AddressLike, _signer: AddressLike],
+    [
+      _end: AddressLike,
+      _sEnd: AddressLike,
+      _stEth: AddressLike,
+      _signer: AddressLike
+    ],
     [void],
     "nonpayable"
   >;
@@ -621,7 +626,12 @@ export interface EnderStaking extends BaseContract {
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [_end: AddressLike, _sEnd: AddressLike, _signer: AddressLike],
+    [
+      _end: AddressLike,
+      _sEnd: AddressLike,
+      _stEth: AddressLike,
+      _signer: AddressLike
+    ],
     [void],
     "nonpayable"
   >;
