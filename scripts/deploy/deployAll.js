@@ -142,7 +142,7 @@ await sleep(9000);
 bondNFTAddress = await bondNFT.getAddress();
 console.log("bondNFTAddress-->", bondNFTAddress);
 
-enderStaking = await upgrades.deployProxy(EnderStaking, [endTokenAddress, sEndTokenAddress, "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"], {
+enderStaking = await upgrades.deployProxy(EnderStaking, [endTokenAddress, sEndTokenAddress,stEthAddress ,"0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"], {
 initializer: "initialize",
 });
 await sleep(9000);
