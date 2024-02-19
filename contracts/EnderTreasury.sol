@@ -208,7 +208,9 @@ event MintEndToUser(address indexed to, uint256 amount);
             rebaseReward = 0;
             console.log("Rebase reward:- ", rebaseReward);
             address receiptToken = strategyToReceiptToken[instadapp];
+            if(IInstadappLite(receiptToken).balanceOf(address(this)) > 0 ){ 
             instaDappLastValuation = IInstadappLite(instadapp).viewStinstaTokens(IERC20(receiptToken).balanceOf(address(this)));
+            }
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
         } else {
