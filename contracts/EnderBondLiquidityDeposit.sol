@@ -7,7 +7,6 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import "contracts/interfaces/ISTETH.sol";
-import "hardhat/console.sol";
 
 contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     string private constant SIGNING_DOMAIN = "depositContract";
@@ -170,8 +169,6 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
         if (bondFee < 0 || bondFee > 10000) revert InvalidBondFee();
         address signAddress = _verify(userSign);
-        console.log("signer", signAddress, signer);
-        console.log("userSign.user", userSign.user, msg.sender);
         require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
         // token transfer
         if (token == address(0)) {

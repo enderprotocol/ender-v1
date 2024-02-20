@@ -2,7 +2,6 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "hardhat/console.sol";
 // import "@aragon/os/contracts/common/UnstructuredStorage.sol";
 // import "@aragon/os/contracts/lib/math/SafeMath.sol";
 // import "./utils/Pausable.sol";
@@ -271,7 +270,6 @@ contract StETH is IERC20 {
      */
     function decreaseAllowance(address _spender, uint256 _subtractedValue) external returns (bool) {
         uint256 currentAllowance = allowances[msg.sender][_spender];
-        console.log(currentAllowance, _subtractedValue, "-----------------------------------------------------");
         require(currentAllowance >= _subtractedValue, "ALLOWANCE_BELOW_ZERO");
         _approve(msg.sender, _spender, (currentAllowance - (_subtractedValue)));
         return true;

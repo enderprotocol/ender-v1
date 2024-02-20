@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "../interfaces/IEnderBond.sol";
-import "hardhat/console.sol";
 
 error ZeroAddress();
 error NotBondContract();
@@ -74,7 +73,6 @@ event BaseURIChanged(string newURI);
 
     function _transfer(address from, address to, uint256 tokenId) internal override {
         if (from != address(0) && to != address(0)) {
-            console.log("Nft transfer:- ", from, to, tokenId);
             IEnderBond(bond).deductFeesFromTransfer(tokenId);
         }
         super._transfer(from, to, tokenId);

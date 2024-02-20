@@ -1,4 +1,3 @@
-import "hardhat/console.sol";
 /**
  *Submitted for verification at mumbai.polygonscan.com on 2023-12-04
 */

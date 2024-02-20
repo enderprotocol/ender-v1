@@ -11,7 +11,6 @@
 // OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable.sol)
 
 pragma solidity ^0.8.18;
-import "hardhat/console.sol";
 /**
  * @dev Contract module which provides a basic access control mechanism, where
  * there is an account (an owner) that can be granted exclusive access to
@@ -305,9 +304,6 @@ contract MockStEth is mockWETH {
     function _transfer(address sender,address recipient, uint256 amount) internal virtual override   {
         uint256 balance = balanceOf(sender);
         require(balance >= amount,"Insufficient Share");
-        // console.log(amount, totalShare, mockWeth.balanceOf(address(this)), "mockWeth.balanceOf(address(this))");
-        // uint256 amountToTransfer = (amount*totalShare)/mockWeth.balanceOf(address(this));
-        // console.log(amountToTransfer, "-----------------------------------------");
         super._transfer(sender, recipient, amount);
     }
 }

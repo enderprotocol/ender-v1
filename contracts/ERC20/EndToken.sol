@@ -7,7 +7,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 // Interfaces
 import "../interfaces/IEndToken.sol";
 import "../interfaces/IEnderBond.sol";
-import "hardhat/console.sol";
 
 error ZeroAddress();
 error InvalidParam();
@@ -212,8 +211,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
             super._transfer(from, to, amount);
         } else {
             uint256 fee = (amount * refractionFeePercentage) / 100;
-            console.log("Refraction fees deducted in End token:- ", fee);
-
             if (fee != 0) {
                 unchecked {
                     refractionFeeTotal += fee;
@@ -226,19 +223,15 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         }
     }
 
-    // function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
     function distributeRefractionFees() external onlyRole(ENDERBOND_ROLE) {
-        // if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
         uint256 feesToTransfer = refractionFeeTotal;
         if (feesToTransfer != 0) {
             refractionFeeTotal = 0;
-            console.log("Total Refraction fees:- ", feesToTransfer);
             lastEpoch = block.timestamp;
             _approve(address(this), enderBond, feesToTransfer);
             IEnderBond(enderBond).epochRewardShareIndex(feesToTransfer);
             // _transfer(address(this), enderBond, feesToTransfer);
             emit RefractionFeesDistributed(enderBond, feesToTransfer);
         }
-        console.log("Total Refraction fees outside if block:- ", feesToTransfer);
     }
 }

@@ -48,6 +48,9 @@ export interface EnderBondInterface extends Interface {
       | "bondYieldShareIndex"
       | "bondableTokens"
       | "bonds"
+      | "calculateBondRewardAmount"
+      | "calculateRefractionRewards"
+      | "calculateStakingReward"
       | "checkUpkeep"
       | "claimRewards"
       | "dayBondYieldShareIndex"
@@ -174,6 +177,18 @@ export interface EnderBondInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "bonds", values: [BigNumberish]): string;
+  encodeFunctionData(
+    functionFragment: "calculateBondRewardAmount",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "calculateRefractionRewards",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "calculateStakingReward",
+    values: [BigNumberish, BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "checkUpkeep",
     values: [BytesLike]
@@ -448,6 +463,18 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "bonds", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "calculateBondRewardAmount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "calculateRefractionRewards",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "calculateStakingReward",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "checkUpkeep",
     data: BytesLike
@@ -1108,6 +1135,24 @@ export interface EnderBond extends BaseContract {
     "view"
   >;
 
+  calculateBondRewardAmount: TypedContractMethod<
+    [_tokenId: BigNumberish, precalUsers: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  calculateRefractionRewards: TypedContractMethod<
+    [_tokenId: BigNumberish, precalUsers: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  calculateStakingReward: TypedContractMethod<
+    [_tokenId: BigNumberish, precalUsers: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
   checkUpkeep: TypedContractMethod<
     [arg0: BytesLike],
     [[boolean, string] & { upkeepNeeded: boolean; performData: string }],
@@ -1450,6 +1495,27 @@ export interface EnderBond extends BaseContract {
         YieldIndex: bigint;
       }
     ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "calculateBondRewardAmount"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, precalUsers: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "calculateRefractionRewards"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, precalUsers: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "calculateStakingReward"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, precalUsers: BigNumberish],
+    [bigint],
     "view"
   >;
   getFunction(
