@@ -242,7 +242,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       // await enderBond.epochBondYieldShareIndex();
       //user cant collect the refraction rewards before the Distribution is done
       // await expect(
-      //   enderBond.connect(signer1).claimRefractionRewards(tokenId)
+      //   enderBond.connect(signer1).calculateRefractionRewards(tokenId)
       // ).to.be.revertedWithCustomError(enderBond, "NotAllowed");
 
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
@@ -312,9 +312,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       const initialBalanceOfuser1 = await endToken.balanceOf(signer1.address);
 
       //as the distribution is done user now can withdraw the rewards
-      //   await enderBond.connect(signer1).claimRefractionRewards(tokenId2);
+      //   await enderBond.connect(signer1).calculateRefractionRewards(tokenId2);
 
-      //   await enderBond.connect(signer1).claimRefractionRewards(tokenId);
+      //   await enderBond.connect(signer1).calculateRefractionRewards(tokenId);
 
       //as he claimed the rewards
       //   expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
@@ -428,7 +428,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
 
       //as the distribution is done user now can withdraw the rewards
-      // await enderBond.connect(signer1).claimRefractionRewards(tokenId,0);
+      // await enderBond.connect(signer1).calculateRefractionRewards(tokenId,0);
 
       //for depositing second time by the same user
       // await WETH.mint(signer1.address, depositPrincipalStEth);
@@ -475,9 +475,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       const initialBalanceOfuser1 = await endToken.balanceOf(signer1.address);
 
       //as the distribution is done user now can withdraw the rewards
-      //   await enderBond.connect(signer1).claimRefractionRewards(tokenId2);
+      //   await enderBond.connect(signer1).calculateRefractionRewards(tokenId2);
 
-      //   await enderBond.connect(signer1).claimRefractionRewards(tokenId);
+      //   await enderBond.connect(signer1).calculateRefractionRewards(tokenId);
 
       //as he claimed the rewards
       //   expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(

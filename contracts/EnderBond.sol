@@ -506,8 +506,18 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         console.log("userReward:- ", reward);
         endTreasury.mintEndToUser(msg.sender, reward);
         userBondYieldShareIndex[_tokenId] = bondYieldShareIndex;
-        if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) claimRefractionRewards(_tokenId, bond.refractionSIndex);
-        if(rewardShareIndexSend != rewardSharePerUserIndexSend[_tokenId]) claimStakingReward(_tokenId, bond.stakingSendIndex);
+        if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) {
+            uint256 refractionReward = calculateRefractionRewards(_tokenId, bond.refractionSIndex);
+            IERC20(endToken).transfer(
+                msg.sender, refractionReward
+            );
+            rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
+        }
+        if(rewardShareIndexSend != rewardSharePerUserIndexSend[_tokenId]){ 
+            uint256 sEndTokenReward = calculateStakingReward(_tokenId, bond.stakingSendIndex);
+            ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
+            rewardSharePerUserIndexSend[_tokenId] = rewardShareIndexSend;
+        }
         emit ClaimRewards(msg.sender, reward, _tokenId);
     }
 
@@ -722,13 +732,13 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @param _tokenId The unique identifier of the bond.
      */
 
-    function claimStakingReward(uint256 _tokenId, uint256 precalUsers) internal {
+    function calculateStakingReward(uint256 _tokenId, uint256 precalUsers) public view returns(uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
         uint rewardPrincipal = bond.principal;
         if (precalUsers != 0) {
             uint sEndTokenReward = ((rewardPrincipal * (precalUsers - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
             if (sEndTokenReward > 0) {
-                ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
+                return sEndTokenReward;
             }
         } else {
             if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
@@ -739,7 +749,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                         (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
 
                     if (sEndTokenReward > 0) {
-                        ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
+                        return sEndTokenReward;
                     }
                 } else {
                     uint256 sTime;
@@ -756,10 +766,9 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                     uint sEndTokenReward = ((rewardPrincipal * (userS - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
 
                     if (sEndTokenReward > 0) {
-                        ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
+                        return sEndTokenReward;
                     }
                 }
-                rewardSharePerUserIndexSend[_tokenId] = rewardShareIndexSend;
             } else {
                 revert NotAllowed();
             }
@@ -771,24 +780,21 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @param _tokenId The unique identifier of the bond.
      */
 
-    function claimRefractionRewards(uint256 _tokenId, uint256 precalUsers) internal {
+    function calculateRefractionRewards(uint256 _tokenId, uint256 precalUsers) public view returns (uint256 _rewards) {
         Bond memory bond = bonds[_tokenId];
         uint rewardPrincipal = bond.refractionPrincipal;
+        uint256 reward;
         if (precalUsers != 0) {
-            IERC20(endToken).transfer(
-                msg.sender,
-                ((rewardPrincipal * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18)
-            );
+            reward = ((rewardPrincipal * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18);
+            return reward;
         } else {
             if (isSet) {
                 if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
                 if (rewardShareIndex == rewardSharePerUserIndex[_tokenId]) revert NoRewardCollected();
                 if (dayToRewardShareIndex[(block.timestamp / SECONDS_IN_DAY)] != 0 && block.timestamp / SECONDS_IN_DAY == bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)){ 
                     console.log("rewardPrincipal * (userS - rewardSharePerUserIndex[_tokenId]", (rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
-                    IERC20(endToken).transfer(
-                        msg.sender,
-                        ((rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18)
-                    );
+                    reward = ((rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
+                    return reward;
                 } else {
                     uint256 sTime;
                     console.log("getLoop", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
@@ -802,13 +808,9 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                         );
                     }
                     uint256 userS = secondsRefractionShareIndex[sTime];
-                    IERC20(endToken).transfer(
-                        msg.sender,
-                        ((rewardPrincipal * (userS - rewardSharePerUserIndex[_tokenId])) / 1e18)
-                    );
+                    reward = ((rewardPrincipal * (userS - rewardSharePerUserIndex[_tokenId])) / 1e18);
+                    return reward;
                 }
-
-                rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
             } else {
                 revert NotAllowed();
             }
@@ -820,7 +822,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @param _tokenId The unique identifier of the bond.
      * @return _reward The reward amount for the bond.
      */
-    function calculateBondRewardAmount(uint256 _tokenId, uint256 precalUsers) internal view returns (uint256 _reward) {
+    function calculateBondRewardAmount(uint256 _tokenId, uint256 precalUsers) public view returns (uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
         // console.log("is Set:- ", isSet);
         if (precalUsers != 0) {

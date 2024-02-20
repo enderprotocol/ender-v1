@@ -213,8 +213,7 @@ event MintEndToUser(address indexed to, uint256 amount);
             }
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
-        } else {
-            
+        } else {     
             (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);
             depositReturn = (depositReturn * int256(stETHPool) * 1000) / int256(ENDSupply);
             rebaseReward = uint256((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));

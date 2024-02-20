@@ -17,7 +17,7 @@ The EnderBond contract is structured as follows:
 
 - Withdraw: Once a bond has matured, users can withdraw their funds by calling the `withdraw` function. This function performs checks to ensure that the bond has not already been withdrawn, the maturity date has passed, and the caller owns the bond.
 
-- Reward Distribution: The contract handles reward distribution based on various factors. Users can collect rewards using the `claimStakingReward` and `claimRefractionRewards` functions.
+- Reward Distribution: The contract handles reward distribution based on various factors. Users can collect rewards using the `calculateStakingReward` and `claimRefractionRewards` functions.
 
 - Epoch Updates: The contract includes functions for updating reward shares and bond yield shares at the beginning of each epoch. These functions calculate and set the reward shares based on the amount of rewards and principles.
 
@@ -37,7 +37,7 @@ The EnderBond contract is structured as follows:
 
 - Yield Share: The bond yield share index represents the growth of rewards over time based on bond principles and yield rates.
 
-- Staking Rewards: Users can earn rewards for staking their bonds using the `claimStakingReward` function.
+- Staking Rewards: Users can earn rewards for staking their bonds using the `calculateStakingReward` function.
 
 - Refraction Rewards: Users can earn rewards for bonding and holding assets using the `claimRefractionRewards` function.
 
@@ -216,7 +216,7 @@ It updates the dayBondYieldShareIndex for the maturity date of the bond with the
 
 The function transfers the calculated reward to the user's address using the mintEndToUser function from the endTreasury contract.
 
-It checks if the user needs to claim refraction rewards or staking rewards manually. If the rewardShareIndex does not match rewardSharePerUserIndex[_tokenId], the user need not to claim refraction rewards using the claimRefractionRewards function. Similarly, if rewardSharePerUserIndexSend[_tokenId] does not match rewardShareIndexSend, the user need not to claim staking rewards using the claimStakingReward function.
+It checks if the user needs to claim refraction rewards or staking rewards manually. If the rewardShareIndex does not match rewardSharePerUserIndex[_tokenId], the user need not to claim refraction rewards using the claimRefractionRewards function. Similarly, if rewardSharePerUserIndexSend[_tokenId] does not match rewardShareIndexSend, the user need not to claim staking rewards using the calculateStakingReward function.
 
 The function updates various accounting variables, including subtracting the userBondPrincipalAmount associated with the bond from totalBondPrincipalAmount.
 
@@ -282,7 +282,7 @@ function calculateStakingPendingReward(
       - `_maturity`: The maturity of the bond.
       - `_tokenId`: The unique identifier of the bond.
 
-function claimStakingReward(uint256 _tokenId) public {
+function calculateStakingReward(uint256 _tokenId) public {
 
 
     - Description: Allows users to claim staking rewards for a specific bond.
