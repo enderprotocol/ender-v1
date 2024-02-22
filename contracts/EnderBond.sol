@@ -39,7 +39,7 @@ error NotAllowed();
 error NotEnderStaking();
 error NotEndToken();
 error NoTreasury();
-error ArrayLengthNotEqual();
+
 
 /**
  * @title EnderBond contract
@@ -388,12 +388,8 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         if (bondFee > 10000) revert InvalidBondFee();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
-            console.log("sign addresses:- ", signAddress, signer);
             require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
         }
-        console.log("user principal amount:- ", principal);
-        console.log("user maturity time:- ", maturity);
-        console.log("user bond fees:- ", bondFee);
         IEndToken(endToken).distributeRefractionFees();
         epochBondYieldShareIndex();                                                                                                 
         uint256 beforeBalance = IERC20(stEth).balanceOf(address(endTreasury));
@@ -429,13 +425,11 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         tokenId = bondNFT.mint(user);                                                                          
         bondIdAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY].push(tokenId);
         uint256 refractionPrincipal = calculateRefractionData(principal, maturity, tokenId, bondFee);          
-        console.log("refractionPrincipal:- ", refractionPrincipal);
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;                                         
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;                                                                                      
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;                                                                                                                                 
 
         uint256 depositPrincipal = (getInterest(maturity) * (10000 + (bondFee)) * principal) / (365 * 100000000);
-        console.log("depositPrincipal",depositPrincipal);
         totalDeposit += principal;
         totalRewardPrincipal += depositPrincipal;
         totalRefractionPrincipal += refractionPrincipal;
