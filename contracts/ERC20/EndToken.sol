@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 // Interfaces
 import "../interfaces/IEndToken.sol";
 import "../interfaces/IEnderBond.sol";
+import "hardhat/console.sol";
 
 error ZeroAddress();
 error InvalidParam();
@@ -55,7 +56,6 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         bool twelveMonths;
         bool fifteenMonths;
     }
-
     // minter role hash
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant ENDERBOND_ROLE = keccak256("ENDERBOND_ROLE");
@@ -68,7 +68,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     mapping(uint256 => uint256) public vestedTime; // count => time
     mapping(uint256 => VestAmount) public yearlyVestAmount;
 
-     event TreasuryContractChanged(address indexed newTreasury);
+    event TreasuryContractChanged(address indexed newTreasury);
     event FeeUpdated(uint256 fee);
     event DayfeeUpdated(uint256 amount, uint256 updateTime);
     event RefractionFeesDistributed(address indexed to, uint256 indexed amount);
@@ -148,15 +148,26 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 time = block.timestamp;
         if ((lastYear * 31536000) + 365 days < time) revert WaitingTimeNotCompleted();
         uint256 mintAmount = (totalSupply() * mintFee) / 10000;
-
         yearlyVestAmount[time / 31536000] = VestAmount(mintAmount, false, false, false);
         mint(address(this), mintAmount);
-
         if (mintFee != 100) {
             mintFee -= 100;
         }
         if (lastYear == 0) lastYear = time / 31536000;
         emit MintAndVest(block.timestamp, mintAmount);
+    }
+
+
+   function timeAndAmountCalculator(uint Principal, uint noOfYears_plusMonths, uint interestRate) public pure returns(uint){
+        uint accumulatedInterestRate;
+        noOfYears_plusMonths = noOfYears_plusMonths/31536000;
+        if(noOfYears_plusMonths>15){
+            accumulatedInterestRate = (noOfYears_plusMonths-15)*100;
+            noOfYears_plusMonths = 15;
+        }
+        console.log("noOfyears: ", noOfYears_plusMonths);
+        accumulatedInterestRate += interestRate*noOfYears_plusMonths - 100*((noOfYears_plusMonths)*(noOfYears_plusMonths-1))/2;
+        return Principal*accumulatedInterestRate/10000;
     }
 
     function getMintedEnd() external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -200,7 +211,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
      * @param amount The amount of tokens to mint
      * Note deleted the minter role for testing
      */
-    function mint(address to, uint256 amount) public{
+    function mint(address to, uint256 amount) public {
         if (to == address(0)) revert ZeroAddress();
 
         _mint(to, amount);
@@ -211,6 +222,8 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
             super._transfer(from, to, amount);
         } else {
             uint256 fee = (amount * refractionFeePercentage) / 100;
+            console.log("Refraction fees deducted in End token:- ", fee);
+
             if (fee != 0) {
                 unchecked {
                     refractionFeeTotal += fee;
@@ -223,15 +236,19 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         }
     }
 
+    // function distributeRefractionFees() external onlyRole(DEFAULT_ADMIN_ROLE) {
     function distributeRefractionFees() external onlyRole(ENDERBOND_ROLE) {
+        // if (lastEpoch + 1 days > block.timestamp) revert InvalidEarlyEpoch();
         uint256 feesToTransfer = refractionFeeTotal;
         if (feesToTransfer != 0) {
             refractionFeeTotal = 0;
+            console.log("Total Refraction fees:- ", feesToTransfer);
             lastEpoch = block.timestamp;
             _approve(address(this), enderBond, feesToTransfer);
             IEnderBond(enderBond).epochRewardShareIndex(feesToTransfer);
             // _transfer(address(this), enderBond, feesToTransfer);
             emit RefractionFeesDistributed(enderBond, feesToTransfer);
         }
+        console.log("Total Refraction fees outside if block:- ", feesToTransfer);
     }
 }
