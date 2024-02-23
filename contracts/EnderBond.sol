@@ -18,8 +18,9 @@ import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEndToken.sol";
 import "./interfaces/IEnderStaking.sol";
 
-
+error ArrayLengthNotEqual();
 error BondAlreadyWithdrawn();
+error NotWhitelisted();
 error BondNotMatured();
 error BondFeeDisabled();
 error NotBondUser();
@@ -246,7 +247,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     }
 
     function setsigner(address _signer) external onlyOwner {
-        require(_signer != address(0), "Address can't be zero");
+        if (_signer == address(0)) revert ZeroAddress();
         signer = _signer;
         emit newSigner(signer);
     }
@@ -388,7 +389,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         if (bondFee > 10000) revert InvalidBondFee();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
-            require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
+            if(signAddress != signer || userSign.user != msg.sender) revert NotWhitelisted();
         }
         IEndToken(endToken).distributeRefractionFees();
         epochBondYieldShareIndex();                                                                                                 
@@ -859,13 +860,10 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     }
 
     function setIndexesOfUser(uint256[] memory tokenId,uint256[] memory refractionSIndex,uint256[] memory stakingSendIndex,uint256[]  memory YieldIndex) external onlyOwner{
-        
-    require(
-        tokenId.length == refractionSIndex.length &&
-        tokenId.length == stakingSendIndex.length &&
-        tokenId.length == YieldIndex.length,
-        "Array lengths must be equal"
-    );
+    if(tokenId.length != refractionSIndex.length ||
+        tokenId.length != stakingSendIndex.length ||
+        tokenId.length != YieldIndex.length
+        ) revert ArrayLengthNotEqual();
 
        for(uint i=0;i<tokenId.length; i++){
         bonds[tokenId[i]].refractionSIndex = refractionSIndex[i];
@@ -876,7 +874,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     }
 
     function resetEndMint() external{
-        require(msg.sender == address(endTreasury));
+        if(msg.sender != address(endTreasury)) revert NoTreasury();
         endMint = 0;
     }
 

@@ -13,12 +13,15 @@ import "hardhat/console.sol";
 error ZeroAddress();
 error InvalidAmount();
 error NotAllowed();
+error NotWhitelisted();
 
 contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     string private constant SIGNING_DOMAIN = "stakingContract";
     string private constant SIGNATURE_VERSION = "1";
-    uint public bondRewardPercentage;
-    uint public rebasingIndex;
+    uint256 public bondRewardPercentage;
+    uint256 public rebasingIndex;  
+    uint256 public rebaseRefractionReward;
+    uint256 public lastRebaseReward;
     address public signer;
     address public endToken;
     address public sEndToken;
@@ -43,7 +46,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     event stakingContractPauseSet(bool indexed isEnable);
     event Stake(address indexed staker, uint256 amount);
     event unStake(address indexed withdrawer, uint256 amount);
-    event EpochStakingReward(address indexed asset, uint256 totalReward, uint256 rw2, uint256 sendTokens);
+    event EpochStakingReward(address indexed asset, uint256 totalReward, uint256 rebaseRefractionReward, uint256 sendTokens);
     event WhitelistChanged(bool indexed action);
     event newSigner(address _signer);
   
@@ -92,7 +95,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     }
 
     function setsigner(address _signer) external onlyOwner {
-        require(_signer != address(0), "Address can't be zero");
+        if (_signer == address(0)) revert ZeroAddress();
         signer = _signer;
         emit newSigner(signer);
     }
@@ -134,7 +137,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         if (amount == 0) revert InvalidAmount();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
-            require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
+            if(signAddress != signer || userSign.user != msg.sender) revert NotWhitelisted();
         }
         console.log("\nEnd token deposit:- ", amount);
         if(ISEndToken(endToken).balanceOf(address(this)) == 0){
@@ -176,13 +179,14 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     function epochStakingReward(address _asset) public  {
         if(_asset != stEth) revert NotAllowed();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
+        lastRebaseReward = totalReward;
         if(totalReward > 0) {
-            uint256 rw2 = (totalReward * bondRewardPercentage) / 100;
-            console.log("Rebase reward for bond holder's:- ", rw2);
-            uint256 sendTokens = calculateSEndTokens(rw2);
+            rebaseRefractionReward = (totalReward * bondRewardPercentage) / 100;
+            console.log("Rebase reward for bond holder's:- ", rebaseRefractionReward);
+            uint256 sendTokens = calculateSEndTokens(rebaseRefractionReward);
             ISEndToken(sEndToken).mint(enderBond, sendTokens);
             ISEndToken(endToken).mint(address(this), totalReward);
-            emit EpochStakingReward(_asset, totalReward, rw2, sendTokens);  
+            emit EpochStakingReward(_asset, totalReward, rebaseRefractionReward, sendTokens);  
         }
         calculateRebaseIndex();
     }
@@ -201,7 +205,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         uint256 endBalStaking = ISEndToken(endToken).balanceOf(address(this));
         uint256 sEndTotalSupply = ISEndToken(sEndToken).totalSupply();
         if (endBalStaking == 0 || sEndTotalSupply == 0) {
-            rebasingIndex = 1;
+            rebasingIndex = 10e18;
         } else {
             rebasingIndex = endBalStaking * 10e18/ sEndTotalSupply;
         }
