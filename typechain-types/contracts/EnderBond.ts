@@ -378,7 +378,7 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setIndexesOfUser",
-    values: [BigNumberish[], BigNumberish[], BigNumberish[], BigNumberish[]]
+    values: [BigNumberish[], BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setInterval",
@@ -1371,9 +1371,9 @@ export interface EnderBond extends BaseContract {
   setIndexesOfUser: TypedContractMethod<
     [
       tokenId: BigNumberish[],
-      refractionSIndex: BigNumberish[],
-      stakingSendIndex: BigNumberish[],
-      YieldIndex: BigNumberish[]
+      refractionSIndex: BigNumberish,
+      stakingSendIndex: BigNumberish,
+      YieldIndex: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -1729,9 +1729,9 @@ export interface EnderBond extends BaseContract {
   ): TypedContractMethod<
     [
       tokenId: BigNumberish[],
-      refractionSIndex: BigNumberish[],
-      stakingSendIndex: BigNumberish[],
-      YieldIndex: BigNumberish[]
+      refractionSIndex: BigNumberish,
+      stakingSendIndex: BigNumberish,
+      YieldIndex: BigNumberish
     ],
     [void],
     "nonpayable"

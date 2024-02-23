@@ -49,7 +49,9 @@ export interface EnderStakingInterface extends Interface {
       | "epochStakingReward"
       | "initialize"
       | "isWhitelisted"
+      | "lastRebaseReward"
       | "owner"
+      | "rebaseRefractionReward"
       | "rebasingIndex"
       | "renounceOwnership"
       | "sEndToken"
@@ -117,7 +119,15 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "isWhitelisted",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "lastRebaseReward",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "rebaseRefractionReward",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "rebasingIndex",
     values?: undefined
@@ -206,7 +216,15 @@ export interface EnderStakingInterface extends Interface {
     functionFragment: "isWhitelisted",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "lastRebaseReward",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "rebaseRefractionReward",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "rebasingIndex",
     data: BytesLike
@@ -284,19 +302,19 @@ export namespace EpochStakingRewardEvent {
   export type InputTuple = [
     asset: AddressLike,
     totalReward: BigNumberish,
-    rw2: BigNumberish,
+    rebaseRefractionReward: BigNumberish,
     sendTokens: BigNumberish
   ];
   export type OutputTuple = [
     asset: string,
     totalReward: bigint,
-    rw2: bigint,
+    rebaseRefractionReward: bigint,
     sendTokens: bigint
   ];
   export interface OutputObject {
     asset: string;
     totalReward: bigint;
-    rw2: bigint;
+    rebaseRefractionReward: bigint;
     sendTokens: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -520,7 +538,11 @@ export interface EnderStaking extends BaseContract {
 
   isWhitelisted: TypedContractMethod<[], [boolean], "view">;
 
+  lastRebaseReward: TypedContractMethod<[], [bigint], "view">;
+
   owner: TypedContractMethod<[], [string], "view">;
+
+  rebaseRefractionReward: TypedContractMethod<[], [bigint], "view">;
 
   rebasingIndex: TypedContractMethod<[], [bigint], "view">;
 
@@ -639,8 +661,14 @@ export interface EnderStaking extends BaseContract {
     nameOrSignature: "isWhitelisted"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
+    nameOrSignature: "lastRebaseReward"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "rebaseRefractionReward"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "rebasingIndex"
   ): TypedContractMethod<[], [bigint], "view">;
