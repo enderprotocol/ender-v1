@@ -145,9 +145,10 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
             console.log("Receipt token:- ", sEndAmount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
             ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
+            calculateRebaseIndex();
         } else {
             // epochStakingReward(stEth);
-            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
+            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);          
             uint256 sEndAmount = calculateSEndTokens(amount);
             console.log("Receipt token:- ", sEndAmount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
@@ -196,7 +197,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
             sEndTokens = _endAmount;
             return sEndTokens;
         } else{
-            sEndTokens = (_endAmount * 10e18/ rebasingIndex); 
+            sEndTokens = (_endAmount * 1e18/ rebasingIndex); 
             return sEndTokens; 
         }
     }
@@ -205,16 +206,16 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         uint256 endBalStaking = ISEndToken(endToken).balanceOf(address(this));
         uint256 sEndTotalSupply = ISEndToken(sEndToken).totalSupply();
         if (endBalStaking == 0 || sEndTotalSupply == 0) {
-            rebasingIndex = 10e18;
+            rebasingIndex = 1e18;
         } else {
-            rebasingIndex = endBalStaking * 10e18/ sEndTotalSupply;
+            rebasingIndex = endBalStaking * 1e18/ sEndTotalSupply;
         }
     }
 
     function claimRebaseValue(uint256 _sendAmount) internal view returns (uint256 reward) {
         console.log("rebasingIndex:- ", rebasingIndex);
 
-        reward = (_sendAmount * rebasingIndex) / 10e18;
+        reward = (_sendAmount * rebasingIndex) / 1e18;
     }
 
     function _hash(signData memory userSign) internal view returns (bytes32) {

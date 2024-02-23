@@ -451,8 +451,8 @@ await stEth
 
 await enderTreasury.setAddress(instadappLiteAddress, 5);
 await sleep(1200);
-let sig1 = signatureDigest();
-
+let sig1 = await signatureDigest();
+console.log("==========",sig1);
       // mint to signer1
       await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
 

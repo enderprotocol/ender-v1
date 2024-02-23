@@ -88,6 +88,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         excludeWallets[msg.sender] = true; //todo pass the admin address in parameter
         mintCount = 4;
         mintFee = 1500;
+        // lastYear = block.timestamp/ 31536000;
         setFee(500);
         unchecked {
             lastTransfer = block.timestamp - (block.timestamp % 1 days);

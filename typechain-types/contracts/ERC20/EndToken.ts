@@ -64,6 +64,7 @@ export interface EndTokenInterface extends Interface {
       | "setTreasury"
       | "supportsInterface"
       | "symbol"
+      | "timeAndAmountCalculator"
       | "todayAmount"
       | "totalSupply"
       | "transfer"
@@ -216,6 +217,10 @@ export interface EndTokenInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "timeAndAmountCalculator",
+    values: [BigNumberish, BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "todayAmount",
     values?: undefined
   ): string;
@@ -331,6 +336,10 @@ export interface EndTokenInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "timeAndAmountCalculator",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "todayAmount",
     data: BytesLike
@@ -705,6 +714,16 @@ export interface EndToken extends BaseContract {
 
   symbol: TypedContractMethod<[], [string], "view">;
 
+  timeAndAmountCalculator: TypedContractMethod<
+    [
+      Principal: BigNumberish,
+      noOfYears_plusMonths: BigNumberish,
+      interestRate: BigNumberish
+    ],
+    [bigint],
+    "view"
+  >;
+
   todayAmount: TypedContractMethod<[], [bigint], "view">;
 
   totalSupply: TypedContractMethod<[], [bigint], "view">;
@@ -898,6 +917,17 @@ export interface EndToken extends BaseContract {
   getFunction(
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "timeAndAmountCalculator"
+  ): TypedContractMethod<
+    [
+      Principal: BigNumberish,
+      noOfYears_plusMonths: BigNumberish,
+      interestRate: BigNumberish
+    ],
+    [bigint],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "todayAmount"
   ): TypedContractMethod<[], [bigint], "view">;
