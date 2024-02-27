@@ -42,8 +42,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     WETH,
     stEth,
     bondNFT;
-    // oracle,
-    // oracleAddress;
+
 
   before(async function () {
     const wETH = await ethers.getContractFactory("mockWETH");
@@ -82,12 +81,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       initializer: "initialize",
     });
     endTokenAddress = await endToken.getAddress();
-
-    // oracle = await upgrades.deployProxy(Oracle, [], {
-    //   initializer: "initialize",
-    // });
-
-    // oracleAddress = await oracle.getAddress();
 
     enderBond = await upgrades.deployProxy(
       EnderBond,
@@ -1221,8 +1214,50 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
     await enderBond.connect(signer).withdraw(tokenId);
   }
+  describe("Staking Rewards Calculation", function () {
+    it("calculates staking rewards correctly", async function () {
+      const [owner, user] = await ethers.getSigners();
+      const stakingAmount = ethers.utils.parseEther("100"); 
+      const rewardRate = 0.1; 
+  
+      await myToken.connect(user).approve(myStakingContract.address, stakingAmount);
+  
+      await myStakingContract.connect(user).stake(stakingAmount, { });
+  
+      await network.provider.send("evm_increaseTime", [30 * 24 * 60 * 60]); // 30 days
+      await network.provider.send("evm_mine");
+  
+      const expectedRewards = stakingAmount.mul(rewardRate);
+  
+      await myStakingContract.connect(user).claimRewards();
+  
+      const actualRewards = await myToken.balanceOf(user.address);
+      expect(actualRewards).to.equal(expectedRewards);
+    });
+  });
+  
+  
+  describe("Staking Withdrawal", function () {
+    it("allows users to withdraw the correct amount including rewards", async function () {
+      const [owner, user] = await ethers.getSigners();
+      const stakingAmount = ethers.utils.parseUnits("100", 18); 
+      const rewardRate = 0.1; 
 
-
+      await myToken.connect(user).approve(myStakingContract.address, stakingAmount);
+      await myStakingContract.connect(user).stake(stakingAmount);
+  
+      await network.provider.send("evm_increaseTime", [30 * 24 * 60 * 60]); 
+      await network.provider.send("evm_mine");
+  
+      const expectedTotal = stakingAmount.add(stakingAmount.mul(rewardRate));
+  
+      await myStakingContract.connect(user).withdraw(stakingAmount);
+  
+      const finalBalance = await myToken.balanceOf(user.address);
+      expect(finalBalance).to.equal(expectedTotal);
+    });
+  });
+  
   async function signatureDigestOfEarlyBond() { 
     let sig = await signer.signTypedData(
         {

@@ -1,51 +1,35 @@
-const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
+const { expect } = require("chai");
 
-describe("EnderStaking", function () {
-  let owner, wallet1;
-  let endTokenAddress;
-  let endToken, enderStaking;
+let EndToken, SEnd, StEth, EnderNFTBond, EnderBond, EnderTreasury;
+
+describe("Ender Bond", function () {
+  let owner, signer1, signer2, signer3, signer4;
+  let endToken, sEnd, stEth, enderNFTBond, enderBond, enderTreasury;
 
   before(async function () {
-    // Deploy EndToken
-    const EndToken = await ethers.getContractFactory("EndToken");
-    endToken = await upgrades.deployProxy(EndToken, [1], {
-      initializer: "initialize",
-    });
-    await endToken.waitForDeployment();
-    endTokenAddress = await endToken.getAddress();
+    [owner, signer1, signer2, signer3, signer4] = await ethers.getSigners();
 
-    // Deploy EnderStaking
-    const EnderStaking = await ethers.getContractFactory("EnderStaking");
-    enderStaking = await upgrades.deployProxy(EnderStaking, [endTokenAddress], {
-      initializer: "initialize",
-    });
-    await enderStaking.waitForDeployment();
+    EndToken = await ethers.getContractFactory("EndToken");
+    SEnd = await ethers.getContractFactory("SEnd");
+    StEth = await ethers.getContractFactory("StEth");
+    EnderNFTBond = await ethers.getContractFactory("EnderNFTBond");
+    EnderBond = await ethers.getContractFactory("EnderBond");
+    EnderTreasury = await ethers.getContractFactory("EnderTreasury");
 
-    [owner, wallet1] = await ethers.getSigners();
+    endToken = await EndToken.deploy();
+    sEnd = await SEnd.deploy(endToken.address);
+    stEth = await StEth.deploy();
+    enderNFTBond = await EnderNFTBond.deploy();
+    enderBond = await EnderBond.deploy();
+    enderTreasury = await EnderTreasury.deploy();
   });
 
-  describe("initialize", function () {
-    it("Should set the right owner", async function () {
-      expect(await enderStaking.owner()).to.equal(owner.address);
-    });
-  });
-
-  describe("Check set END token", function () {
-    it("Should not allow non-owner to set the end token address", async function () {
-      await expect(enderStaking.connect(wallet1).setAddress(endTokenAddress))
-        .to.be.revertedWith("Ownable: caller is not the owner");
-    });
-
-    it("Should revert if the end token address is the zero address", async function () {
-      await expect(enderStaking.connect(owner).setAddress(ethers.ZeroAddress))
-        .to.be.revertedWithCustomError(enderStaking, "ZeroAddress");
-    });
-
-    it("Should emit a SetEnd event", async function () {
-      await expect(enderStaking.setAddress(endTokenAddress))
-        .to.emit(enderStaking, 'AddressUpdated')
-        .withArgs(endTokenAddress);
+  describe("Staking", function () {
+    it("should fail to stake if the amount is zero", async function () {
+      await expect(
+        enderBond.connect(signer1).depositStEth(0, [])
+      ).to.be.revertedWith("Invalid amount");
     });
   });
 });

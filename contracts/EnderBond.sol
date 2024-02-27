@@ -358,7 +358,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
     function userInfoDepositContract(uint256[] memory index, signData memory userSign) external onlyOwner{
         if (index.length >= 0){
-            for (uint256 i = index[0]; i <= index.length; i++){
+            for (uint256 i = index[0]; i <= index.length; ++i){
                 (address user, uint256 principal, uint256 bondFees, uint256 maturity) = depositContract.depositedIntoBond(index[i], address(this));
                 deposit(user, principal, maturity, bondFees, stEth, userSign);
             }
@@ -515,11 +515,11 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         uint256 currentDay = block.timestamp / SECONDS_IN_DAY;
         if (currentDay == lastDay) return withdrawAmntFromSt = 0;
         else{
-            for (uint256 i = lastDay + 1; i <= currentDay; i++) {
+            for (uint256 i = lastDay + 1; i <= currentDay; ++i) {
                 ///@dev loop will start from the first day of the deplyment.
                 /// minimum deposit is for 7 days. So it will cover the 4 days gaps in below condition. 
                 if(bondIdAtMaturity[i].length > 0){
-                    for(uint256 j = 0; j < bondIdAtMaturity[i].length; j++){
+                    for(uint256 j; j < bondIdAtMaturity[i].length; ++j){
                         Bond memory bond = bonds[bondIdAtMaturity[i][j]];
                         depositAmountRequired += bond.depositPrincipal;
                         refractionAmountRequired += bond.refractionPrincipal;
@@ -527,7 +527,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                     }
                 }
                 if(bondIdAtMaturity[i+4].length > 0){
-                    for(uint256 j = 0; j < bondIdAtMaturity[i+4].length; j++){
+                    for(uint256 j; j < bondIdAtMaturity[i+4].length; ++j){
                         Bond memory bond = bonds[bondIdAtMaturity[i+4][j]];
                         amountRequired += bond.principal;
                     }
@@ -576,7 +576,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 dayToRefractionShareUpdation[timeNow].push(block.timestamp);
             }else{
                 uint day = lastSecOfRefraction / SECONDS_IN_DAY;
-                for(uint i = day+1; i <= timeNow; i++){
+                for(uint i = day+1; i <= timeNow; ++i){
                     dayToRefractionShareUpdation[i].push(lastSecOfRefraction);
                 }
             }
@@ -595,7 +595,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 dayToRefractionShareUpdation[timeNow].push(lastSecOfRefraction);
             }else{
                 uint day = lastSecOfRefraction / SECONDS_IN_DAY;
-                for(uint i = day+1; i <= timeNow; i++){
+                for(uint i = day+1; i <= timeNow; ++i){
                     console.log("i",i);
                     dayToRefractionShareUpdation[i].push(lastSecOfRefraction);
                 }
@@ -620,7 +620,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
             }else{
                 uint day = lastSecOfSendReward / SECONDS_IN_DAY;
-                for(uint i = day+1; i <= timeNow; i++){
+                for(uint i = day+1; i <= timeNow; ++i){
                     dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
                 }
             }
@@ -636,7 +636,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 dayToRefractionShareUpdationSend[timeNow].push(lastSecOfSendReward);
             }else{
                 uint day = lastSecOfSendReward / SECONDS_IN_DAY;
-                for(uint i = day+1; i <= timeNow; i++){
+                for(uint i = day+1; i <= timeNow; ++i){
                     dayToRefractionShareUpdationSend[i].push(lastSecOfSendReward);
                 }
             }
