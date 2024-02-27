@@ -23,7 +23,7 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export interface EndTokenInterface extends Interface {
+export interface EndToken2Interface extends Interface {
   getFunction(
     nameOrSignature:
       | "DEFAULT_ADMIN_ROLE"
@@ -46,6 +46,7 @@ export interface EndTokenInterface extends Interface {
       | "increaseAllowance"
       | "initialize"
       | "lastEpoch"
+      | "lastYear"
       | "mint"
       | "mintCount"
       | "mintFee"
@@ -63,6 +64,7 @@ export interface EndTokenInterface extends Interface {
       | "setTreasury"
       | "supportsInterface"
       | "symbol"
+      | "timeAndAmountCalculator"
       | "todayAmount"
       | "totalSupply"
       | "transfer"
@@ -157,6 +159,7 @@ export interface EndTokenInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "lastEpoch", values?: undefined): string;
+  encodeFunctionData(functionFragment: "lastYear", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "mint",
     values: [AddressLike, BigNumberish]
@@ -210,6 +213,10 @@ export interface EndTokenInterface extends Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "timeAndAmountCalculator",
+    values: [BigNumberish, BigNumberish, BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "todayAmount",
     values?: undefined
@@ -290,6 +297,7 @@ export interface EndTokenInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lastEpoch", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "lastYear", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mintCount", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mintFee", data: BytesLike): Result;
@@ -322,6 +330,10 @@ export interface EndTokenInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "timeAndAmountCalculator",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "todayAmount",
     data: BytesLike
@@ -529,11 +541,11 @@ export namespace TreasuryContractChangedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface EndToken extends BaseContract {
-  connect(runner?: ContractRunner | null): EndToken;
+export interface EndToken2 extends BaseContract {
+  connect(runner?: ContractRunner | null): EndToken2;
   waitForDeployment(): Promise<this>;
 
-  interface: EndTokenInterface;
+  interface: EndToken2Interface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -636,6 +648,8 @@ export interface EndToken extends BaseContract {
 
   lastEpoch: TypedContractMethod<[], [bigint], "view">;
 
+  lastYear: TypedContractMethod<[], [bigint], "view">;
+
   mint: TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
     [void],
@@ -693,6 +707,16 @@ export interface EndToken extends BaseContract {
   >;
 
   symbol: TypedContractMethod<[], [string], "view">;
+
+  timeAndAmountCalculator: TypedContractMethod<
+    [
+      Principal: BigNumberish,
+      noOfYears_plusMonths: BigNumberish,
+      interestRate: BigNumberish
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
   todayAmount: TypedContractMethod<[], [bigint], "view">;
 
@@ -818,6 +842,9 @@ export interface EndToken extends BaseContract {
     nameOrSignature: "lastEpoch"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "lastYear"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "mint"
   ): TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
@@ -884,6 +911,17 @@ export interface EndToken extends BaseContract {
   getFunction(
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "timeAndAmountCalculator"
+  ): TypedContractMethod<
+    [
+      Principal: BigNumberish,
+      noOfYears_plusMonths: BigNumberish,
+      interestRate: BigNumberish
+    ],
+    [bigint],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "todayAmount"
   ): TypedContractMethod<[], [bigint], "view">;

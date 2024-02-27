@@ -791,14 +791,16 @@ export namespace DepositEvent {
     tokenId: BigNumberish,
     principal: BigNumberish,
     maturity: BigNumberish,
-    token: AddressLike
+    token: AddressLike,
+    bondFee: BigNumberish
   ];
   export type OutputTuple = [
     sender: string,
     tokenId: bigint,
     principal: bigint,
     maturity: bigint,
-    token: string
+    token: string,
+    bondFee: bigint
   ];
   export interface OutputObject {
     sender: string;
@@ -806,6 +808,7 @@ export namespace DepositEvent {
     principal: bigint;
     maturity: bigint;
     token: string;
+    bondFee: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -2046,7 +2049,7 @@ export interface EnderBond extends BaseContract {
       ClaimRewardsEvent.OutputObject
     >;
 
-    "Deposit(address,uint256,uint256,uint256,address)": TypedContractEvent<
+    "Deposit(address,uint256,uint256,uint256,address,uint256)": TypedContractEvent<
       DepositEvent.InputTuple,
       DepositEvent.OutputTuple,
       DepositEvent.OutputObject
