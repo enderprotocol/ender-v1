@@ -1,4 +1,4 @@
-const EndToken =  "0x704095b58f7930c7cc2d00080e584fc31aca7e87"//
+const EndToken =  "0x4d67b57b73DfAD4C27dEE8bCee4392d381FAB956"//
 const EnderBond =   "0x6995c8a643bf95739708e318ffd32c557edbe168" //
 const SEndToken ="0xf40eb2ada82d7be2621152f4aaa5d6838b8b7a50"
 const BondNFT =   "0x383e31361c03a84afc7d22e5e5381eea04946f8d"
@@ -52,10 +52,10 @@ async function main() {
         //     contract: "contracts/ERC20/SEndToken.sol:SEndToken",
         // });
 
-        await hre.run("verify:verify", {
-            address: EnderBond,
-            contract: "contracts/EnderBond.sol:EnderBond",
-        });
+        // await hre.run("verify:verify", {
+        //     address: EnderBond,
+        //     contract: "contracts/EnderBond.sol:EnderBond",
+        // });
 
         // await hre.run("verify:verify", {
         //     address: BondNFT,
