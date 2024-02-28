@@ -33,11 +33,9 @@ export interface SEndTokenInterface extends Interface {
       | "balanceOf"
       | "burn"
       | "decimals"
-      | "decreaseAllowance"
       | "getRoleAdmin"
       | "grantRole"
       | "hasRole"
-      | "increaseAllowance"
       | "initialize"
       | "isWhitelisted"
       | "mint"
@@ -96,10 +94,6 @@ export interface SEndTokenInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "decreaseAllowance",
-    values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getRoleAdmin",
     values: [BytesLike]
   ): string;
@@ -110,10 +104,6 @@ export interface SEndTokenInterface extends Interface {
   encodeFunctionData(
     functionFragment: "hasRole",
     values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "increaseAllowance",
-    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
@@ -186,19 +176,11 @@ export interface SEndTokenInterface extends Interface {
   decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "decreaseAllowance",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getRoleAdmin",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "increaseAllowance",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isWhitelisted",
@@ -434,7 +416,7 @@ export interface SEndToken extends BaseContract {
   >;
 
   approve: TypedContractMethod<
-    [spender: AddressLike, amount: BigNumberish],
+    [spender: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -448,12 +430,6 @@ export interface SEndToken extends BaseContract {
   >;
 
   decimals: TypedContractMethod<[], [bigint], "view">;
-
-  decreaseAllowance: TypedContractMethod<
-    [spender: AddressLike, subtractedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
 
   getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
 
@@ -469,12 +445,6 @@ export interface SEndToken extends BaseContract {
     "view"
   >;
 
-  increaseAllowance: TypedContractMethod<
-    [spender: AddressLike, addedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
-
   initialize: TypedContractMethod<[], [void], "nonpayable">;
 
   isWhitelisted: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
@@ -488,7 +458,7 @@ export interface SEndToken extends BaseContract {
   name: TypedContractMethod<[], [string], "view">;
 
   renounceRole: TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
+    [role: BytesLike, callerConfirmation: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -528,13 +498,13 @@ export interface SEndToken extends BaseContract {
   totalSupply: TypedContractMethod<[], [bigint], "view">;
 
   transfer: TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
+    [to: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
 
   transferFrom: TypedContractMethod<
-    [from: AddressLike, to: AddressLike, amount: BigNumberish],
+    [from: AddressLike, to: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -565,7 +535,7 @@ export interface SEndToken extends BaseContract {
   getFunction(
     nameOrSignature: "approve"
   ): TypedContractMethod<
-    [spender: AddressLike, amount: BigNumberish],
+    [spender: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -583,13 +553,6 @@ export interface SEndToken extends BaseContract {
     nameOrSignature: "decimals"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "decreaseAllowance"
-  ): TypedContractMethod<
-    [spender: AddressLike, subtractedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
-  getFunction(
     nameOrSignature: "getRoleAdmin"
   ): TypedContractMethod<[role: BytesLike], [string], "view">;
   getFunction(
@@ -605,13 +568,6 @@ export interface SEndToken extends BaseContract {
     [role: BytesLike, account: AddressLike],
     [boolean],
     "view"
-  >;
-  getFunction(
-    nameOrSignature: "increaseAllowance"
-  ): TypedContractMethod<
-    [spender: AddressLike, addedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
   >;
   getFunction(
     nameOrSignature: "initialize"
@@ -632,7 +588,7 @@ export interface SEndToken extends BaseContract {
   getFunction(
     nameOrSignature: "renounceRole"
   ): TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
+    [role: BytesLike, callerConfirmation: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -674,14 +630,14 @@ export interface SEndToken extends BaseContract {
   getFunction(
     nameOrSignature: "transfer"
   ): TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
+    [to: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "transferFrom"
   ): TypedContractMethod<
-    [from: AddressLike, to: AddressLike, amount: BigNumberish],
+    [from: AddressLike, to: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -780,7 +736,7 @@ export interface SEndToken extends BaseContract {
       ApprovalEvent.OutputObject
     >;
 
-    "Initialized(uint8)": TypedContractEvent<
+    "Initialized(uint64)": TypedContractEvent<
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject

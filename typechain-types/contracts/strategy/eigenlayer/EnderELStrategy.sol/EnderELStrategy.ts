@@ -411,7 +411,7 @@ export interface EnderELStrategy extends BaseContract {
       AddressUpdatedEvent.OutputObject
     >;
 
-    "Initialized(uint8)": TypedContractEvent<
+    "Initialized(uint64)": TypedContractEvent<
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject

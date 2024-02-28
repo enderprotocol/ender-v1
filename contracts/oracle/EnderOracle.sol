@@ -17,7 +17,7 @@ contract EnderOracle is IEnderOracle, Initializable, OwnableUpgradeable {
      * @notice Initialize the contract and set the END token address
      */
     function initialize() external initializer {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
     }
 
     function setFeeds(address[] calldata _tokens, address[] calldata _feeds) external onlyOwner {

@@ -247,7 +247,7 @@ export interface EnderOracle extends BaseContract {
   >;
 
   filters: {
-    "Initialized(uint8)": TypedContractEvent<
+    "Initialized(uint64)": TypedContractEvent<
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject

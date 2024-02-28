@@ -5,8 +5,9 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
 import "hardhat/console.sol";
 
@@ -175,7 +176,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @param endToken_ The address of the END token
      */
     function initialize(address endToken_, address _lido, address _signer) public initializer {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         rateOfChange = 100;
         lido = _lido;
@@ -901,7 +902,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
     function _verify(signData memory userSign) internal view returns (address) {
         bytes32 digest = _hash(userSign);
-        return ECDSAUpgradeable.recover(digest, userSign.signature);
+        return ECDSA.recover(digest, userSign.signature);
     }
 
     receive() external payable {}

@@ -218,9 +218,9 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         _mint(to, amount);
     }
 
-    function _transfer(address from, address to, uint256 amount) internal override {
-        if (excludeWallets[from] || excludeWallets[to]) {
-            super._transfer(from, to, amount);
+    function _update(address from, address to, uint256 amount) internal override {
+        if (excludeWallets[from] || excludeWallets[to] || from == address(0) || to == address(0)) {
+            super._update(from, to, amount);
         } else {
             uint256 fee = (amount * refractionFeePercentage) / 100;
             console.log("Refraction fees deducted in End token:- ", fee);
@@ -230,10 +230,10 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
                     refractionFeeTotal += fee;
                 }
 
-                super._transfer(from, address(this), fee);
+                super._update(from, address(this), fee);
             }
 
-            super._transfer(from, to, amount - fee);
+            super._update(from, to, amount - fee);
         }
     }
 

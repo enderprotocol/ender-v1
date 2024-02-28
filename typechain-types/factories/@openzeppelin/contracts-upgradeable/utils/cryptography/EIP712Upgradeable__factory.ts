@@ -10,6 +10,16 @@ import type {
 
 const _abi = [
   {
+    inputs: [],
+    name: "InvalidInitialization",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "NotInitializing",
+    type: "error",
+  },
+  {
     anonymous: false,
     inputs: [],
     name: "EIP712DomainChanged",
@@ -20,9 +30,9 @@ const _abi = [
     inputs: [
       {
         indexed: false,
-        internalType: "uint8",
+        internalType: "uint64",
         name: "version",
-        type: "uint8",
+        type: "uint64",
       },
     ],
     name: "Initialized",

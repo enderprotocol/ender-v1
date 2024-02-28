@@ -35,7 +35,6 @@ export interface EndTokenInterface extends Interface {
       | "balanceOf"
       | "currentMintCount"
       | "decimals"
-      | "decreaseAllowance"
       | "distributeRefractionFees"
       | "enderBond"
       | "excludeWallets"
@@ -43,7 +42,6 @@ export interface EndTokenInterface extends Interface {
       | "getRoleAdmin"
       | "grantRole"
       | "hasRole"
-      | "increaseAllowance"
       | "initialize"
       | "lastEpoch"
       | "mint"
@@ -122,10 +120,6 @@ export interface EndTokenInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "decreaseAllowance",
-    values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "distributeRefractionFees",
     values?: undefined
   ): string;
@@ -149,10 +143,6 @@ export interface EndTokenInterface extends Interface {
   encodeFunctionData(
     functionFragment: "hasRole",
     values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "increaseAllowance",
-    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
@@ -272,10 +262,6 @@ export interface EndTokenInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "decreaseAllowance",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "distributeRefractionFees",
     data: BytesLike
   ): Result;
@@ -294,10 +280,6 @@ export interface EndTokenInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "increaseAllowance",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lastEpoch", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
@@ -605,7 +587,7 @@ export interface EndToken extends BaseContract {
   >;
 
   approve: TypedContractMethod<
-    [spender: AddressLike, amount: BigNumberish],
+    [spender: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -615,12 +597,6 @@ export interface EndToken extends BaseContract {
   currentMintCount: TypedContractMethod<[], [bigint], "view">;
 
   decimals: TypedContractMethod<[], [bigint], "view">;
-
-  decreaseAllowance: TypedContractMethod<
-    [spender: AddressLike, subtractedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
 
   distributeRefractionFees: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -642,12 +618,6 @@ export interface EndToken extends BaseContract {
     [role: BytesLike, account: AddressLike],
     [boolean],
     "view"
-  >;
-
-  increaseAllowance: TypedContractMethod<
-    [spender: AddressLike, addedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
   >;
 
   initialize: TypedContractMethod<[], [void], "nonpayable">;
@@ -677,7 +647,7 @@ export interface EndToken extends BaseContract {
   refractionFeeTotal: TypedContractMethod<[], [bigint], "view">;
 
   renounceRole: TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
+    [role: BytesLike, callerConfirmation: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -729,13 +699,13 @@ export interface EndToken extends BaseContract {
   totalSupply: TypedContractMethod<[], [bigint], "view">;
 
   transfer: TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
+    [to: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
 
   transferFrom: TypedContractMethod<
-    [from: AddressLike, to: AddressLike, amount: BigNumberish],
+    [from: AddressLike, to: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -785,7 +755,7 @@ export interface EndToken extends BaseContract {
   getFunction(
     nameOrSignature: "approve"
   ): TypedContractMethod<
-    [spender: AddressLike, amount: BigNumberish],
+    [spender: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -798,13 +768,6 @@ export interface EndToken extends BaseContract {
   getFunction(
     nameOrSignature: "decimals"
   ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "decreaseAllowance"
-  ): TypedContractMethod<
-    [spender: AddressLike, subtractedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
   getFunction(
     nameOrSignature: "distributeRefractionFees"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -833,13 +796,6 @@ export interface EndToken extends BaseContract {
     [role: BytesLike, account: AddressLike],
     [boolean],
     "view"
-  >;
-  getFunction(
-    nameOrSignature: "increaseAllowance"
-  ): TypedContractMethod<
-    [spender: AddressLike, addedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
   >;
   getFunction(
     nameOrSignature: "initialize"
@@ -881,7 +837,7 @@ export interface EndToken extends BaseContract {
   getFunction(
     nameOrSignature: "renounceRole"
   ): TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
+    [role: BytesLike, callerConfirmation: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -937,14 +893,14 @@ export interface EndToken extends BaseContract {
   getFunction(
     nameOrSignature: "transfer"
   ): TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
+    [to: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "transferFrom"
   ): TypedContractMethod<
-    [from: AddressLike, to: AddressLike, amount: BigNumberish],
+    [from: AddressLike, to: AddressLike, value: BigNumberish],
     [boolean],
     "nonpayable"
   >;
@@ -1102,7 +1058,7 @@ export interface EndToken extends BaseContract {
       GetMintedEndEvent.OutputObject
     >;
 
-    "Initialized(uint8)": TypedContractEvent<
+    "Initialized(uint64)": TypedContractEvent<
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject

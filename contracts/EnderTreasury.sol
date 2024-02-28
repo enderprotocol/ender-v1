@@ -81,7 +81,7 @@ event MintEndToUser(address indexed to, uint256 amount);
         uint256 _reserveFundsPercentage
     ) external initializer {
         if (_availableFundsPercentage != 70 && _reserveFundsPercentage != 30) revert InvalidRatio();
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         enderStaking = _enderStaking;
         instadapp = _instadapp;
         lybraFinance = _lybraFinance;

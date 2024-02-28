@@ -4,6 +4,7 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/ISEndToken.sol";
@@ -51,7 +52,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     event newSigner(address _signer);
   
     function initialize(address _end, address _sEnd, address _stEth, address _signer) external initializer {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         signer = _signer;
         stakingEnable = true; // for testing purpose
@@ -236,6 +237,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
      */
     function _verify(signData memory userSign) internal view returns (address) {
         bytes32 digest = _hash(userSign);
-        return ECDSAUpgradeable.recover(digest, userSign.signature);
+        return ECDSA.recover(digest, userSign.signature);
     }
 }

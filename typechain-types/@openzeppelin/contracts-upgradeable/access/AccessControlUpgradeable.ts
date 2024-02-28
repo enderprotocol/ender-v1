@@ -223,7 +223,7 @@ export interface AccessControlUpgradeable extends BaseContract {
   >;
 
   renounceRole: TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
+    [role: BytesLike, callerConfirmation: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -267,7 +267,7 @@ export interface AccessControlUpgradeable extends BaseContract {
   getFunction(
     nameOrSignature: "renounceRole"
   ): TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
+    [role: BytesLike, callerConfirmation: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -312,7 +312,7 @@ export interface AccessControlUpgradeable extends BaseContract {
   >;
 
   filters: {
-    "Initialized(uint8)": TypedContractEvent<
+    "Initialized(uint64)": TypedContractEvent<
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject

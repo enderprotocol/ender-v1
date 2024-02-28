@@ -2079,7 +2079,7 @@ export interface EnderBond extends BaseContract {
       EndMintResetEvent.OutputObject
     >;
 
-    "Initialized(uint8)": TypedContractEvent<
+    "Initialized(uint64)": TypedContractEvent<
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject

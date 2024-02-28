@@ -32,7 +32,7 @@ abstract contract BaseStrategy is IEnderStrategy, Initializable, OwnableUpgradea
      * @notice Initialize the contract and set the END token address
      */
     function initialize(address _treasury, address _strategy) external initializer {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
 
         setAddressBase(_strategy, AddressTypeBase.STRATEGY);
         setAddressBase(_treasury, AddressTypeBase.ENDTREASURY);

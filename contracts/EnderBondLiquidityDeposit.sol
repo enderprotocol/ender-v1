@@ -2,10 +2,10 @@
 pragma solidity ^0.8.18;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "contracts/interfaces/ISTETH.sol";
 
 contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
@@ -73,7 +73,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
     );
 
     function initialize(address _stEth, address _lido, address _signer, address _admin) public initializer {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         stEth = _stEth;
@@ -240,6 +240,6 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
      */
     function _verify(signData memory userSign) internal view returns (address) {
         bytes32 digest = _hash(userSign);
-        return ECDSAUpgradeable.recover(digest, userSign.signature);
+        return ECDSA.recover(digest, userSign.signature);
     }
 }

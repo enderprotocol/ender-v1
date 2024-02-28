@@ -69,9 +69,9 @@ event WhitelistChanged(address indexed whitelistingAddress, bool indexed action)
         emit TransactionStatusChanged(_status);
     }
 
-    function _transfer(address from, address to, uint256 value) internal override {
+    function _update(address from, address to, uint256 value) internal override {
         verifyStatus();
-        super._transfer(from, to, value);
+        super._update(from, to, value);
     }
 
     function burn(address from, uint256 value) public {

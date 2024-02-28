@@ -92,7 +92,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "amount",
+        name: "value",
         type: "uint256",
       },
     ],
@@ -161,7 +161,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "amount",
+        name: "value",
         type: "uint256",
       },
     ],
@@ -190,7 +190,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "amount",
+        name: "value",
         type: "uint256",
       },
     ],

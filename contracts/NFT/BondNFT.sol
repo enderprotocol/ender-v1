@@ -4,7 +4,6 @@ pragma solidity ^0.8.18;
 // Openzeppelin
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "../interfaces/IEnderBond.sol";
 
 error ZeroAddress();
@@ -15,9 +14,8 @@ error NotBondContract();
  * @dev An NFT contract for bonds.
  */
 contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
-    using CountersUpgradeable for CountersUpgradeable.Counter;
 
-    CountersUpgradeable.Counter private _tokenIdsCounter;
+    uint256 private _tokenIdsCounter;
 
     /**
      * @dev The address of the Bond contract.
@@ -32,9 +30,9 @@ contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     /**
      * @dev Emitted when the Bond contract address is changed.
      */
- event BondContractChanged(address indexed newBond);
-event NFTMinted(address indexed to, uint256 tokenId);
-event BaseURIChanged(string newURI);
+    event BondContractChanged(address indexed newBond);
+    event NFTMinted(address indexed to, uint256 tokenId);
+    event BaseURIChanged(string newURI);
 
     modifier onlyBond() {
         if (msg.sender != bond) {
@@ -50,7 +48,7 @@ event BaseURIChanged(string newURI);
      * @param baseURI_ Base Uri for bond NFT
      */
     function initialize(address bond_, string memory baseURI_) public initializer {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         __ERC721_init("Ender Bond NFT", "END-BOND");
 
         setBondContract(bond_);
@@ -64,18 +62,18 @@ event BaseURIChanged(string newURI);
      * @return newTokenId The token ID of the minted token.
      */
     function mint(address to) external onlyBond returns (uint256 newTokenId) {
-        _tokenIdsCounter.increment();
-        newTokenId = _tokenIdsCounter.current();
+        _tokenIdsCounter++;
+        newTokenId = _tokenIdsCounter;
 
         _mint(to, newTokenId);
          emit NFTMinted(to, newTokenId);
     }
 
-    function _transfer(address from, address to, uint256 tokenId) internal override {
+    function _safeTransfer(address from, address to, uint256 tokenId, bytes memory data) internal override {
         if (from != address(0) && to != address(0)) {
             IEnderBond(bond).deductFeesFromTransfer(tokenId);
         }
-        super._transfer(from, to, tokenId);
+        super._safeTransfer(from, to, tokenId, data);
     }
 
     //  function burn(uint256 _tokenId) external onlyBond  {
