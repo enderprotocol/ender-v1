@@ -23,9 +23,6 @@ module.exports = {
   etherscan: {
     apiKey: process.env.API_KEY_POLYGON,
   },
-  mocha: {
-    timeout: 200000, // 200 seconds max for running tests
-},
   solidity: {
     compilers: [
       {
