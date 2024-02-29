@@ -15,7 +15,6 @@ import "./interfaces/ILybraFinance.sol";
 import "./interfaces/IEnderBond.sol";
 
 error NotAllowed();
-// error ZeroAddress();
 error TransferFailed();
 error InvalidStrategy();
 error InvalidRequest();
@@ -187,6 +186,7 @@ event MintEndToUser(address indexed to, uint256 amount);
             epochDeposit += param.tokenAmt;
             fundsInfo[param.stakingToken] += param.tokenAmt;
         }
+        emit TreasuryDeposit(param.stakingToken, param.tokenAmt);
     }
 
     function _transferFunds(address _account, address _token, uint256 _amount) private {

@@ -171,8 +171,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         ISEndToken(endToken).transfer(msg.sender, reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
         emit unStake(msg.sender, amount);
-
-
      
     }
 

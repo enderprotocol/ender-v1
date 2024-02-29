@@ -74,6 +74,7 @@ contract EnderBond is
 
     mapping(uint256 => uint256) public secondsBondYieldShareIndex;
     mapping(uint256 => uint256[]) public dayToRefractionShareUpdation;
+    mapping(uint256 => uint256[]) public dayToYeildShareUpdation;
     mapping(uint256 => uint256) public secondsRefractionShareIndex;
 
     mapping(uint256 => uint256[]) public dayToRefractionShareUpdationSend;
@@ -101,6 +102,7 @@ contract EnderBond is
     uint public interval;
     uint public lastTimeStamp;
     uint public lastSecOfRefraction;
+    uint public lastSecOfYeildUpdation;
     uint public lastSecOfSendReward;
     bool public isWhitelisted;
     bool public isSet;
@@ -153,9 +155,9 @@ event MinDepAmountSet(uint256 indexed newAmount);
 event TxFeesSet(uint256 indexed newTxFees);
 event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
 event BondFeeEnabledSet(bool indexed isEnabled);
-event depositEnableSet(bool indexed isEnabled);
-event withdrawPauseSet(bool indexed isEnabled);
-event bondPauseSet(bool indexed isEnabled);
+event DepositEnableSet(bool indexed isEnabled);
+event WithdrawPauseSet(bool indexed isEnabled);
+event BondPauseSet(bool indexed isEnabled);
 event BondableTokensSet(address indexed token, bool indexed isEnabled);
 event Deposit(address indexed sender, uint256 indexed tokenId, uint256 principal, uint256 maturity, address token);
 event Withdrawal(address indexed sender, uint256 indexed tokenId);
@@ -164,7 +166,7 @@ event StakingRewardsClaimed(address indexed sender, uint256 indexed tokenId, uin
 event RewardShareIndexUpdated(uint256 indexed newRewardShareIndex);
 event BondYieldShareIndexUpdated(uint256 indexed newBondYieldShareIndex);
 event EndMintReset();
-event newSigner(address _signer);
+event NewSigner(address _signer);
 event WhitelistChanged(bool indexed action);
 event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRewardSharePerUserIndex);
 event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
@@ -190,6 +192,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         lastTimeStamp = block.timestamp;
         lastDay = block.timestamp / SECONDS_IN_DAY;
         lastSecOfRefraction = block.timestamp;
+        lastSecOfYeildUpdation = block.timestamp;
         lastSecOfSendReward = block.timestamp;
         depositEnable = true; // for testing purpose
         isWithdrawPause = true; // for testing purpose
@@ -249,7 +252,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     function setsigner(address _signer) external onlyOwner {
         if (_signer == address(0)) revert ZeroAddress();
         signer = _signer;
-        emit newSigner(signer);
+        emit NewSigner(signer);
     }
 
     function setMinDepAmount(uint256 _amt) public onlyOwner {
@@ -288,7 +291,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
     function setBondFeeEnabled(bool _enabled) public onlyOwner {
         bondFeeEnabled = _enabled;
-        emit depositEnableSet(_enabled);
+        emit BondFeeEnabledSet(_enabled);
     }
 
     /**
@@ -297,7 +300,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
     function setDepositEnable(bool _enabled) public onlyOwner {
         depositEnable = _enabled;
-        emit BondFeeEnabledSet(_enabled);
+        emit DepositEnableSet(_enabled);
     }
 
     /**
@@ -306,7 +309,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
     function setWithdrawPause(bool _enabled) public onlyOwner {
         isWithdrawPause = _enabled;
-        emit withdrawPauseSet(_enabled);
+        emit WithdrawPauseSet(_enabled);
     }
 
     /**
@@ -315,7 +318,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
     function setBondPause(bool _enabled) public onlyOwner {
         bondPause = _enabled;
-        emit bondPauseSet(_enabled);
+        emit BondPauseSet(_enabled);
     }
 
     /**
@@ -360,8 +363,9 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
     function userInfoDepositContract(uint256[] memory index, signData memory userSign) external onlyOwner{
         if (index.length >= 0){
-            for (uint256 i = index[0]; i <= index.length; i++){
-                (address user, uint256 principal, uint256 bondFees, uint256 maturity) = depositContract.depositedIntoBond(index[i], address(this));
+            for (uint256 i = 0; i < index.length; i++){
+                // // console.log("i am here");
+                (address user, uint256 principal, uint256 bondFees, uint256 maturity) = depositContract.depositedIntoBond(index[i]);
                 deposit(user, principal, maturity, bondFees, stEth, userSign);
             }
         }
@@ -383,14 +387,18 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         address token,
         signData memory userSign
     ) public payable nonReentrant depositEnabled bondPaused returns (uint256 tokenId) {
-        if (principal < minDepositAmount) revert InvalidAmount();
-        if (maturity < 5 || maturity > 90) revert InvalidMaturity();
-        if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee > 10000) revert InvalidBondFee();
-        if(isWhitelisted){
-            address signAddress = _verify(userSign);
-            if(signAddress != signer || userSign.user != msg.sender) revert NotWhitelisted();
+        address _owner = owner();
+        if(msg.sender != _owner){               //When the deposit is made via deposit contract, needs to be reviewed
+            if (principal < minDepositAmount) revert InvalidAmount();
+            if (maturity < 5 || maturity > 90) revert InvalidMaturity();
+            if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
+            if (bondFee > 10000) revert InvalidBondFee();
+            if(isWhitelisted){
+                address signAddress = _verify(userSign);
+                if(signAddress != signer || userSign.user != msg.sender) revert NotWhitelisted();
+            }
         }
+        
         IEndToken(endToken).distributeRefractionFees();
         epochBondYieldShareIndex();                                                                                                 
         uint256 beforeBalance = IERC20(stEth).balanceOf(address(endTreasury));
@@ -404,11 +412,15 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             IERC20(stEth).transfer(address(endTreasury), IERC20(stEth).balanceOf(address(this)));                  
         } else {                                                                                                   
             // send directly to the ender treasury
-            IERC20(token).transferFrom(user, address(endTreasury), principal);                                
+
+            //When the deposit is made via deposit contract, needs to be reviewed
+            if(msg.sender == _owner)IERC20(token).transferFrom(address(depositContract), address(endTreasury), principal);   
+            else IERC20(token).transferFrom(user, address(endTreasury), principal);                                
         }
         uint256 afterBalance = IERC20(stEth).balanceOf(address(endTreasury)); 
         principal = afterBalance - beforeBalance;                                                                                
-        tokenId = _deposit(user, principal, maturity, token, bondFee);                                                              
+        tokenId = _deposit(user, principal, maturity, token, bondFee);   
+                                                               
         // IEnderStaking(endStaking).epochStakingReward(stEth);
         emit Deposit(user, tokenId, principal, maturity, token);
     }
@@ -421,11 +433,11 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         uint256 bondFee
     ) private returns (uint256 tokenId) {
         endTreasury.depositTreasury(IEnderBase.EndRequest(user, token, principal), getLoopCount());
-        console.log("Amount required to withdraw from st:- ",amountRequired);    
+        // console.log("Amount required to withdraw from st:- ",amountRequired);    
         // mint bond nft                                                                      
         tokenId = bondNFT.mint(user);                                                                          
         bondIdAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY].push(tokenId);
-        uint256 refractionPrincipal = calculateRefractionData(principal, maturity, tokenId, bondFee);          
+        uint256 refractionPrincipal = calculateRefractionData(user, principal, maturity, tokenId, bondFee);          
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;                                         
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;                                                                                      
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;                                                                                                                                 
@@ -449,6 +461,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             0,
             0
         );
+        // console.log("final maturity second", bonds[tokenId].startTime+maturity*SECONDS_IN_DAY, tokenId);
     }
 
     /**
@@ -470,14 +483,14 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
      */
     function _withdraw(uint256 _tokenId) private {
-        Bond storage bond = bonds[_tokenId];
+        Bond memory bond = bonds[_tokenId];
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (block.timestamp <= bond.startTime + (bond.maturity * SECONDS_IN_DAY)) revert BondNotMatured();
         claimRewards(_tokenId);
-        bond.withdrawn = true;
+        bonds[_tokenId].withdrawn = true;
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, (bond.principal * (10000 - bond.bondFee)) / 10000 ), getLoopCount());
         //todo need to check this
-        dayBondYieldShareIndex[bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId]; 
+        dayBondYieldShareIndex[(bonds[_tokenId].startTime/SECONDS_IN_DAY) + bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId]; 
        
         totalBondPrincipalAmount -= bond.depositPrincipal;
 
@@ -492,14 +505,14 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
     function claimRewards(uint256 _tokenId) public {
         epochRewardShareIndexByPass();
-        console.log("epoch");
+        // console.log("epoch");
         epochBondYieldShareIndex();
         epochRewardShareIndexSendByPass();
         Bond memory bond = bonds[_tokenId];
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         IEndToken(endToken).distributeRefractionFees();
         uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
-        console.log("userReward:- ", reward);
+        // console.log("userReward:- ", reward);
         endTreasury.mintEndToUser(msg.sender, reward);
         userBondYieldShareIndex[_tokenId] = bondYieldShareIndex;
         if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) {
@@ -508,11 +521,16 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 msg.sender, refractionReward
             );
             rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
+            // console.log("Refraction reward--------------", refractionReward);
+            emit RefractionRewardsClaimed(msg.sender, _tokenId, refractionReward);
+
         }
         if(rewardShareIndexSend != rewardSharePerUserIndexSend[_tokenId]){ 
             uint256 sEndTokenReward = calculateStakingReward(_tokenId, bond.stakingSendIndex);
             ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
             rewardSharePerUserIndexSend[_tokenId] = rewardShareIndexSend;
+            emit StakingRewardsClaimed(msg.sender, _tokenId, reward);
+
         }
         emit ClaimRewards(msg.sender, reward, _tokenId);
     }
@@ -522,7 +540,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         if (currentDay == lastDay) return withdrawAmntFromSt = 0;
         else{
             for (uint256 i = lastDay + 1; i <= currentDay; i++) {
-                ///@dev loop will start from the first day of the deplyment.
+                ///@dev loop will start from the first day of the deployment.
                 /// minimum deposit is for 7 days. So it will cover the 4 days gaps in below condition. 
                 if(bondIdAtMaturity[i].length > 0){
                     for(uint256 j = 0; j < bondIdAtMaturity[i].length; j++){
@@ -596,13 +614,13 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     function epochRewardShareIndexByPass() internal{
 
         uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
-        console.log("epochRewardShareIndexByPass", lastSecOfRefraction / SECONDS_IN_DAY, dayToRefractionShareUpdation[timeNow].length, timeNow);
+        // console.log("epochRewardShareIndexByPass", lastSecOfRefraction / SECONDS_IN_DAY, dayToRefractionShareUpdation[timeNow].length, timeNow);
         if( lastSecOfRefraction / SECONDS_IN_DAY == timeNow && dayToRefractionShareUpdation[timeNow].length == 0){
                 dayToRefractionShareUpdation[timeNow].push(lastSecOfRefraction);
             }else{
                 uint day = lastSecOfRefraction / SECONDS_IN_DAY;
                 for(uint i = day+1; i <= timeNow; i++){
-                    console.log("i",i);
+                    // console.log("i",i);
                     dayToRefractionShareUpdation[i].push(lastSecOfRefraction);
                 }
             }
@@ -673,7 +691,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 high = mid - 1;
             }
         }
-        console.log("ARR[LOW]", arr[low]);
+        // // console.log("ARR[LOW]", arr[low]);
         if (arr[low] > _totalMaturity) {
             return arr[low];
         } else if (arr[high] < _totalMaturity) {
@@ -687,16 +705,30 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */ 
     function epochBondYieldShareIndex() public {
-        console.log("totalBondPrincipalAmount - depositAmountRequired",totalBondPrincipalAmount ,depositAmountRequired);
+        // console.log("totalBondPrincipalAmount - depositAmountRequired",totalBondPrincipalAmount ,depositAmountRequired);
         if(totalBondPrincipalAmount - depositAmountRequired != 0){
             uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
             uint256 finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired);
             uint256 _endMint = (finalRewardPrincipal * 1000);
             endMint += _endMint;
             bondYieldShareIndex = bondYieldShareIndex + ((_endMint) / finalRewardPrincipal);
+
+            console.log("=-----------",lastSecOfYeildUpdation);
+            if( lastSecOfYeildUpdation / SECONDS_IN_DAY == timeNow ){
+                if(dayToYeildShareUpdation[timeNow].length == 0) dayToYeildShareUpdation[timeNow].push(lastSecOfYeildUpdation);
+                dayToYeildShareUpdation[timeNow].push(block.timestamp);
+            }else{
+                uint day = lastSecOfYeildUpdation / SECONDS_IN_DAY;
+                for(uint i = day+1; i <= timeNow; i++){
+                    dayToYeildShareUpdation[i].push(lastSecOfYeildUpdation);
+                }
+            }
+
+            lastSecOfYeildUpdation = block.timestamp;
             dayBondYieldShareIndex[timeNow] = bondYieldShareIndex;
-            secondsBondYieldShareIndex[timeNow] = bondYieldShareIndex;
-            console.log("bondYieldShareIndex, endMint, _endMint",bondYieldShareIndex, endMint, _endMint);
+            secondsBondYieldShareIndex[block.timestamp] = bondYieldShareIndex;
+            // console.log("timeNow", secondsBondYieldShareIndex[block.timestamp], block.timestamp);
+            // // console.log("bondYieldShareIndex, endMint, _endMint",bondYieldShareIndex, endMint, _endMint);
             emit BondYieldShareIndexUpdated(bondYieldShareIndex);
         }
     }
@@ -709,12 +741,13 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @return rewardPrinciple The principle amount used in reward calculations.
      */
     function calculateRefractionData(
+        address user,
         uint256 _principle,
         uint256 _maturity,
         uint256 _tokenId,
         uint256 _bondfee
     ) internal returns (uint256 rewardPrinciple) {
-        if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
+        if ( bondNFT.ownerOf(_tokenId) != user) revert NotBondUser();
         uint avgRefractionIndex = _bondfee != 0 ? 
             100 + ((rateOfChange * _bondfee * (_maturity - 1)) / (2 * 1000000)) :
             100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
@@ -788,16 +821,14 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
                 if (rewardShareIndex == rewardSharePerUserIndex[_tokenId]) revert NoRewardCollected();
                 if (dayToRewardShareIndex[(block.timestamp / SECONDS_IN_DAY)] != 0 && block.timestamp / SECONDS_IN_DAY == bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)){ 
-                    console.log("rewardPrincipal * (userS - rewardSharePerUserIndex[_tokenId]", (rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
                     reward = ((rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
                     return reward;
                 } else {
                     uint256 sTime;
-                    console.log("getLoop", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
                     if(dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)].length == 1){
                         sTime = dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)][0];
                     }else{
-                        // console.log("Hello Hi there", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
+                        // // console.log("Hello Hi there", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
                         sTime = findClosestS(
                             dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)],
                             ((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)
@@ -820,20 +851,33 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
     function calculateBondRewardAmount(uint256 _tokenId, uint256 precalUsers) public view returns (uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
-        // console.log("is Set:- ", isSet);
         if (precalUsers != 0) {
             _reward = (bond.depositPrincipal * (precalUsers - userBondYieldShareIndex[_tokenId]));
         } else {
             if (isSet) {
-                if (dayBondYieldShareIndex[bonds[_tokenId].maturity] == 0) {
-                    console.log("calculateBondRewardAmount:- ", _reward, bondYieldShareIndex, userBondYieldShareIndex[_tokenId]);
+                if (dayBondYieldShareIndex[((bonds[_tokenId].startTime/SECONDS_IN_DAY)+bonds[_tokenId].maturity)] == 0) {
                     _reward = (bond.depositPrincipal *
                         (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
                 } else {
-                    uint256 userS = secondsBondYieldShareIndex[((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)] == 0 ?
-                        secondsBondYieldShareIndex[((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime) - 1] :
-                        secondsBondYieldShareIndex[((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)];
-                        _reward = (bond.depositPrincipal * (userS - userBondYieldShareIndex[_tokenId]));
+                        // console.log("-------maturity second---------",((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime));
+                        // uint256 userS = secondsBondYieldShareIndex[((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)] == 0 ?
+                        // secondsBondYieldShareIndex[((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime) - 1] :
+                        // secondsBondYieldShareIndex[((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)];
+                        // // console.log("calculateBondRewardAmount:- ", userBondYieldShareIndex[_tokenId], userS);
+                        // _reward = (bond.depositPrincipal * (userS - userBondYieldShareIndex[_tokenId]));
+
+                        uint256 sTime;
+                        if(dayToYeildShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)].length == 1){
+                        sTime = dayToYeildShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)][0];
+                        }else{
+                        // // console.log("Hello Hi there", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
+                        sTime = findClosestS(
+                            dayToYeildShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)],
+                            ((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)
+                        );
+                    }
+                    uint256 userS = secondsBondYieldShareIndex[sTime];
+                    _reward = (bond.depositPrincipal * (userS - userBondYieldShareIndex[_tokenId]));
                 }
             } else {
                 revert NotAllowed();
@@ -876,6 +920,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     function resetEndMint() external{
         if(msg.sender != address(endTreasury)) revert NoTreasury();
         endMint = 0;
+        emit EndMintReset();
     }
 
     function setAvailableBondFee(uint amount) external {

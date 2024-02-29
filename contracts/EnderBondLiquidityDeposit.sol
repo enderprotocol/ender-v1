@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import "contracts/interfaces/ISTETH.sol";
+import "hardhat/console.sol";
 
 contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     string private constant SIGNING_DOMAIN = "depositContract";
@@ -199,7 +200,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
      */
     function depositedIntoBond(
         uint256 _index
-    ) external onlyBond returns (address user, uint256 principal, uint256 bondFees, uint256 maturity) {
+    ) external  returns (address user, uint256 principal, uint256 bondFees, uint256 maturity) {
         principal = IStEth(stEth).getPooledEthByShares(bonds[_index].principalAmount);
         emit userInfo(
             bonds[_index].user,

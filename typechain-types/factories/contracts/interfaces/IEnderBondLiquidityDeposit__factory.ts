@@ -16,11 +16,6 @@ const _abi = [
         name: "index",
         type: "uint256",
       },
-      {
-        internalType: "address",
-        name: "_bond",
-        type: "address",
-      },
     ],
     name: "depositedIntoBond",
     outputs: [

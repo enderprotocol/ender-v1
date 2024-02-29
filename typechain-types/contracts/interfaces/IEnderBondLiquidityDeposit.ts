@@ -8,7 +8,6 @@ import type {
   FunctionFragment,
   Result,
   Interface,
-  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -26,7 +25,7 @@ export interface IEnderBondLiquidityDepositInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "depositedIntoBond",
-    values: [BigNumberish, AddressLike]
+    values: [BigNumberish]
   ): string;
 
   decodeFunctionResult(
@@ -79,7 +78,7 @@ export interface IEnderBondLiquidityDeposit extends BaseContract {
   ): Promise<this>;
 
   depositedIntoBond: TypedContractMethod<
-    [index: BigNumberish, _bond: AddressLike],
+    [index: BigNumberish],
     [
       [string, bigint, bigint, bigint] & {
         user: string;
@@ -98,7 +97,7 @@ export interface IEnderBondLiquidityDeposit extends BaseContract {
   getFunction(
     nameOrSignature: "depositedIntoBond"
   ): TypedContractMethod<
-    [index: BigNumberish, _bond: AddressLike],
+    [index: BigNumberish],
     [
       [string, bigint, bigint, bigint] & {
         user: string;

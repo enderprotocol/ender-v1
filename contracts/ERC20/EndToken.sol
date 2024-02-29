@@ -12,11 +12,7 @@ import "hardhat/console.sol";
 error ZeroAddress();
 error InvalidParam();
 error InvalidEarlyEpoch();
-error ZeroFeeCollected();
-error ThreeMonthVestingNotComplete();
 error ZeroAmount();
-error MoreThanMintAmount();
-error VestingNotCompleted();
 error WaitingTimeNotCompleted();
 
 /**
@@ -30,18 +26,9 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     uint256 public refractionFeePercentage;
     uint256 public refractionFeeTotal;
 
-    uint256 public prevAmount;
-
-    uint256 public todayAmount;
-
     uint256 private lastTransfer;
 
     uint256 public lastEpoch;
-
-    uint256 public mintPrec;
-
-    uint256 public currentMintCount;
-    uint lastYear;
 
     //Mint
     uint256 public mintFee;
@@ -49,6 +36,8 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     uint256 public mintCount;
 
     address public enderBond;
+
+    uint256 public lastYear;
 
     struct VestAmount {
         uint256 totalAmount;
@@ -63,14 +52,12 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     mapping(address => bool) public excludeWallets;
 
     //mint
-
     mapping(uint256 => uint256) public vestedAmounts; // count => amount
     mapping(uint256 => uint256) public vestedTime; // count => time
     mapping(uint256 => VestAmount) public yearlyVestAmount;
 
     event TreasuryContractChanged(address indexed newTreasury);
     event FeeUpdated(uint256 fee);
-    event DayfeeUpdated(uint256 amount, uint256 updateTime);
     event RefractionFeesDistributed(address indexed to, uint256 indexed amount);
     event MintAndVest(uint256 time, uint256 mintAmount);
     event GetMintedEnd(uint256 time, uint256 withdrawAmount);
