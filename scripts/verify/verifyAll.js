@@ -1,15 +1,15 @@
-const EndToken =  "0x4d67b57b73DfAD4C27dEE8bCee4392d381FAB956"//
-const EnderBond =   "0x6995c8a643bf95739708e318ffd32c557edbe168" //
-const SEndToken ="0xf40eb2ada82d7be2621152f4aaa5d6838b8b7a50"
-const BondNFT =   "0x383e31361c03a84afc7d22e5e5381eea04946f8d"
-const EnderTreasury =   "0xdf9f3f68d5a70d1692e3a5c8ea93c3446a46fa15"  
-const EnderStaking =   "0x38504A7A5b48f6493065BEa5C5fCe3d4b3DADD7e" 
+const EndToken =  "0xaDb1dAa108bBB67EAD6D2ce0Dfca766551D21136" //
+const EnderBond =   "0x8fc9740707FaC3C327ef8AC60f10613e9Ee35468"// 
+const SEndToken ="0x7cC9546b5C8a0b898b8c8A571BAe8B1061A6f7A7" //
+const BondNFT =   "0xf15a811a70fDaE327547C5C66da39483c8470E13"//
+const EnderTreasury =   "0x68C4c3E919584Db95779e3437d6421B9dEda90fD"//  
+const EnderStaking =   "0xe1F63899584D5d09DC483CA9Cce963eCa2D9404b"// 
 const Weth =   "0x94D818e0B85F7b1D3D38871C0D58758A23FF9CcB"
-const MockStEth = "0x2cDc4e31844b27283D700685ef504E3b91fEA00F" 
+const MockStEth = "0x3C3a738EdA4bB5E2003e128f174CF0d0A7653a2D"// 
 const EnderLidoStrategy =   "0x9F306B7119F24e78A286265905E80af7a318f3AD"
 const EnderOracle = "0x4CE5090196f000C6C486af65af8b55A98bBC728a"
 const depositContract = "0xCcb2374039fB1937A65a2233a130391A1643EbE5"
-const InstaDapp = "0x896799A36F227090b0774aBFb9e5E171575A22bF" 
+const InstaDapp = "0x4407422216Be505770be35b6e108dD9AbDA80f1B" //
  
 async function main() {
     try {
@@ -40,17 +40,17 @@ async function main() {
         // });
         // await hre.run("verify:verify", {
         //     address: InstaDapp,
-        //     constructorArguments: ["InstaToken", "Inst", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", "0xd8BEf5b8e0a54C279Ac03258941a214bA68Ed5a1"],
+        //     constructorArguments: ["InstaToken", "Inst", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9", "0x3C3a738EdA4bB5E2003e128f174CF0d0A7653a2D"],
         //     contract: "contracts/strategy/instadapp/instadappLite.sol:StinstaToken",
         // });
-        await hre.run("verify:verify", {
-            address: EndToken,
-            contract: "contracts/ERC20/EndToken.sol:EndToken",
-        });
         // await hre.run("verify:verify", {
-        //     address: "0xDec056C27ad12d3Eb405230086d3c9eDf157bC1A",
-        //     contract: "contracts/ERC20/SEndToken.sol:SEndToken",
+        //     address: EndToken,
+        //     contract: "contracts/ERC20/EndToken.sol:EndToken",
         // });
+        await hre.run("verify:verify", {
+            address: SEndToken,
+            contract: "contracts/ERC20/SEndToken.sol:SEndToken",
+        });
 
         // await hre.run("verify:verify", {
         //     address: EnderBond,

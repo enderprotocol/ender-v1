@@ -18,7 +18,6 @@ import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEndToken.sol";
 import "./interfaces/IEnderStaking.sol";
 
-error ArrayLengthNotEqual();
 error BondAlreadyWithdrawn();
 error NotWhitelisted();
 error BondNotMatured();
