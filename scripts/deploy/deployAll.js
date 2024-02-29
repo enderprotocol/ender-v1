@@ -146,8 +146,8 @@ await sleep(9000);
 enderStakingAddress = await enderStaking.getAddress();
 console.log("enderStakingAddress-->", enderStakingAddress);
 
-// const EnderProxy = "0x1C8Cd95885d72e497C4b9BAebedCCa4f948F9cfb";
-// await upgrades.upgradeProxy(EnderProxy,EnderBond);
+// const EndTokenProxy = "0x5968b7eCdA2b9D912Caf4645aA046556644661A7";
+// await upgrades.upgradeProxy(EndTokenProxy,EndToken);
 // console.log("Ender Upgraded");
 
 enderTreasury = await upgrades.deployProxy(
