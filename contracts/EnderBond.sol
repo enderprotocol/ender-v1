@@ -712,7 +712,6 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             endMint += _endMint;
             bondYieldShareIndex = bondYieldShareIndex + ((_endMint) / finalRewardPrincipal);
 
-            console.log("=-----------",lastSecOfYeildUpdation);
             if( lastSecOfYeildUpdation / SECONDS_IN_DAY == timeNow ){
                 if(dayToYeildShareUpdation[timeNow].length == 0) dayToYeildShareUpdation[timeNow].push(lastSecOfYeildUpdation);
                 dayToYeildShareUpdation[timeNow].push(block.timestamp);

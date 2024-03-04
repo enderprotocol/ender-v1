@@ -227,6 +227,5 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
             // _transfer(address(this), enderBond, feesToTransfer);
             emit RefractionFeesDistributed(enderBond, feesToTransfer);
         }
-        console.log("Total Refraction fees outside if block:- ", feesToTransfer);
     }
 }

@@ -1094,8 +1094,8 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       let maturity = 90;
       let bondFee = 1;
       const depositAmountEnd = expandTo18Decimals(5);
-      const depositPrincipalStEth = expandTo18Decimals(1);
-      // const depositPrincipalStEth = 100000000000000
+      // const depositPrincipalStEth = expandTo18Decimals(1);
+      const depositPrincipalStEth = 100000000000000
       await endToken.setFee(20);
 
 
@@ -1212,8 +1212,8 @@ describe.only("EnderBond Deposit and Withdraw", function () {
           depositPrincipalStEth,
           maturity,
           bondFee,
-          0x0000000000000000000000000000,
-          [signer.address, "0", sig1], { value: ethers.parseEther("1.0") }
+          sEndTokenAddress,
+          [signer.address, "0", sig1]
         )
       ).to.be.revertedWithCustomError(enderBond, "NotBondableToken");
 
