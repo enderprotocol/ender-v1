@@ -66,7 +66,9 @@ export interface EnderBondInterface extends Interface {
       | "endMint"
       | "epochBondYieldShareIndex"
       | "epochRewardShareIndex"
+      | "epochRewardShareIndexByPass"
       | "epochRewardShareIndexForSend"
+      | "epochRewardShareIndexSendByPass"
       | "getAddress"
       | "getInterest"
       | "getLoopCount"
@@ -256,8 +258,16 @@ export interface EnderBondInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "epochRewardShareIndexByPass",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "epochRewardShareIndexForSend",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "epochRewardShareIndexSendByPass",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getAddress",
@@ -540,7 +550,15 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "epochRewardShareIndexByPass",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "epochRewardShareIndexForSend",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "epochRewardShareIndexSendByPass",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getAddress", data: BytesLike): Result;
@@ -1269,8 +1287,16 @@ export interface EnderBond extends BaseContract {
     "nonpayable"
   >;
 
+  epochRewardShareIndexByPass: TypedContractMethod<[], [void], "nonpayable">;
+
   epochRewardShareIndexForSend: TypedContractMethod<
     [_reward: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  epochRewardShareIndexSendByPass: TypedContractMethod<
+    [],
     [void],
     "nonpayable"
   >;
@@ -1634,8 +1660,14 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "epochRewardShareIndex"
   ): TypedContractMethod<[_reward: BigNumberish], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "epochRewardShareIndexByPass"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "epochRewardShareIndexForSend"
   ): TypedContractMethod<[_reward: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "epochRewardShareIndexSendByPass"
+  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "getAddress"
   ): TypedContractMethod<[_type: BigNumberish], [string], "view">;

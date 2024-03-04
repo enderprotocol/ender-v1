@@ -57,7 +57,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         stakingEnable = true; // for testing purpose
         unstakeEnable = true;   // for testing purpose
         stakingContractPause = true; // for testing purpose
-        isWhitelisted = true; // for testing purpose
+        isWhitelisted = false; // for testing purpose
         setAddress(_end, 3);
         setAddress(_sEnd, 4);
         setAddress(_stEth, 5);
@@ -133,7 +133,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
      * @param amount  stake amount
      */
     function stake(uint256 amount, signData memory userSign) external stakingEnabled stakingContractPaused{
-        console.log("Inside Stake");
+        // console.log("Inside Stake");
         if (amount == 0) revert InvalidAmount();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
@@ -142,7 +142,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         console.log("\nEnd token deposit:- ", amount);
         if(ISEndToken(endToken).balanceOf(address(this)) == 0){
             uint256 sEndAmount = calculateSEndTokens(amount);
-            console.log("Receipt token:- ", sEndAmount);
+            console.log("\nReceipt token:- ", sEndAmount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
             ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
             calculateRebaseIndex();
@@ -179,10 +179,14 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         if(_asset != stEth) revert NotAllowed();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         lastRebaseReward = totalReward;
+
+        // console.log("Rebasereward", totalReward);
         if(totalReward > 0) {
+        // console.log("tytyutyuuugyugu",totalReward);
             rebaseRefractionReward = (totalReward * bondRewardPercentage) / 100;
-            console.log("Rebase reward for bond holder's:- ", rebaseRefractionReward);
             uint256 sendTokens = calculateSEndTokens(rebaseRefractionReward);
+            console.log("Rebase reward for bond holder's:- ", sendTokens);
+            IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
             ISEndToken(sEndToken).mint(enderBond, sendTokens);
             ISEndToken(endToken).mint(address(this), totalReward);
             emit EpochStakingReward(_asset, totalReward, rebaseRefractionReward, sendTokens);  

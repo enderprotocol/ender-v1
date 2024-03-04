@@ -6,6 +6,7 @@ const { EigenLayerStrategyManagerAddress } = require("../utils/common");
 const exp = require("constants");
 const { sign } = require("crypto");
 const { log } = require("console");
+const { increase } = require("@openzeppelin/test-helpers/src/time");
 
 const baseURI = "https://endworld-backend-git-dev-metagaming.vercel.app/nft/metadata/";
 const MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -13,6 +14,10 @@ const ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000
 
 function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
+}
+
+function expandTo15Decimals(n) {
+  return ethers.parseUnits(n.toString(), 15);
 }
 
 describe("Ender Bond deposit and withdraw", async() => {
@@ -25,6 +30,7 @@ describe("Ender Bond deposit and withdraw", async() => {
     signer2, 
     signer3, 
     signer4,
+    signer5,
 
     stEthAddress,
     enderBondAddress,
@@ -49,6 +55,17 @@ describe("Ender Bond deposit and withdraw", async() => {
     signature1, 
     signature2,
     signature3,
+    stakingSignature1,
+
+    tokenId_1_1,
+    tokenId_1_2,
+    tokenId_1_3,
+    tokenId_2_1,
+    tokenId_2_2,
+    tokenId_2_3,
+    tokenId_3_1,
+    tokenId_3_2,
+    tokenId_3_3,
 
     tokenId1,
     tokenId2,
@@ -66,7 +83,7 @@ describe("Ender Bond deposit and withdraw", async() => {
         const bondNftFactory = await ethers.getContractFactory("BondNFT");
     
         //Owner and signers addresses
-        [owner, signer, wallet, signer1, signer2, signer3, signer4] = await ethers.getSigners();
+        [owner, signer, wallet, signer1, signer2, signer3, signer4, signer5] = await ethers.getSigners();
     
         //delpoy stEth
         stEth = await stEthFactory.deploy();
@@ -152,7 +169,6 @@ describe("Ender Bond deposit and withdraw", async() => {
 
         await enderStaking.setAddress(enderBondAddress, 1);
         await enderStaking.setAddress(enderTreasuryAddress, 2);
-        await enderStaking.setAddress(stEthAddress, 6);
 
         await enderBond.setBondableTokens([stEthAddress], true);
         await enderBond.setAddress(enderTreasuryAddress, 1);
@@ -178,10 +194,15 @@ describe("Ender Bond deposit and withdraw", async() => {
     
         await enderBond.setBool(true);
 
+        await enderTreasury.setAddress(instadappLitelidoStaking, 5);
+        await enderTreasury.setStrategy([instadappLitelidoStaking], true);
+        await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
+
         //signature
         signature1 = await signatureDigest();
         signature2 = await signatureDigest1();
         signature3 = await signatureDigest2();
+        stakingSignature1 = await signatureDigestStaking1();
 
     });
 
@@ -274,7 +295,7 @@ describe("Ender Bond deposit and withdraw", async() => {
 
         });
 
-        it.only("deposit, claim refraction reward, withdraw", async() => {
+        it("deposit, claim refraction reward, withdraw", async() => {
           const maturity = 90;
           const bondFee = 500;
           const depositAmountEnd = expandTo18Decimals(5);
@@ -328,7 +349,7 @@ describe("Ender Bond deposit and withdraw", async() => {
 
         });
 
-        it.only("deposit, stake, stake reward, unstake, mature, withdraw", async() => {
+        it("deposit, stake, stake reward, unstake, mature, withdraw", async() => {
           const maturity = 90;
           const bondFee = 500;
           const depositAmountEnd = expandTo18Decimals(5);
@@ -347,34 +368,276 @@ describe("Ender Bond deposit and withdraw", async() => {
           await endToken.connect(owner).mint(signer2.address, depositAmountEnd);
           await endToken.connect(signer2).transfer(signer3.address, depositAmountEnd);
 
-          //distribute the collected refraction reward
-          await endToken.distributeRefractionFees();
+          //collect the accumulated refraction reward
+          await enderBond.connect(signer1).claimRewards(tokenId1);
 
           const stakeAmount = await endToken.balanceOf(signer1.address);
 
+          //allowing staking contract
+          endToken.connect(signer1).approve(enderStakingAddress, stakeAmount);
+
           //stake
-          enderStaking.stake(stakeAmount, [signer1.address, "0", signature1]);
+          await enderStaking.connect(signer1).stake(stakeAmount, [signer1.address, "0", stakingSignature1]);
 
           //deposit in statergy from treasury
-          await enderTreasury.setAddress(instadappLitelidoStaking, 5);
-          await enderTreasury.setStrategy([instadappLitelidoStaking], true);
-          await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
           await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, await stEth.balanceOf(enderTreasuryAddress));
+
+          //after 1 epoch
+          await passEpoch(1);
+
+          //rewards from statergy
+          await stEth.connect(signer3).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer3).transfer(instadappLiteAddress, depositPrincipalStEth);
+
+          //epoch reward share
+          await enderStaking.epochStakingReward(stEthAddress);
+
+          //unstake
+          await enderStaking.connect(signer1).unstake(await sEndToken.balanceOf(signer1.address));
+
+          expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(stakeAmount);
+
+          //collect the accumulated refraction reward
+          await enderBond.connect(signer1).claimRewards(tokenId1);
           
-          enderStaking.unstake(await sEndToken.balanceOf(signer1.address), [signer1.address, "0", signature1]);
-
-          expect(await endToken.balanceOf(signer1.address)).to.be.equal(stakeAmount);
-
+          expect(await sEndToken.balanceOf(signer1.address)).to.be.greaterThan(0);
+          
           //mature the bond
-          increaseTime(maturity);
-
+          passEpoch(maturity*3);
+          
           //balance of signer1 before withdrawal
           const balanceBefore =  await stEth.balanceOf(signer1.address);
 
           //withdraw
-          await withdrawAndSetup(signer1, tokenId1)
+          await withdrawAndSetup(signer1, tokenId1);
 
           expect(await stEth.balanceOf(signer1.address)).to.be.greaterThan(balanceBefore);
+
+        });
+
+        it.only("multiple deposits, multiple stakes, multiple claimrewards", async() => {
+          const maturity = 90;
+          const bondFee = 500;
+          const depositPrincipalStEth = expandTo18Decimals(1);
+          const depositAmountEnd = expandTo18Decimals(5);
+             
+
+          //mint stEth to signer1 and approve enderBond
+          await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
+
+          /*<-------------------------deposit by signer1(1.1)------------------->*/
+          expect(tokenId_1_1 = await depositAndSetup(signer1, depositPrincipalStEth, maturity, bondFee, [signer1.address, "0", signature1]))
+          .to
+          .changeTokenBalance(stEth, [signer1.address, enderTreasuryAddress], [-depositPrincipalStEth, depositPrincipalStEth]);
+
+          //token transfers to collect refraction reward 
+          await endToken.connect(owner).mint(signer4.address, depositAmountEnd);
+          await endToken.connect(signer4).transfer(signer5.address, depositAmountEnd);
+
+          //deposit in statergy from treasury
+          await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, await stEth.balanceOf(enderTreasuryAddress));
+
+          //rewards from statergy
+          await stEth.connect(signer3).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer3).transfer(instadappLiteAddress, depositPrincipalStEth);
+          
+          //2 days 
+          await passEpoch(2);
+
+          // signer1 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(1.1)--Claim:1-----------------------");
+          await enderBond.connect(signer1).claimRewards(tokenId_1_1);
+          console.log("--------------------------------------------------------");
+
+          /******************************************************************************** */
+
+          //token transfers to collect refraction reward 
+          await endToken.connect(owner).mint(signer4.address, depositAmountEnd);
+          await endToken.connect(signer4).transfer(signer5.address, depositAmountEnd);
+
+          //mint stEth to signer1 and approve enderBond
+          await stEth.connect(signer1).submit({ value: ethers.parseEther("2.0") });
+          await stEth.connect(signer1).approve(enderBondAddress, 2n*depositPrincipalStEth);
+
+          /*<-------------------------deposit by signer1(1.2)------------------->*/
+          expect(tokenId_1_2 = await depositAndSetup(signer1, 2n*depositPrincipalStEth, maturity, bondFee, [signer1.address, "0", signature1]))
+          .to
+          .changeTokenBalance(stEth, [signer1.address, enderTreasuryAddress], [-2n*depositPrincipalStEth, 2n*depositPrincipalStEth]);
+
+          //deposit in statergy from treasury
+          await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, await stEth.balanceOf(enderTreasuryAddress));
+          
+          
+          //rewards from statergy
+          await stEth.connect(signer3).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer3).transfer(instadappLiteAddress, depositPrincipalStEth);
+          
+          //token transfers to collect refraction reward 
+          await endToken.connect(owner).mint(signer4.address, depositAmountEnd);
+          await endToken.connect(signer4).transfer(signer5.address, depositAmountEnd);
+          
+          
+          //signer1 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(1.1)--Claim:2-----------------------");
+          await enderBond.connect(signer1).claimRewards(tokenId_1_1);
+          console.log("--------------------------------------------------------");
+          
+          //signer1 collects refraction + bondYeild  + rewards from statergy returns
+          console.log("--------------Token(1.2)--Claim:1-----------------------");
+          await enderBond.connect(signer1).claimRewards(tokenId_1_2);
+          console.log("--------------------------------------------------------");
+          
+          // enderTreasury.setNominalYield(20000);
+
+          await passEpoch(1);
+
+          //signer1 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(1.1)--Claim:3-----------------------");
+          await enderBond.connect(signer1).claimRewards(tokenId_1_1);
+          console.log("--------------------------------------------------------");
+          
+
+          //signer1 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(1.1)--Claim:2-----------------------");
+          await enderBond.connect(signer1).claimRewards(tokenId_1_2);
+          console.log("--------------------------------------------------------");
+
+          await passEpoch(3);
+
+          /******************************************************************************** */
+
+          //token transfers to collect refraction reward 
+          await endToken.connect(owner).mint(signer4.address, depositAmountEnd);
+          await endToken.connect(signer4).transfer(signer5.address, depositAmountEnd);
+
+          //mint stEth to signer1 and approve enderBond
+          await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer2).approve(enderBondAddress, depositPrincipalStEth);
+
+          /*<-------------------------deposit by signer1(1.2)------------------->*/
+          expect(tokenId_2_1 = await depositAndSetup(signer2, depositPrincipalStEth, maturity, bondFee, [signer2.address, "0", signature2]))
+          .to
+          .changeTokenBalance(stEth, [signer2.address, enderTreasuryAddress], [-depositPrincipalStEth, depositPrincipalStEth]);
+
+          /*<--------------------------Stake by signer 1------------------>*/
+          const stakeAmount = await endToken.balanceOf(signer1.address);
+
+          //allowing staking contract
+          endToken.connect(signer1).approve(enderStakingAddress, stakeAmount);
+
+          //stake
+          await enderStaking.connect(signer1).stake(stakeAmount, [signer1.address, "0", stakingSignature1]);
+
+          //signer2 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(2.1)--Claim:1-----------------------");
+          await enderBond.connect(signer2).claimRewards(tokenId_2_1);
+          console.log("--------------------------------------------------------");
+
+          /*<--------------------------Stake by signer 2------------------>*/
+
+          const stakeAmount2 = await endToken.balanceOf(signer2.address)
+
+          //allowing staking contract
+          endToken.connect(signer2).approve(enderStakingAddress, stakeAmount2);
+
+          //stake
+          await enderStaking.connect(signer2).stake(stakeAmount2, [signer2.address, "0", stakingSignature1]);
+
+          /*<-----------------Unstake by signer 1------------------>*/
+          await enderStaking.connect(signer1).unstake(await sEndToken.balanceOf(signer1.address));
+
+          expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(stakeAmount);
+
+          /*<-----------------Unstake by signer 2------------------>*/
+          await enderStaking.connect(signer2).unstake(await sEndToken.balanceOf(signer2.address));
+
+          expect(await endToken.balanceOf(signer2.address)).to.be.lessThanOrEqual(stakeAmount2);
+
+          //deposit in statergy from treasury
+          await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, await stEth.balanceOf(enderTreasuryAddress));
+          
+          //rewards from statergy
+          await stEth.connect(signer3).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer3).transfer(instadappLiteAddress, depositPrincipalStEth);
+
+          //signer1 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(1.1)--Claim:3-----------------------");
+          await enderBond.connect(signer1).claimRewards(tokenId_1_1);
+          console.log("--------------------------------------------------------");
+          
+          //signer1 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(1.2)--Claim:2-----------------------");
+          await enderBond.connect(signer1).claimRewards(tokenId_1_2);
+          console.log("--------------------------------------------------------");
+
+          //signer2 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(2.1)--Claim:1-----------------------");
+          await enderBond.connect(signer2).claimRewards(tokenId_2_1);
+          console.log("--------------------------------------------------------");
+
+          await passEpoch(1);
+
+          //signer1 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(1.1)--Claim:4-----------------------");
+          await enderBond.connect(signer1).claimRewards(tokenId_1_1);
+          console.log("--------------------------------------------------------");
+          
+          //signer1 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(1.2)--Claim:3-----------------------");
+          await enderBond.connect(signer1).claimRewards(tokenId_1_2);
+          console.log("--------------------------------------------------------");
+
+          //signer2 collects refraction + bondYeild + rewards from statergy returns
+          console.log("--------------Token(2.1)--Claim:2-----------------------");
+          await enderBond.connect(signer2).claimRewards(tokenId_2_1);
+          console.log("--------------------------------------------------------");
+
+          /******************************************************************************* */
+
+          //rewards from statergy
+          await stEth.connect(signer3).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer3).transfer(instadappLiteAddress, depositPrincipalStEth);
+
+          //token transfers to collect refraction reward 
+          await endToken.connect(owner).mint(signer4.address, depositAmountEnd);
+          await endToken.connect(signer4).transfer(signer5.address, depositAmountEnd);
+
+          await increaseTime(4);
+
+          //rewards from statergy
+          await stEth.connect(signer3).submit({ value: ethers.parseEther("2.0") });
+          await stEth.connect(signer3).transfer(instadappLiteAddress, 2n*depositPrincipalStEth);
+
+          //token transfers to collect refraction reward 
+          await endToken.connect(owner).mint(signer4.address, 5n*depositAmountEnd);
+          await endToken.connect(signer4).transfer(signer5.address, 5n*depositAmountEnd);
+
+          //rewards from statergy
+          await stEth.connect(signer3).submit({ value: ethers.parseEther("10.0") });
+          await stEth.connect(signer3).transfer(instadappLiteAddress, 10n*depositPrincipalStEth);
+
+          //token transfers to collect refraction reward 
+          await endToken.connect(owner).mint(signer4.address, 10n*depositAmountEnd);
+          await endToken.connect(signer4).transfer(signer5.address, 10n*depositAmountEnd);
+
+          await increaseTime(2);
+
+          //mint stEth to signer1 and approve enderBond
+          await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer2).approve(enderBondAddress, depositPrincipalStEth);
+
+          /*<-------------------------deposit by signer1(1.2)------------------->*/
+          expect(tokenId_2_2 = await depositAndSetup(signer2, depositPrincipalStEth, maturity, bondFee, [signer2.address, "0", signature2]))
+          .to
+          .changeTokenBalance(stEth, [signer2.address, enderTreasuryAddress], [-depositPrincipalStEth, depositPrincipalStEth]);
+
+          await increaseTime(90);
+          await passEpoch(1);
+
+          //withdraw
+          console.log("<------------------Withdraw------------------>")
+          await withdrawAndSetup(signer1, tokenId_1_1);
 
         });
     });
@@ -538,6 +801,45 @@ describe("Ender Bond deposit and withdraw", async() => {
           }
         )
         return sig;
+    }
+
+    async function signatureDigestStaking1() {
+      let sig = await signer.signTypedData(
+        {
+          name: "stakingContract",
+          version: "1",
+          chainId: 31337,
+          verifyingContract: enderStakingAddress,
+        },
+        {
+          userSign: [
+            {
+              name: 'user',
+              type: 'address',
+            },
+            {
+              name: 'key',
+              type: 'string',
+            },
+          ],
+        },
+        {
+          user: signer1.address,
+          key: "0",
+        }
+      )
+      return sig;
+    }
+
+    async function passEpoch(epoch){
+      while(epoch--){
+        await enderBond.epochBondYieldShareIndex();
+        await enderBond.epochRewardShareIndexByPass();
+        await enderBond.epochRewardShareIndexSendByPass();
+        await enderStaking.epochStakingReward(stEthAddress);
+        await enderBond.getLoopCount();
+        await increaseTime(1);
+      }
     }
    
     async function increaseTime(days) {
