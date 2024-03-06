@@ -519,7 +519,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 ///@dev loop will start from the first day of the deplyment.
                 /// minimum deposit is for 7 days. So it will cover the 4 days gaps in below condition. 
                 if(bondIdAtMaturity[i].length > 0){
-                    for(uint256 j; j < bondIdAtMaturity[i].length; ++j){
+                    for(uint256 j = 0; j < bondIdAtMaturity[i].length; ++j){
                         Bond memory bond = bonds[bondIdAtMaturity[i][j]];
                         depositAmountRequired += bond.depositPrincipal;
                         refractionAmountRequired += bond.refractionPrincipal;
@@ -527,7 +527,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                     }
                 }
                 if(bondIdAtMaturity[i+4].length > 0){
-                    for(uint256 j; j < bondIdAtMaturity[i+4].length; ++j){
+                    for(uint256 j = 0; j < bondIdAtMaturity[i+4].length; ++j){
                         Bond memory bond = bonds[bondIdAtMaturity[i+4][j]];
                         amountRequired += bond.principal;
                     }
