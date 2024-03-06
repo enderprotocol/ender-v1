@@ -57,7 +57,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         stakingEnable = true; // for testing purpose
         unstakeEnable = true;   // for testing purpose
         stakingContractPause = true; // for testing purpose
-        isWhitelisted = true; // for testing purpose
+        isWhitelisted = false; // for testing purpose
         setAddress(_end, 3);
         setAddress(_sEnd, 4);
         setAddress(_stEth, 5);
@@ -133,7 +133,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
      * @param amount  stake amount
      */
     function stake(uint256 amount, signData memory userSign) external stakingEnabled stakingContractPaused{
-        console.log("Inside Stake");
+        // console.log("Inside Stake");
         if (amount == 0) revert InvalidAmount();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
@@ -142,12 +142,13 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         console.log("\nEnd token deposit:- ", amount);
         if(ISEndToken(endToken).balanceOf(address(this)) == 0){
             uint256 sEndAmount = calculateSEndTokens(amount);
-            console.log("Receipt token:- ", sEndAmount);
+            console.log("\nReceipt token:- ", sEndAmount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
             ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
+            calculateRebaseIndex();
         } else {
             // epochStakingReward(stEth);
-            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
+            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);          
             uint256 sEndAmount = calculateSEndTokens(amount);
             console.log("Receipt token:- ", sEndAmount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
@@ -170,8 +171,6 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         ISEndToken(endToken).transfer(msg.sender, reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
         emit unStake(msg.sender, amount);
-
-
      
     }
 
@@ -180,10 +179,14 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         if(_asset != stEth) revert NotAllowed();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         lastRebaseReward = totalReward;
+
+        // console.log("Rebasereward", totalReward);
         if(totalReward > 0) {
+        // console.log("tytyutyuuugyugu",totalReward);
             rebaseRefractionReward = (totalReward * bondRewardPercentage) / 100;
-            console.log("Rebase reward for bond holder's:- ", rebaseRefractionReward);
             uint256 sendTokens = calculateSEndTokens(rebaseRefractionReward);
+            console.log("Rebase reward for bond holder's:- ", sendTokens);
+            IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
             ISEndToken(sEndToken).mint(enderBond, sendTokens);
             ISEndToken(endToken).mint(address(this), totalReward);
             emit EpochStakingReward(_asset, totalReward, rebaseRefractionReward, sendTokens);  
@@ -196,7 +199,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
             sEndTokens = _endAmount;
             return sEndTokens;
         } else{
-            sEndTokens = (_endAmount * 10e18/ rebasingIndex); 
+            sEndTokens = (_endAmount * 1e18/ rebasingIndex); 
             return sEndTokens; 
         }
     }
@@ -205,16 +208,16 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         uint256 endBalStaking = ISEndToken(endToken).balanceOf(address(this));
         uint256 sEndTotalSupply = ISEndToken(sEndToken).totalSupply();
         if (endBalStaking == 0 || sEndTotalSupply == 0) {
-            rebasingIndex = 10e18;
+            rebasingIndex = 1e18;
         } else {
-            rebasingIndex = endBalStaking * 10e18/ sEndTotalSupply;
+            rebasingIndex = endBalStaking * 1e18/ sEndTotalSupply;
         }
     }
 
     function claimRebaseValue(uint256 _sendAmount) internal view returns (uint256 reward) {
         console.log("rebasingIndex:- ", rebasingIndex);
 
-        reward = (_sendAmount * rebasingIndex) / 10e18;
+        reward = (_sendAmount * rebasingIndex) / 1e18;
     }
 
     function _hash(signData memory userSign) internal view returns (bytes32) {

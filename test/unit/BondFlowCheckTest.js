@@ -19,7 +19,7 @@ function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
 
-describe.only("EnderBond Deposit and Withdraw", function () {
+describe("EnderBond Deposit and Withdraw", function () {
   let owner, signer, signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
@@ -429,7 +429,7 @@ console.log("stEthBlanceOfTreasury",stEthBlanceOfTreasury);
 });
 
 
-it.only("Claim Reward ", async () => {
+it("Claim Reward ", async () => {
 
   console.log("Inside my First Test Case ");
 const maturity = 90;
@@ -451,8 +451,8 @@ await stEth
 
 await enderTreasury.setAddress(instadappLiteAddress, 5);
 await sleep(1200);
-let sig1 = signatureDigest();
-
+let sig1 = await signatureDigest();
+console.log("==========",sig1);
       // mint to signer1
       await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
 
@@ -494,6 +494,201 @@ console.log("stEthBlanceOfTreasury",stEthBlanceOfTreasury);
 
 
 });
+
+it("Deposit Revert InvalidAmount()", async () => {
+  let maturity = 90;
+  let bondFee = 1;
+  const depositAmountEnd = expandTo18Decimals(5);
+  const depositPrincipalStEth = expandTo18Decimals(1);
+  // const depositPrincipalStEth = 10000000000
+  await endToken.setFee(20);
+
+
+  expect(await enderBond.rewardShareIndex()).to.be.equal(0);                                                   
+  await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+  console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
+
+  await stEth
+  .connect(signer1)
+  .approve(enderBondAddress, depositPrincipalStEth);
+
+  await enderTreasury.setAddress(instadappLiteAddress, 5);
+  await sleep(1200);
+  let sig1 = signatureDigest();    
+  await expect(
+    enderBond.connect(signer1).deposit(
+      signer1.address,
+      10000,
+      maturity,
+      bondFee,
+      stEthAddress,
+      [signer1.address, "0", sig1]
+    )
+  ).to.be.revertedWithCustomError(enderBond, "InvalidAmount");
+
+});
+
+it("Deposit Revert InvalidMaturity() maturity >90", async () => {
+  let maturity = 91;
+  let bondFee = 1;
+  const depositAmountEnd = expandTo18Decimals(5);
+  const depositPrincipalStEth = expandTo18Decimals(1);
+  await endToken.setFee(20);
+
+
+  expect(await enderBond.rewardShareIndex()).to.be.equal(0);                                                   
+  await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+  console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
+
+  await stEth
+  .connect(signer1)
+  .approve(enderBondAddress, depositPrincipalStEth);
+
+  await enderTreasury.setAddress(instadappLiteAddress, 5);
+  await sleep(1200);
+  let sig1 = signatureDigest();    
+  await expect(
+    enderBond.connect(signer1).deposit(
+      signer1.address,
+      depositPrincipalStEth,
+      maturity,
+      bondFee,
+      stEthAddress,
+      [signer1.address, "0", sig1]
+    )
+  ).to.be.revertedWithCustomError(enderBond, "InvalidMaturity");
+
+
+});
+
+it("Deposit Revert InvalidMaturity() maturity >90", async () => {
+  let maturity = 91;
+  let bondFee = 1;
+  const depositAmountEnd = expandTo18Decimals(5);
+  const depositPrincipalStEth = expandTo18Decimals(1);
+  await endToken.setFee(20);
+
+
+  expect(await enderBond.rewardShareIndex()).to.be.equal(0);                                                   
+  await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+  console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
+
+  await stEth
+  .connect(signer1)
+  .approve(enderBondAddress, depositPrincipalStEth);
+
+  await enderTreasury.setAddress(instadappLiteAddress, 5);
+  await sleep(1200);
+  let sig1 = signatureDigest();    
+  await expect(
+    enderBond.connect(signer1).deposit(
+      signer1.address,
+      depositPrincipalStEth,
+      maturity,
+      bondFee,
+      stEthAddress,
+      [signer1.address, "0", sig1]
+    )
+  ).to.be.revertedWithCustomError(enderBond, "InvalidMaturity");
+
+
+});
+
+it("Deposit Revert NotBondableToken() ", async () => {
+  let maturity = 90;
+  let bondFee = 1;
+  const depositAmountEnd = expandTo18Decimals(5);
+  const depositPrincipalStEth = expandTo18Decimals(1);
+  await endToken.setFee(20);
+
+
+  expect(await enderBond.rewardShareIndex()).to.be.equal(0);                                                   
+  await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+  console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
+
+  await stEth
+  .connect(signer1)
+  .approve(enderBondAddress, depositPrincipalStEth);
+
+  await enderTreasury.setAddress(instadappLiteAddress, 5);
+  await sleep(1200);
+  let sig1 = signatureDigest();    
+  await expect(
+    enderBond.connect(signer1).deposit(
+      signer1.address,
+      depositPrincipalStEth,
+      maturity,
+      bondFee,
+      endToken,
+      [signer1.address, "0", sig1]
+    )
+  ).to.be.revertedWithCustomError(enderBond, "NotBondableToken");
+
+});
+
+it("Deposit Revert InvalidAmount by Sending Ether", async () => {
+  let maturity = 90;
+  let bondFee = 1;
+  const depositAmountEnd = expandTo18Decimals(5);
+  const depositPrincipalStEth = expandTo18Decimals(1);
+  await endToken.setFee(20);
+
+
+  expect(await enderBond.rewardShareIndex()).to.be.equal(0);                                                   
+  await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+  console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
+
+  await stEth
+  .connect(signer1)
+  .approve(enderBondAddress, depositPrincipalStEth);
+
+  await enderTreasury.setAddress(instadappLiteAddress, 5);
+  await sleep(1200);
+  let sig1 = signatureDigest();    
+  await expect(
+    enderBond.connect(signer1).deposit(
+      signer1.address,
+      depositPrincipalStEth,
+      maturity,
+      bondFee,
+      endToken,
+      [signer1.address, "0", sig1],{ value: ethers.parseEther("1.0")}
+    )
+  ).to.be.revertedWithCustomError(enderBond, "NotBondableToken");
+});
+
+it("Deposit Revert for InvalidBondFees()", async () => {
+  let maturity = 90;
+  let bondFee = 1000000;
+  const depositAmountEnd = expandTo18Decimals(5);
+  const depositPrincipalStEth = expandTo18Decimals(1);
+  await endToken.setFee(20);
+
+
+  expect(await enderBond.rewardShareIndex()).to.be.equal(0);                                                   
+  await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+  console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
+
+  await stEth
+  .connect(signer1)
+  .approve(enderBondAddress, depositPrincipalStEth);
+
+  await enderTreasury.setAddress(instadappLiteAddress, 5);
+  await sleep(1200);
+  let sig1 = signatureDigest();    
+  await expect(
+    enderBond.connect(signer1).deposit(
+      signer1.address,
+      depositPrincipalStEth,
+      maturity,
+      bondFee,
+      stEth,
+      [signer1.address, "0", sig1],
+    )
+  ).to.be.revertedWithCustomError(enderBond, "InvalidBondFee");
+});
+
+
 
 
 });

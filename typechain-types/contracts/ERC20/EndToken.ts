@@ -33,7 +33,6 @@ export interface EndTokenInterface extends Interface {
       | "allowance"
       | "approve"
       | "balanceOf"
-      | "currentMintCount"
       | "decimals"
       | "decreaseAllowance"
       | "distributeRefractionFees"
@@ -46,13 +45,11 @@ export interface EndTokenInterface extends Interface {
       | "increaseAllowance"
       | "initialize"
       | "lastEpoch"
+      | "lastYear"
       | "mint"
-      | "mintAndVest"
       | "mintCount"
       | "mintFee"
-      | "mintPrec"
       | "name"
-      | "prevAmount"
       | "refractionFeePercentage"
       | "refractionFeeTotal"
       | "renounceRole"
@@ -64,7 +61,6 @@ export interface EndTokenInterface extends Interface {
       | "setTreasury"
       | "supportsInterface"
       | "symbol"
-      | "todayAmount"
       | "totalSupply"
       | "transfer"
       | "transferFrom"
@@ -77,7 +73,6 @@ export interface EndTokenInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "Approval"
-      | "DayfeeUpdated"
       | "FeeUpdated"
       | "GetMintedEnd"
       | "Initialized"
@@ -114,10 +109,6 @@ export interface EndTokenInterface extends Interface {
   encodeFunctionData(
     functionFragment: "balanceOf",
     values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "currentMintCount",
-    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
@@ -158,22 +149,14 @@ export interface EndTokenInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "lastEpoch", values?: undefined): string;
+  encodeFunctionData(functionFragment: "lastYear", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "mint",
     values: [AddressLike, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "mintAndVest",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "mintCount", values?: undefined): string;
   encodeFunctionData(functionFragment: "mintFee", values?: undefined): string;
-  encodeFunctionData(functionFragment: "mintPrec", values?: undefined): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "prevAmount",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "refractionFeePercentage",
     values?: undefined
@@ -216,10 +199,6 @@ export interface EndTokenInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "todayAmount",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "totalSupply",
     values?: undefined
   ): string;
@@ -261,10 +240,6 @@ export interface EndTokenInterface extends Interface {
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "currentMintCount",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "decreaseAllowance",
@@ -295,16 +270,11 @@ export interface EndTokenInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lastEpoch", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "lastYear", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "mintAndVest",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "mintCount", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mintFee", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "mintPrec", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "prevAmount", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "refractionFeePercentage",
     data: BytesLike
@@ -331,10 +301,6 @@ export interface EndTokenInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "todayAmount",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
     data: BytesLike
@@ -367,19 +333,6 @@ export namespace ApprovalEvent {
     owner: string;
     spender: string;
     value: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace DayfeeUpdatedEvent {
-  export type InputTuple = [amount: BigNumberish, updateTime: BigNumberish];
-  export type OutputTuple = [amount: bigint, updateTime: bigint];
-  export interface OutputObject {
-    amount: bigint;
-    updateTime: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -603,8 +556,6 @@ export interface EndToken extends BaseContract {
 
   balanceOf: TypedContractMethod<[account: AddressLike], [bigint], "view">;
 
-  currentMintCount: TypedContractMethod<[], [bigint], "view">;
-
   decimals: TypedContractMethod<[], [bigint], "view">;
 
   decreaseAllowance: TypedContractMethod<
@@ -645,23 +596,19 @@ export interface EndToken extends BaseContract {
 
   lastEpoch: TypedContractMethod<[], [bigint], "view">;
 
+  lastYear: TypedContractMethod<[], [bigint], "view">;
+
   mint: TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
     [void],
     "nonpayable"
   >;
 
-  mintAndVest: TypedContractMethod<[], [void], "nonpayable">;
-
   mintCount: TypedContractMethod<[], [bigint], "view">;
 
   mintFee: TypedContractMethod<[], [bigint], "view">;
 
-  mintPrec: TypedContractMethod<[], [bigint], "view">;
-
   name: TypedContractMethod<[], [string], "view">;
-
-  prevAmount: TypedContractMethod<[], [bigint], "view">;
 
   refractionFeePercentage: TypedContractMethod<[], [bigint], "view">;
 
@@ -705,8 +652,6 @@ export interface EndToken extends BaseContract {
 
   symbol: TypedContractMethod<[], [string], "view">;
 
-  todayAmount: TypedContractMethod<[], [bigint], "view">;
-
   totalSupply: TypedContractMethod<[], [bigint], "view">;
 
   transfer: TypedContractMethod<
@@ -732,9 +677,9 @@ export interface EndToken extends BaseContract {
     [
       [bigint, boolean, boolean, boolean] & {
         totalAmount: bigint;
+        threeMonths: boolean;
+        sixMonths: boolean;
         nineMonths: boolean;
-        twelveMonths: boolean;
-        fifteenMonths: boolean;
       }
     ],
     "view"
@@ -773,9 +718,6 @@ export interface EndToken extends BaseContract {
   getFunction(
     nameOrSignature: "balanceOf"
   ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "currentMintCount"
-  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "decimals"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -829,6 +771,9 @@ export interface EndToken extends BaseContract {
     nameOrSignature: "lastEpoch"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "lastYear"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "mint"
   ): TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
@@ -836,23 +781,14 @@ export interface EndToken extends BaseContract {
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "mintAndVest"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
     nameOrSignature: "mintCount"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "mintFee"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "mintPrec"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
     nameOrSignature: "name"
   ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "prevAmount"
-  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "refractionFeePercentage"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -899,9 +835,6 @@ export interface EndToken extends BaseContract {
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "todayAmount"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
     nameOrSignature: "totalSupply"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -934,9 +867,9 @@ export interface EndToken extends BaseContract {
     [
       [bigint, boolean, boolean, boolean] & {
         totalAmount: bigint;
+        threeMonths: boolean;
+        sixMonths: boolean;
         nineMonths: boolean;
-        twelveMonths: boolean;
-        fifteenMonths: boolean;
       }
     ],
     "view"
@@ -948,13 +881,6 @@ export interface EndToken extends BaseContract {
     ApprovalEvent.InputTuple,
     ApprovalEvent.OutputTuple,
     ApprovalEvent.OutputObject
-  >;
-  getEvent(
-    key: "DayfeeUpdated"
-  ): TypedContractEvent<
-    DayfeeUpdatedEvent.InputTuple,
-    DayfeeUpdatedEvent.OutputTuple,
-    DayfeeUpdatedEvent.OutputObject
   >;
   getEvent(
     key: "FeeUpdated"
@@ -1037,17 +963,6 @@ export interface EndToken extends BaseContract {
       ApprovalEvent.InputTuple,
       ApprovalEvent.OutputTuple,
       ApprovalEvent.OutputObject
-    >;
-
-    "DayfeeUpdated(uint256,uint256)": TypedContractEvent<
-      DayfeeUpdatedEvent.InputTuple,
-      DayfeeUpdatedEvent.OutputTuple,
-      DayfeeUpdatedEvent.OutputObject
-    >;
-    DayfeeUpdated: TypedContractEvent<
-      DayfeeUpdatedEvent.InputTuple,
-      DayfeeUpdatedEvent.OutputTuple,
-      DayfeeUpdatedEvent.OutputObject
     >;
 
     "FeeUpdated(uint256)": TypedContractEvent<

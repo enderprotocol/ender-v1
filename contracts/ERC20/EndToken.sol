@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-
+// import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
 // Interfaces
 import "../interfaces/IEndToken.sol";
 import "../interfaces/IEnderBond.sol";
@@ -12,11 +12,7 @@ import "hardhat/console.sol";
 error ZeroAddress();
 error InvalidParam();
 error InvalidEarlyEpoch();
-error ZeroFeeCollected();
-error ThreeMonthVestingNotComplete();
 error ZeroAmount();
-error MoreThanMintAmount();
-error VestingNotCompleted();
 error WaitingTimeNotCompleted();
 
 /**
@@ -30,18 +26,9 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     uint256 public refractionFeePercentage;
     uint256 public refractionFeeTotal;
 
-    uint256 public prevAmount;
-
-    uint256 public todayAmount;
-
     uint256 private lastTransfer;
 
     uint256 public lastEpoch;
-
-    uint256 public mintPrec;
-
-    uint256 public currentMintCount;
-    uint lastYear;
 
     //Mint
     uint256 public mintFee;
@@ -50,11 +37,13 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
 
     address public enderBond;
 
+    uint256 public lastYear;
+
     struct VestAmount {
         uint256 totalAmount;
+        bool threeMonths;
+        bool sixMonths;
         bool nineMonths;
-        bool twelveMonths;
-        bool fifteenMonths;
     }
     // minter role hash
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -63,14 +52,12 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
     mapping(address => bool) public excludeWallets;
 
     //mint
-
     mapping(uint256 => uint256) public vestedAmounts; // count => amount
     mapping(uint256 => uint256) public vestedTime; // count => time
     mapping(uint256 => VestAmount) public yearlyVestAmount;
 
     event TreasuryContractChanged(address indexed newTreasury);
     event FeeUpdated(uint256 fee);
-    event DayfeeUpdated(uint256 amount, uint256 updateTime);
     event RefractionFeesDistributed(address indexed to, uint256 indexed amount);
     event MintAndVest(uint256 time, uint256 mintAmount);
     event GetMintedEnd(uint256 time, uint256 withdrawAmount);
@@ -87,7 +74,8 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         excludeWallets[address(this)] = true;
         excludeWallets[msg.sender] = true; //todo pass the admin address in parameter
         mintCount = 4;
-        mintFee = 1500;
+        mintFee = 1600;
+        lastYear = block.timestamp/ 31536000;
         setFee(500);
         unchecked {
             lastTransfer = block.timestamp - (block.timestamp % 1 days);
@@ -144,67 +132,43 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         admin = _admin;
     }
 
-    function mintAndVest() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 time = block.timestamp;
-        if ((lastYear * 31536000) + 365 days < time) revert WaitingTimeNotCompleted();
-        uint256 mintAmount = (totalSupply() * mintFee) / 10000;
-        yearlyVestAmount[time / 31536000] = VestAmount(mintAmount, false, false, false);
-        mint(address(this), mintAmount);
-        if (mintFee != 100) {
-            mintFee -= 100;
-        }
-        if (lastYear == 0) lastYear = time / 31536000;
-        emit MintAndVest(block.timestamp, mintAmount);
-    }
 
 
-   function timeAndAmountCalculator(uint Principal, uint noOfYears_plusMonths, uint interestRate) public pure returns(uint){
-        uint accumulatedInterestRate;
-        noOfYears_plusMonths = noOfYears_plusMonths/31536000;
-        if(noOfYears_plusMonths>15){
-            accumulatedInterestRate = (noOfYears_plusMonths-15)*100;
-            noOfYears_plusMonths = 15;
-        }
-        console.log("noOfyears: ", noOfYears_plusMonths);
-        accumulatedInterestRate += interestRate*noOfYears_plusMonths - 100*((noOfYears_plusMonths)*(noOfYears_plusMonths-1))/2;
-        return Principal*accumulatedInterestRate/10000;
-    }
-
-    function getMintedEnd() external onlyRole(DEFAULT_ADMIN_ROLE) {
+   function getMintedEnd() external{
+        mintAndVest();
         uint256 time = block.timestamp;
         uint256 withdrawAmount = 0;
         uint256 secondsInYear = 31536000;
-        uint256 lastYearStart = lastYear * secondsInYear;
+        uint256 lastYearStart = lastYear ;
 
-        VestAmount memory lastYearVest = yearlyVestAmount[lastYear];
+        VestAmount storage lastYearVest = yearlyVestAmount[lastYear];
 
-        if (lastYear < time / secondsInYear) {
-            uint256 nineMonths = lastYearStart + 270 days;
-            uint256 twelveMonths = lastYearStart + 360 days;
-            uint256 fifteenMonths = lastYearStart + 450 days;
+        if (lastYear*secondsInYear< time ) {
+            uint256 theeeMonths = lastYearStart*secondsInYear + 90 days;
+            uint256 sixMonths = lastYearStart*secondsInYear + 180 days;
+            uint256 nineMonths = lastYearStart*secondsInYear + 270 days;
 
-            if (!lastYearVest.nineMonths && nineMonths < time) withdrawAmount += lastYearVest.totalAmount / 3;
-            if (!lastYearVest.twelveMonths && twelveMonths < time) withdrawAmount += lastYearVest.totalAmount / 3;
-            if (!lastYearVest.fifteenMonths && fifteenMonths < time)
-                withdrawAmount += (lastYearVest.totalAmount - (2 * lastYearVest.totalAmount) / 3);
+            if (lastYearVest.threeMonths && theeeMonths <= time)
+                {
+                withdrawAmount += lastYearVest.totalAmount / 3;
+                lastYearVest.threeMonths = false;
+                }
+            if (lastYearVest.sixMonths && sixMonths <= time) 
+               {
+                withdrawAmount += lastYearVest.totalAmount / 3;
+                lastYearVest.sixMonths = false;
+               }
+            if (lastYearVest.nineMonths && nineMonths <= time) 
+              {
+                withdrawAmount += lastYearVest.totalAmount / 3;
+                lastYearVest.nineMonths = false;
+              }
         }
-
-        uint256 currentYearStart = (time / secondsInYear) * secondsInYear;
-        VestAmount memory currentYearVest = yearlyVestAmount[time / secondsInYear];
-
-        if (!currentYearVest.nineMonths && currentYearStart + 270 days < time)
-            withdrawAmount += currentYearVest.totalAmount / 3;
-        if (!currentYearVest.twelveMonths && currentYearStart + 360 days < time)
-            withdrawAmount += currentYearVest.totalAmount / 3;
-
-        if (lastYear != time / secondsInYear) {
-            lastYear = time / secondsInYear;
-        }
-
         if (withdrawAmount > 0) {
-            transfer(msg.sender, withdrawAmount);
+            _transfer(address(this),admin,withdrawAmount);
         }
     }
+
 
     /**
      * @notice Mints a specified amount of tokens to the treasury
@@ -217,6 +181,20 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         _mint(to, amount);
     }
 
+
+    function mintAndVest() internal {
+        uint256 time = block.timestamp;
+        if(time>=lastYear*31536000 + 365 days){
+        uint256 mintAmount = (totalSupply() * mintFee) / 10000;
+        yearlyVestAmount[time / 31536000] = VestAmount(mintAmount, true, true, true);
+        mint(address(this), mintAmount);
+        if (mintFee != 100) {
+            mintFee -= 100;
+        }
+        lastYear = time / 31536000;
+        emit MintAndVest(block.timestamp, mintAmount);
+        }
+    }
     function _transfer(address from, address to, uint256 amount) internal override {
         if (excludeWallets[from] || excludeWallets[to]) {
             super._transfer(from, to, amount);
@@ -242,7 +220,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         uint256 feesToTransfer = refractionFeeTotal;
         if (feesToTransfer != 0) {
             refractionFeeTotal = 0;
-            console.log("Total Refraction fees:- ", feesToTransfer);
+            // console.log("Total Refraction fees:- ", feesToTransfer);
             lastEpoch = block.timestamp;
             _approve(address(this), enderBond, feesToTransfer);
             IEnderBond(enderBond).epochRewardShareIndex(feesToTransfer);

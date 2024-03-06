@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -20,12 +20,10 @@ contract SEndToken is ERC20Upgradeable, AccessControlUpgradeable {
     error TransactionDisabled();
     error ZeroAddress();
 
-    
     event AddressUpdated(address indexed _address, uint256 indexed _index);
-
-
-event TransactionStatusChanged(uint256 newStatus);
-event WhitelistChanged(address indexed whitelistingAddress, bool indexed action);
+    event TransactionStatusChanged(uint256 newStatus);
+    event WhitelistChanged(address indexed whitelistingAddress, bool indexed action);
+    
     function initialize() external initializer {
         __ERC20_init("sEndToken", "sEnd");
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);

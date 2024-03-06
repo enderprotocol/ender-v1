@@ -13,9 +13,9 @@ import "./interfaces/IEndToken.sol";
 import "./interfaces/IInstadappLite.sol";
 import "./interfaces/ILybraFinance.sol";
 import "./interfaces/IEnderBond.sol";
+import "hardhat/console.sol";
 
 error NotAllowed();
-// error ZeroAddress();
 error TransferFailed();
 error InvalidStrategy();
 error InvalidRequest();
@@ -187,6 +187,7 @@ event MintEndToUser(address indexed to, uint256 amount);
             epochDeposit += param.tokenAmt;
             fundsInfo[param.stakingToken] += param.tokenAmt;
         }
+        emit TreasuryDeposit(param.stakingToken, param.tokenAmt);
     }
 
     function _transferFunds(address _account, address _token, uint256 _amount) private {
@@ -197,9 +198,10 @@ event MintEndToUser(address indexed to, uint256 amount);
     }
 
     function stakeRebasingReward(address _tokenAddress) public onlyStaking returns (uint256 rebaseReward) {
-        int256 bondReturn = int256(IEnderBond(enderBond).endMint());
+        int256 bondReturn = int256(IEnderBond(enderBond).endMint()/1000);
         int256 depositReturn = int256(calculateDepositReturn(_tokenAddress));
         balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
+        // console.log("EndMint", uint(bondReturn));
         if (depositReturn == 0) {
             epochWithdrawl = 0;
             epochDeposit = 0;
@@ -212,8 +214,10 @@ event MintEndToUser(address indexed to, uint256 amount);
             instaDappDepositValuations = 0;
         } else {     
             (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);
+            // console.log("End supply",ENDSupply);
             depositReturn = (depositReturn * int256(stETHPool) * 1000) / int256(ENDSupply);
             rebaseReward = uint256((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));
+            console.log(uint256(depositReturn), uint256((depositReturn * nominalYield )/10000), "----", uint256(bondReturn));
             epochWithdrawl = 0;
             epochDeposit = 0;
             IEnderBond(enderBond).resetEndMint();
@@ -222,6 +226,7 @@ event MintEndToUser(address indexed to, uint256 amount);
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
         }
+        
     }
 
     /**
@@ -329,7 +334,8 @@ event MintEndToUser(address indexed to, uint256 amount);
             stReturn = IInstadappLite(receiptToken).viewStinstaTokens(receiptTokenAmount) +  instaDappWithdrawlValuations
                 - instaDappDepositValuations - instaDappLastValuation;
         }
-        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl + instaDappDepositValuations + stReturn - epochDeposit - balanceLastEpoch;  
+        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl + instaDappDepositValuations + stReturn - epochDeposit - balanceLastEpoch; 
+        // console.log("totalReturn", totalReturn); 
     }
 
     /**
@@ -351,6 +357,7 @@ event MintEndToUser(address indexed to, uint256 amount);
 
     function ETHDenomination(address _stEthAddress) public view returns (uint stETHPoolAmount, uint ENDSupply){
         uint stETHBalance = IERC20(_stEthAddress).balanceOf(address(this)); 
+        // console.log("stETHBalance", stETHBalance);
         address receiptToken = instadapp;
         uint256 receiptTokenAmount = IInstadappLite(receiptToken).balanceOf(address(this));
         uint stRewards;

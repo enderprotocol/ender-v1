@@ -11,39 +11,30 @@
 
 //   before(async function () {
 //     // Deploy EndToken
-//     const EndToken = await ethers.getContractFactory("EndToken");
-//     endToken = await upgrades.deployProxy(EndToken, [1], {
+
+//     console.log("Before Deployemt");
+//     const EndToken = await ethers.getContractFactory("EndToken2");
+//     endToken = await upgrades.deployProxy(EndToken,{
 //       initializer: "initialize",
 //     });
+
+//     console.log("Before Deployemt");
+
 //     await endToken.waitForDeployment();
 //     endTokenAddress = await endToken.getAddress();
 
-//     // Deploy EnderBond
-//     const EnderBond = await ethers.getContractFactory("EnderBond");
-//     enderBond = await upgrades.deployProxy(EnderBond, [endTokenAddress, signature], {
-//       initializer: "initialize",
-//     });
-//     await enderBond.waitForDeployment();
-//     enderBondAddress = await enderBond.getAddress();
-
-//     // Deploy EnderTreasury
-//     const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
-//     enderTreasury = await upgrades.deployProxy(EnderTreasury, [enderBondAddress, enderBondAddress], {
-//       initializer: "initialize",
-//     });
-//     await enderTreasury.waitForDeployment();
-//     enderTreasuryAddress = await enderTreasury.getAddress();
+   
 //     // get minter role
-//     const minterRole = await endToken.MINTER_ROLE()
+//     // const minterRole = await endToken.MINTER_ROLE()
 
 //     // grant minter role to treasury contract
-//     await endToken.grantRole(minterRole, enderTreasuryAddress);
+//     // await endToken.grantRole(minterRole, enderTreasuryAddress);
     
 //     [owner, wallet1] = await ethers.getSigners();
-//     await endToken.grantRole(minterRole, owner.address);
+//     // await endToken.grantRole(minterRole, owner.address);
 //   });
 
-//   describe("initialize", function () {
+//   describe.only("Testing", function () {
 //     it("Should set token name and symbol", async function () {
 //       expect(await endToken.name()).to.equal("End Token");
 //       expect(await endToken.symbol()).to.equal("END");
@@ -53,6 +44,52 @@
 //       const ownerBalance = await endToken.balanceOf(owner.address);
 //       expect(await endToken.totalSupply()).to.equal(ownerBalance);
 //     });
+
+//     it.only("mintAndVest", async function(){
+//       await endToken.mint(wallet1.address,12000);
+//       console.log("walleet1Address", wallet1.address);
+//       console.log("ownerAddress", owner.address);
+//       console.log("endTokenAddress",endToken.target);
+//       const totalSupply = await endToken.totalSupply();
+//       console.log("totalSupplyOfContract",totalSupply);
+
+//       // 15552000 - 6 months 
+//       // 7776000 - 3 months
+//       //23328000 - 9 months 
+//       //31536000 - 1 Year 
+//       await increaseTime(31536000);
+//       await endToken.getMintedEnd();
+//       await increaseTime(7776000);
+      
+//       await endToken.getMintedEnd();
+//       await increaseTime(7776000);
+
+//       await endToken.getMintedEnd();
+
+//       await increaseTime(7776000);
+
+//       await endToken.getMintedEnd();
+
+//       await increaseTime(7776000);
+
+//       await endToken.getMintedEnd();
+
+//       await increaseTime(7776000);
+//       await endToken.getMintedEnd();
+
+
+//       const balanceOfContractAfter = await endToken.balanceOf(endToken.target);
+//       console.log("balance Of Contract After",balanceOfContractAfter);
+      
+//       const balanceOfOwner = await endToken.balanceOf(owner.address);
+//       console.log(balanceOfOwner);
+
+//     })
+
+//     async function increaseTime(seconds) {
+//         await ethers.provider.send("evm_increaseTime", [seconds]);
+//         await ethers.provider.send("evm_mine");
+//       }
 //   });
 
 //   describe("decimals", function () {

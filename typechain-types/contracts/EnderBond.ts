@@ -58,6 +58,7 @@ export interface EnderBondInterface extends Interface {
       | "dayToRefractionShareUpdation"
       | "dayToRefractionShareUpdationSend"
       | "dayToRewardShareIndex"
+      | "dayToYeildShareUpdation"
       | "deductFeesFromTransfer"
       | "deposit"
       | "depositEnable"
@@ -65,7 +66,9 @@ export interface EnderBondInterface extends Interface {
       | "endMint"
       | "epochBondYieldShareIndex"
       | "epochRewardShareIndex"
+      | "epochRewardShareIndexByPass"
       | "epochRewardShareIndexForSend"
+      | "epochRewardShareIndexSendByPass"
       | "getAddress"
       | "getInterest"
       | "getLoopCount"
@@ -78,6 +81,7 @@ export interface EnderBondInterface extends Interface {
       | "lastDay"
       | "lastSecOfRefraction"
       | "lastSecOfSendReward"
+      | "lastSecOfYeildUpdation"
       | "lastTimeStamp"
       | "lido"
       | "maturities"
@@ -126,17 +130,20 @@ export interface EnderBondInterface extends Interface {
     nameOrSignatureOrTopic:
       | "AddressSet"
       | "BondFeeEnabledSet"
+      | "BondPauseSet"
       | "BondYieldBaseRateSet"
       | "BondYieldShareIndexUpdated"
       | "BondableTokensSet"
       | "BoolSet"
       | "ClaimRewards"
       | "Deposit"
+      | "DepositEnableSet"
       | "EIP712DomainChanged"
       | "EndMintReset"
       | "Initialized"
       | "IntervalSet"
       | "MinDepAmountSet"
+      | "NewSigner"
       | "OwnershipTransferred"
       | "RefractionRewardsClaimed"
       | "RewardShareIndexUpdated"
@@ -144,11 +151,8 @@ export interface EnderBondInterface extends Interface {
       | "StakingRewardsClaimed"
       | "TxFeesSet"
       | "WhitelistChanged"
+      | "WithdrawPauseSet"
       | "Withdrawal"
-      | "bondPauseSet"
-      | "depositEnableSet"
-      | "newSigner"
-      | "withdrawPauseSet"
   ): EventFragment;
 
   encodeFunctionData(
@@ -218,6 +222,10 @@ export interface EnderBondInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "dayToYeildShareUpdation",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "deductFeesFromTransfer",
     values: [BigNumberish]
   ): string;
@@ -250,8 +258,16 @@ export interface EnderBondInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "epochRewardShareIndexByPass",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "epochRewardShareIndexForSend",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "epochRewardShareIndexSendByPass",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getAddress",
@@ -287,6 +303,10 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "lastSecOfSendReward",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "lastSecOfYeildUpdation",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -378,7 +398,7 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setIndexesOfUser",
-    values: [BigNumberish[], BigNumberish[], BigNumberish[], BigNumberish[]]
+    values: [BigNumberish[], BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setInterval",
@@ -504,6 +524,10 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "dayToYeildShareUpdation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "deductFeesFromTransfer",
     data: BytesLike
   ): Result;
@@ -526,7 +550,15 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "epochRewardShareIndexByPass",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "epochRewardShareIndexForSend",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "epochRewardShareIndexSendByPass",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getAddress", data: BytesLike): Result;
@@ -557,6 +589,10 @@ export interface EnderBondInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "lastSecOfSendReward",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "lastSecOfYeildUpdation",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -718,6 +754,18 @@ export namespace BondFeeEnabledSetEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace BondPauseSetEvent {
+  export type InputTuple = [isEnabled: boolean];
+  export type OutputTuple = [isEnabled: boolean];
+  export interface OutputObject {
+    isEnabled: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace BondYieldBaseRateSetEvent {
   export type InputTuple = [newBondYieldBaseRate: BigNumberish];
   export type OutputTuple = [newBondYieldBaseRate: bigint];
@@ -791,14 +839,16 @@ export namespace DepositEvent {
     tokenId: BigNumberish,
     principal: BigNumberish,
     maturity: BigNumberish,
-    token: AddressLike
+    token: AddressLike,
+    bondFee: BigNumberish
   ];
   export type OutputTuple = [
     sender: string,
     tokenId: bigint,
     principal: bigint,
     maturity: bigint,
-    token: string
+    token: string,
+    bondFee: bigint
   ];
   export interface OutputObject {
     sender: string;
@@ -806,6 +856,19 @@ export namespace DepositEvent {
     principal: bigint;
     maturity: bigint;
     token: string;
+    bondFee: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DepositEnableSetEvent {
+  export type InputTuple = [isEnabled: boolean];
+  export type OutputTuple = [isEnabled: boolean];
+  export interface OutputObject {
+    isEnabled: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -862,6 +925,18 @@ export namespace MinDepAmountSetEvent {
   export type OutputTuple = [newAmount: bigint];
   export interface OutputObject {
     newAmount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace NewSignerEvent {
+  export type InputTuple = [_signer: AddressLike];
+  export type OutputTuple = [_signer: string];
+  export interface OutputObject {
+    _signer: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -981,60 +1056,24 @@ export namespace WhitelistChangedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace WithdrawPauseSetEvent {
+  export type InputTuple = [isEnabled: boolean];
+  export type OutputTuple = [isEnabled: boolean];
+  export interface OutputObject {
+    isEnabled: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace WithdrawalEvent {
   export type InputTuple = [sender: AddressLike, tokenId: BigNumberish];
   export type OutputTuple = [sender: string, tokenId: bigint];
   export interface OutputObject {
     sender: string;
     tokenId: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace bondPauseSetEvent {
-  export type InputTuple = [isEnabled: boolean];
-  export type OutputTuple = [isEnabled: boolean];
-  export interface OutputObject {
-    isEnabled: boolean;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace depositEnableSetEvent {
-  export type InputTuple = [isEnabled: boolean];
-  export type OutputTuple = [isEnabled: boolean];
-  export interface OutputObject {
-    isEnabled: boolean;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace newSignerEvent {
-  export type InputTuple = [_signer: AddressLike];
-  export type OutputTuple = [_signer: string];
-  export interface OutputObject {
-    _signer: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace withdrawPauseSetEvent {
-  export type InputTuple = [isEnabled: boolean];
-  export type OutputTuple = [isEnabled: boolean];
-  export interface OutputObject {
-    isEnabled: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -1195,6 +1234,12 @@ export interface EnderBond extends BaseContract {
     "view"
   >;
 
+  dayToYeildShareUpdation: TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
   deductFeesFromTransfer: TypedContractMethod<
     [_tokenId: BigNumberish],
     [void],
@@ -1242,8 +1287,16 @@ export interface EnderBond extends BaseContract {
     "nonpayable"
   >;
 
+  epochRewardShareIndexByPass: TypedContractMethod<[], [void], "nonpayable">;
+
   epochRewardShareIndexForSend: TypedContractMethod<
     [_reward: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  epochRewardShareIndexSendByPass: TypedContractMethod<
+    [],
     [void],
     "nonpayable"
   >;
@@ -1275,6 +1328,8 @@ export interface EnderBond extends BaseContract {
   lastSecOfRefraction: TypedContractMethod<[], [bigint], "view">;
 
   lastSecOfSendReward: TypedContractMethod<[], [bigint], "view">;
+
+  lastSecOfYeildUpdation: TypedContractMethod<[], [bigint], "view">;
 
   lastTimeStamp: TypedContractMethod<[], [bigint], "view">;
 
@@ -1371,9 +1426,9 @@ export interface EnderBond extends BaseContract {
   setIndexesOfUser: TypedContractMethod<
     [
       tokenId: BigNumberish[],
-      refractionSIndex: BigNumberish[],
-      stakingSendIndex: BigNumberish[],
-      YieldIndex: BigNumberish[]
+      refractionSIndex: BigNumberish,
+      stakingSendIndex: BigNumberish,
+      YieldIndex: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -1552,6 +1607,13 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "dayToRewardShareIndex"
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
   getFunction(
+    nameOrSignature: "dayToYeildShareUpdation"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "deductFeesFromTransfer"
   ): TypedContractMethod<[_tokenId: BigNumberish], [void], "nonpayable">;
   getFunction(
@@ -1598,8 +1660,14 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "epochRewardShareIndex"
   ): TypedContractMethod<[_reward: BigNumberish], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "epochRewardShareIndexByPass"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "epochRewardShareIndexForSend"
   ): TypedContractMethod<[_reward: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "epochRewardShareIndexSendByPass"
+  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "getAddress"
   ): TypedContractMethod<[_type: BigNumberish], [string], "view">;
@@ -1639,6 +1707,9 @@ export interface EnderBond extends BaseContract {
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "lastSecOfSendReward"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lastSecOfYeildUpdation"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "lastTimeStamp"
@@ -1729,9 +1800,9 @@ export interface EnderBond extends BaseContract {
   ): TypedContractMethod<
     [
       tokenId: BigNumberish[],
-      refractionSIndex: BigNumberish[],
-      stakingSendIndex: BigNumberish[],
-      YieldIndex: BigNumberish[]
+      refractionSIndex: BigNumberish,
+      stakingSendIndex: BigNumberish,
+      YieldIndex: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -1807,6 +1878,13 @@ export interface EnderBond extends BaseContract {
     BondFeeEnabledSetEvent.OutputObject
   >;
   getEvent(
+    key: "BondPauseSet"
+  ): TypedContractEvent<
+    BondPauseSetEvent.InputTuple,
+    BondPauseSetEvent.OutputTuple,
+    BondPauseSetEvent.OutputObject
+  >;
+  getEvent(
     key: "BondYieldBaseRateSet"
   ): TypedContractEvent<
     BondYieldBaseRateSetEvent.InputTuple,
@@ -1849,6 +1927,13 @@ export interface EnderBond extends BaseContract {
     DepositEvent.OutputObject
   >;
   getEvent(
+    key: "DepositEnableSet"
+  ): TypedContractEvent<
+    DepositEnableSetEvent.InputTuple,
+    DepositEnableSetEvent.OutputTuple,
+    DepositEnableSetEvent.OutputObject
+  >;
+  getEvent(
     key: "EIP712DomainChanged"
   ): TypedContractEvent<
     EIP712DomainChangedEvent.InputTuple,
@@ -1882,6 +1967,13 @@ export interface EnderBond extends BaseContract {
     MinDepAmountSetEvent.InputTuple,
     MinDepAmountSetEvent.OutputTuple,
     MinDepAmountSetEvent.OutputObject
+  >;
+  getEvent(
+    key: "NewSigner"
+  ): TypedContractEvent<
+    NewSignerEvent.InputTuple,
+    NewSignerEvent.OutputTuple,
+    NewSignerEvent.OutputObject
   >;
   getEvent(
     key: "OwnershipTransferred"
@@ -1933,39 +2025,18 @@ export interface EnderBond extends BaseContract {
     WhitelistChangedEvent.OutputObject
   >;
   getEvent(
+    key: "WithdrawPauseSet"
+  ): TypedContractEvent<
+    WithdrawPauseSetEvent.InputTuple,
+    WithdrawPauseSetEvent.OutputTuple,
+    WithdrawPauseSetEvent.OutputObject
+  >;
+  getEvent(
     key: "Withdrawal"
   ): TypedContractEvent<
     WithdrawalEvent.InputTuple,
     WithdrawalEvent.OutputTuple,
     WithdrawalEvent.OutputObject
-  >;
-  getEvent(
-    key: "bondPauseSet"
-  ): TypedContractEvent<
-    bondPauseSetEvent.InputTuple,
-    bondPauseSetEvent.OutputTuple,
-    bondPauseSetEvent.OutputObject
-  >;
-  getEvent(
-    key: "depositEnableSet"
-  ): TypedContractEvent<
-    depositEnableSetEvent.InputTuple,
-    depositEnableSetEvent.OutputTuple,
-    depositEnableSetEvent.OutputObject
-  >;
-  getEvent(
-    key: "newSigner"
-  ): TypedContractEvent<
-    newSignerEvent.InputTuple,
-    newSignerEvent.OutputTuple,
-    newSignerEvent.OutputObject
-  >;
-  getEvent(
-    key: "withdrawPauseSet"
-  ): TypedContractEvent<
-    withdrawPauseSetEvent.InputTuple,
-    withdrawPauseSetEvent.OutputTuple,
-    withdrawPauseSetEvent.OutputObject
   >;
 
   filters: {
@@ -1989,6 +2060,17 @@ export interface EnderBond extends BaseContract {
       BondFeeEnabledSetEvent.InputTuple,
       BondFeeEnabledSetEvent.OutputTuple,
       BondFeeEnabledSetEvent.OutputObject
+    >;
+
+    "BondPauseSet(bool)": TypedContractEvent<
+      BondPauseSetEvent.InputTuple,
+      BondPauseSetEvent.OutputTuple,
+      BondPauseSetEvent.OutputObject
+    >;
+    BondPauseSet: TypedContractEvent<
+      BondPauseSetEvent.InputTuple,
+      BondPauseSetEvent.OutputTuple,
+      BondPauseSetEvent.OutputObject
     >;
 
     "BondYieldBaseRateSet(uint256)": TypedContractEvent<
@@ -2046,7 +2128,7 @@ export interface EnderBond extends BaseContract {
       ClaimRewardsEvent.OutputObject
     >;
 
-    "Deposit(address,uint256,uint256,uint256,address)": TypedContractEvent<
+    "Deposit(address,uint256,uint256,uint256,address,uint256)": TypedContractEvent<
       DepositEvent.InputTuple,
       DepositEvent.OutputTuple,
       DepositEvent.OutputObject
@@ -2055,6 +2137,17 @@ export interface EnderBond extends BaseContract {
       DepositEvent.InputTuple,
       DepositEvent.OutputTuple,
       DepositEvent.OutputObject
+    >;
+
+    "DepositEnableSet(bool)": TypedContractEvent<
+      DepositEnableSetEvent.InputTuple,
+      DepositEnableSetEvent.OutputTuple,
+      DepositEnableSetEvent.OutputObject
+    >;
+    DepositEnableSet: TypedContractEvent<
+      DepositEnableSetEvent.InputTuple,
+      DepositEnableSetEvent.OutputTuple,
+      DepositEnableSetEvent.OutputObject
     >;
 
     "EIP712DomainChanged()": TypedContractEvent<
@@ -2110,6 +2203,17 @@ export interface EnderBond extends BaseContract {
       MinDepAmountSetEvent.InputTuple,
       MinDepAmountSetEvent.OutputTuple,
       MinDepAmountSetEvent.OutputObject
+    >;
+
+    "NewSigner(address)": TypedContractEvent<
+      NewSignerEvent.InputTuple,
+      NewSignerEvent.OutputTuple,
+      NewSignerEvent.OutputObject
+    >;
+    NewSigner: TypedContractEvent<
+      NewSignerEvent.InputTuple,
+      NewSignerEvent.OutputTuple,
+      NewSignerEvent.OutputObject
     >;
 
     "OwnershipTransferred(address,address)": TypedContractEvent<
@@ -2189,6 +2293,17 @@ export interface EnderBond extends BaseContract {
       WhitelistChangedEvent.OutputObject
     >;
 
+    "WithdrawPauseSet(bool)": TypedContractEvent<
+      WithdrawPauseSetEvent.InputTuple,
+      WithdrawPauseSetEvent.OutputTuple,
+      WithdrawPauseSetEvent.OutputObject
+    >;
+    WithdrawPauseSet: TypedContractEvent<
+      WithdrawPauseSetEvent.InputTuple,
+      WithdrawPauseSetEvent.OutputTuple,
+      WithdrawPauseSetEvent.OutputObject
+    >;
+
     "Withdrawal(address,uint256)": TypedContractEvent<
       WithdrawalEvent.InputTuple,
       WithdrawalEvent.OutputTuple,
@@ -2198,50 +2313,6 @@ export interface EnderBond extends BaseContract {
       WithdrawalEvent.InputTuple,
       WithdrawalEvent.OutputTuple,
       WithdrawalEvent.OutputObject
-    >;
-
-    "bondPauseSet(bool)": TypedContractEvent<
-      bondPauseSetEvent.InputTuple,
-      bondPauseSetEvent.OutputTuple,
-      bondPauseSetEvent.OutputObject
-    >;
-    bondPauseSet: TypedContractEvent<
-      bondPauseSetEvent.InputTuple,
-      bondPauseSetEvent.OutputTuple,
-      bondPauseSetEvent.OutputObject
-    >;
-
-    "depositEnableSet(bool)": TypedContractEvent<
-      depositEnableSetEvent.InputTuple,
-      depositEnableSetEvent.OutputTuple,
-      depositEnableSetEvent.OutputObject
-    >;
-    depositEnableSet: TypedContractEvent<
-      depositEnableSetEvent.InputTuple,
-      depositEnableSetEvent.OutputTuple,
-      depositEnableSetEvent.OutputObject
-    >;
-
-    "newSigner(address)": TypedContractEvent<
-      newSignerEvent.InputTuple,
-      newSignerEvent.OutputTuple,
-      newSignerEvent.OutputObject
-    >;
-    newSigner: TypedContractEvent<
-      newSignerEvent.InputTuple,
-      newSignerEvent.OutputTuple,
-      newSignerEvent.OutputObject
-    >;
-
-    "withdrawPauseSet(bool)": TypedContractEvent<
-      withdrawPauseSetEvent.InputTuple,
-      withdrawPauseSetEvent.OutputTuple,
-      withdrawPauseSetEvent.OutputObject
-    >;
-    withdrawPauseSet: TypedContractEvent<
-      withdrawPauseSetEvent.InputTuple,
-      withdrawPauseSetEvent.OutputTuple,
-      withdrawPauseSetEvent.OutputObject
     >;
   };
 }
