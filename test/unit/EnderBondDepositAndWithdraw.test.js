@@ -20,7 +20,7 @@ function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
 
-describe.only("EnderBond Deposit and Withdraw", function () {
+describe("EnderBond Deposit and Withdraw", function () {
   let owner, signer, signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
@@ -70,7 +70,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
     enderBondLiquidityDeposit = await upgrades.deployProxy(
       EnderBondLiquidityBond,
-      [stEthAddress, stEthAddress, signer.address, owner.address],
+      [stEthAddress, stEthAddress, owner.address, owner.address],
       {
         initializer: "initialize",
       }
@@ -511,6 +511,7 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       let sig3 = signatureDigest2();
+      let receiptTokenAmount = await enderStaking.calculateSEndTokens(depositAmountEnd);
       await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
 
       // Wait for the bond to mature
@@ -1066,30 +1067,6 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       // await withdrawAndSetup(signer4, tokenId2);
     });
 
-    // it.only("Ender bond :- deposit early bond contract funds into ender bond testing", async () => {
-    //   const maturity = 90;
-    //   const bondFee = 500;
-    //   const depositPrincipalStEth = expandTo18Decimals(1);
-    //   console.log(signer4.address, owner.address, "admin");
-    //   await enderBondLiquidityDeposit.setDepositEnable(true);
-    //   await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-    //   let signature = await signatureDigestOfEarlyBond();
-    //   // await stEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
-    //   await enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]);
-    //   console.log("ddddd");
-
-    //   // await WETH.mint(signer1.address, depositPrincipalStEth);
-    //   // await WETH.connect(signer1).transfer(stEthAddress, depositPrincipalStEth);
-
-    //   await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
-
-    //   let signature1 = await signatureDigestOfEarlyBond1();
-    //   await stEth.connect(signer2).approve(enderBondLiquidityDepositAddress, 1500000000000000000n);
-    //   await enderBondLiquidityDeposit.connect(signer2).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer2.address, "0", signature1]);
-
-
-    // });
-
     it("Deposit Revert InvalidAmount()", async () => {
       let maturity = 90;
       let bondFee = 1;
@@ -1099,29 +1076,29 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       await endToken.setFee(20);
 
 
-    //   expect(await enderBond.rewardShareIndex()).to.be.equal(0);
-    //   await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-    //   console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
+      expect(await enderBond.rewardShareIndex()).to.be.equal(0);
+      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+      console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
 
-    //   await stEth
-    //     .connect(signer1)
-    //     .approve(enderBondAddress, depositPrincipalStEth);
+      await stEth
+        .connect(signer1)
+        .approve(enderBondAddress, depositPrincipalStEth);
 
-    //   await enderTreasury.setAddress(instadappLiteAddress, 5);
-    //   await sleep(1200);
-    //   let sig1 = signatureDigest();
-    //   await expect(
-    //     enderBond.connect(signer1).deposit(
-    //       signer1.address,
-    //       depositPrincipalStEth,
-    //       maturity,
-    //       bondFee,
-    //       stEthAddress,
-    //       [signer1.address, "0", sig1]
-    //     )
-    //   ).to.be.revertedWithCustomError(enderBond, "InvalidAmount");
+      await enderTreasury.setAddress(instadappLiteAddress, 5);
+      await sleep(1200);
+      let sig1 = signatureDigest();
+      await expect(
+        enderBond.connect(signer1).deposit(
+          signer1.address,
+          depositPrincipalStEth,
+          maturity,
+          bondFee,
+          stEthAddress,
+          [signer1.address, "0", sig1]
+        )
+      ).to.be.revertedWithCustomError(enderBond, "InvalidAmount");
 
-    // });
+    });
 
     it("Deposit Revert InvalidMaturity() maturity >90", async () => {
       let maturity = 91;
@@ -1187,12 +1164,12 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
     });
 
-    // it("Deposit Revert InvalidAmount by Sending Ether", async () => {
-    //   let maturity = 90;
-    //   let bondFee = 1;
-    //   const depositAmountEnd = expandTo18Decimals(5);
-    //   const depositPrincipalStEth = expandTo18Decimals(1);
-    //   await endToken.setFee(20);
+    it("Deposit Revert InvalidAmount by Sending Ether", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await endToken.setFee(20);
 
 
       expect(await enderBond.rewardShareIndex()).to.be.equal(0);
@@ -1218,9 +1195,238 @@ describe.only("EnderBond Deposit and Withdraw", function () {
       ).to.be.revertedWithCustomError(enderBond, "NotBondableToken");
 
 
-    // });
+    });
 
+    it("Ender Bond:- setBondFeeEnabled", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await enderBond.setBondFeeEnabled(false);
+    })
+    it("Ender Bond:- setBondFeeEnabled revert with invalid caller", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderBond.connect(signer2).setBondFeeEnabled(false)).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("Ender Bond:- setDepositEnable", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await enderBond.setDepositEnable(true);
+    })
+
+    it("Ender Bond:- setDepositEnable revert with invalid caller", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderBond.connect(signer2).setDepositEnable(true)).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("Ender Bond:- setWithdrawPause", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await enderBond.setWithdrawPause(true);
+    })
+
+    it("Ender Bond:- setWithdrawPause revert with invalid caller", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderBond.connect(signer2).setWithdrawPause(true)).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("Ender Bond:- setBondPause", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await enderBond.setBondPause(true);
+    })
+    it("Ender Bond:- setBondPause revert with invalid caller", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderBond.connect(signer2).setBondPause(true)).to.be.rejectedWith("Ownable: caller is not the owner");
+    })
+
+    it("Ender Bond:- setWhitelist", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await enderBond.whitelist(true);
+    })
+    it("Ender Bond:- setWhitelist revert with invalid caller", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderBond.connect(signer2).whitelist(true)).to.be.rejectedWith("Ownable: caller is not the owner");
+    })
+    it("Ender Treasury:- setBondYieldBaseRate", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await enderTreasury.setBondYieldBaseRate(50);
+    })
+    it("Ender Treasury:- setBondYieldBaseRate revert with invalid caller", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderTreasury.connect(signer2).setBondYieldBaseRate(50)).to.be.rejectedWith("Ownable: caller is not the owner");
+    })
+
+    it("Ender Treasury:- setBondYieldBaseRate revert with InvalidBaseRate", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderTreasury.setBondYieldBaseRate(0)).to.be.revertedWithCustomError(enderTreasury, "InvalidBaseRate");
+    })
+
+    it("Ender Treasury:- setNominalYield revert with invalid caller", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderTreasury.connect(signer2).setNominalYield(50)).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+    it("Ender Treasury:- setNominalYield", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      enderTreasury.setNominalYield(50);
+    })
+    it("Ender Treasury:- setNominalYield revert with invaild owner", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderTreasury.connect(signer2).setNominalYield(50)).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("Ender staking:- setStakingEnable", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await enderStaking.setStakingEnable(true);
+    })
+
+    it("Ender staking:- setStakingEnable revert with invaild owner", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderStaking.connect(signer2).setStakingEnable(true)).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("Ender staking:- setUnstakeEnable", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      enderStaking.setUnstakeEnable(true);
+    })
+
+    it("Ender staking:- setUnstakeEnable revert with invaild owner", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderStaking.connect(signer2).setUnstakeEnable(true)).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+    it("Ender staking:- setStakingPause", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      enderStaking.setStakingPause(true);
+    })
+    it("Ender staking:- setStakingPause revert with invaild owner", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderStaking.connect(signer2).setStakingPause(true)).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("Ender staking:- setsigner", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      enderStaking.setsigner(signer2.address);
+    });
+
+    it("Ender staking:- setsigner revert with invaild owner", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderStaking.connect(signer2).setsigner(signer2.address)).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Ender staking:- setsigner revert with ZeroAddress", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderStaking.setsigner(ethers.ZeroAddress)).to.be.revertedWithCustomError(enderStaking, "ZeroAddress");
+    });
+    it("Ender staking:- setBondRewardPercentage", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      enderStaking.setBondRewardPercentage(10);
+    });
+
+    it("Ender staking:- setBondRewardPercentage revert with invaild owner", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderStaking.connect(signer2).setBondRewardPercentage(10)).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Ender staking:- setBondRewardPercentage revert with InvalidAmount", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+     await expect(enderStaking.setBondRewardPercentage(0)).to.be.revertedWithCustomError(enderStaking, "InvalidAmount");
+    });
+    it("Ender staking:- setWhitelist", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      enderStaking.whitelist(false);
+    });
+    it("Ender staking:- setWhitelist revert with invalid caller", async () => {
+      let maturity = 90;
+      let bondFee = 1;
+      const depositAmountEnd = expandTo18Decimals(5);
+      const depositPrincipalStEth = expandTo18Decimals(1);
+      await expect(enderStaking.connect(signer2).whitelist(false)).to.be.rejectedWith("Ownable: caller is not the owner");
+    });
   });
+
+
 
   async function depositAndSetup(signer, depositAmount, maturity, bondFee, [user, key, signature]) {
     await enderBond
@@ -1244,32 +1450,32 @@ describe.only("EnderBond Deposit and Withdraw", function () {
 
 
   async function signatureDigestOfEarlyBond() {
-    let sig = await signer.signTypedData(
+    let sig = await owner.signTypedData(
       {
-        name: "depositContract",
-        version: "1",
-        chainId: 31337,
-        verifyingContract: enderBondLiquidityDepositAddress,
+          name: "depositContract",
+          version: "1",
+          chainId: 31337,
+          verifyingContract: enderBondLiquidityDepositAddress,
       },
       {
-        userSign: [
-          {
-            name: 'user',
-            type: 'address',
-          },
-          {
-            name: 'key',
-            type: 'string',
-          },
-        ],
+          userSign: [
+              {
+                  name: 'user',
+                  type: 'address',
+              },
+              {
+                  name: 'key',
+                  type: 'string',
+              },
+          ],
       },
       {
-        user: signer1.address,
-        key: "0",
+          user: signer1.address,
+          key: "0",
       }
-    )
-    return sig;
-  };
+  )
+  return sig;
+};
 
   async function signatureDigestOfEarlyBond1() {
     let sig = await signer.signTypedData(
@@ -1387,8 +1593,9 @@ describe.only("EnderBond Deposit and Withdraw", function () {
     await ethers.provider.send("evm_increaseTime", [seconds]);
     await ethers.provider.send("evm_mine");
   }
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 });
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+

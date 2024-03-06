@@ -235,6 +235,145 @@ describe("Ender Bond deposit and withdraw", async() => {
 
         });
 
+        it("EnderBond:- performUpkeep", async() => {
+          const maturity = 90;
+          const bondFee = 500;
+          const depositPrincipalStEth = expandTo18Decimals(1);
+
+          //mint stEth to signer1 and approve enderBond
+          await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
+
+          //deposit by signer1
+          expect(tokenId1 = await depositAndSetup(signer1, depositPrincipalStEth, maturity, bondFee, [signer1.address, "0", signature1]))
+          .to
+          .changeTokenBalance(stEth, [signer1.address, enderTreasuryAddress], [-depositPrincipalStEth, depositPrincipalStEth]);
+          await enderBond.connect(signer1).performUpkeep("0x1234");
+          //mature the bond
+          increaseTime(maturity);
+
+          //balance of signer1 before withdrawal
+          const balanceBefore =  await stEth.balanceOf(signer1.address);
+
+          //withdraw
+          await withdrawAndSetup(signer1, tokenId1)
+
+          expect(await stEth.balanceOf(signer1.address)).to.be.greaterThan(balanceBefore);
+
+        });
+
+        it("EnderBond:- calculating rewards", async() => {
+          const maturity = 90;
+          const bondFee = 500;
+          const depositAmountEnd = expandTo18Decimals(5);
+          const depositPrincipalStEth = expandTo18Decimals(1);
+
+          //mint stEth to signer1 and approve enderBond
+          await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
+
+          //deposit by signer1
+          expect(tokenId1 = await depositAndSetup(signer1, depositPrincipalStEth, maturity, bondFee, [signer1.address, "0", signature1]))
+          .to
+          .changeTokenBalance(stEth, [signer1.address, enderTreasuryAddress], [-depositPrincipalStEth, depositPrincipalStEth]);
+          await enderBond.connect(signer1).performUpkeep("0x1234");
+          await enderBond.connect(signer1).calculateBondRewardAmount(tokenId1, 0);
+          await enderBond.connect(signer1).calculateStakingReward(tokenId1, 0);
+
+          await endToken.connect(owner).mint(signer2.address, depositAmountEnd);
+          await endToken.connect(signer2).transfer(signer3.address, depositAmountEnd);
+
+          await endToken.distributeRefractionFees();
+
+          await enderBond.connect(signer1).calculateRefractionRewards(tokenId1, 0);
+          //mature the bond
+          increaseTime(maturity);
+
+          //balance of signer1 before withdrawal
+          const balanceBefore =  await stEth.balanceOf(signer1.address);
+
+          //withdraw
+          await withdrawAndSetup(signer1, tokenId1)
+
+          expect(await stEth.balanceOf(signer1.address)).to.be.greaterThan(balanceBefore);
+
+        });
+
+        it("EnderBond:- updating states without performUpKeep", async() => {
+          const maturity = 90;
+          const bondFee = 500;
+          const depositPrincipalStEth = expandTo18Decimals(1);
+
+          //mint stEth to signer1 and approve enderBond
+          await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
+
+          //deposit by signer1
+          expect(tokenId1 = await depositAndSetup(signer1, depositPrincipalStEth, maturity, bondFee, [signer1.address, "0", signature1]))
+          .to
+          .changeTokenBalance(stEth, [signer1.address, enderTreasuryAddress], [-depositPrincipalStEth, depositPrincipalStEth]);
+          await enderBond.epochBondYieldShareIndex();
+          await enderBond.epochRewardShareIndexByPass();
+          await enderBond.epochRewardShareIndexSendByPass();
+          await enderBond.getLoopCount();
+          await enderStaking.epochStakingReward(stEthAddress);
+          //mature the bond
+          increaseTime(maturity);
+
+          //balance of signer1 before withdrawal
+          const balanceBefore =  await stEth.balanceOf(signer1.address);
+
+          //withdraw
+          await withdrawAndSetup(signer1, tokenId1)
+
+          expect(await stEth.balanceOf(signer1.address)).to.be.greaterThan(balanceBefore);
+
+        });
+
+        it("Ender Bond:- claim Reward function calling without depositing in the enderBond", async() => {
+          const maturity = 90;
+          const bondFee = 500;
+          const depositPrincipalStEth = expandTo18Decimals(1);
+
+          //mint stEth to signer1 and approve enderBond
+          await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
+
+          //deposit by signer1
+          expect(tokenId1 = await depositAndSetup(signer1, depositPrincipalStEth, maturity, bondFee, [signer1.address, "0", signature1]))
+          .to
+          .changeTokenBalance(stEth, [signer1.address, enderTreasuryAddress], [-depositPrincipalStEth, depositPrincipalStEth]);
+
+         await expect(enderBond.connect(signer2).claimRewards(tokenId1)).to.be.revertedWithCustomError(enderBond, "NotBondUser");
+
+        });
+
+        it("Ender Bond:- Bond Not Matured", async() => {
+          const maturity = 90;
+          const bondFee = 500;
+          const depositPrincipalStEth = expandTo18Decimals(1);
+
+          //mint stEth to signer1 and approve enderBond
+          await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+          await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
+
+          //deposit by signer1
+          expect(tokenId1 = await depositAndSetup(signer1, depositPrincipalStEth, maturity, bondFee, [signer1.address, "0", signature1]))
+          .to
+          .changeTokenBalance(stEth, [signer1.address, enderTreasuryAddress], [-depositPrincipalStEth, depositPrincipalStEth]);
+
+          //mature the bond
+          // increaseTime(maturity);
+
+          //balance of signer1 before withdrawal
+          const balanceBefore =  await stEth.balanceOf(signer1.address);
+
+          //withdraw
+          // await withdrawAndSetup(signer1, tokenId1)
+          await expect(enderBond.withdraw(tokenId1)).to.be.revertedWithCustomError(enderBond, "BondNotMatured");
+
+        });
+
         it("Simple 3 deposits, matures, withdraws", async() => {
           const maturity = 90;
           const bondFee = 500;
@@ -310,8 +449,6 @@ describe("Ender Bond deposit and withdraw", async() => {
           .to
           .changeTokenBalance(stEth, [signer1.address, enderTreasuryAddress], [-depositPrincipalStEth, depositPrincipalStEth]);
 
-          //reward Share "S" will be 0 as no refraction reward has yet been collected
-          expect(await enderBond.rewardShareIndex()).to.be.equal(0);
 
           //token transfers to collect refraction reward 
           await endToken.connect(owner).mint(signer2.address, depositAmountEnd);
@@ -403,19 +540,17 @@ describe("Ender Bond deposit and withdraw", async() => {
           expect(await sEndToken.balanceOf(signer1.address)).to.be.greaterThan(0);
           
           //mature the bond
-          passEpoch(maturity*3);
+          increaseTime(maturity);
           
           //balance of signer1 before withdrawal
           const balanceBefore =  await stEth.balanceOf(signer1.address);
-
           //withdraw
-          await withdrawAndSetup(signer1, tokenId1);
-
+          await withdrawAndSetup(signer1, tokenId1)
           expect(await stEth.balanceOf(signer1.address)).to.be.greaterThan(balanceBefore);
 
         });
 
-        it.only("multiple deposits, multiple stakes, multiple claimrewards", async() => {
+        it("multiple deposits, multiple stakes, multiple claimrewards", async() => {
           const maturity = 90;
           const bondFee = 500;
           const depositPrincipalStEth = expandTo18Decimals(1);

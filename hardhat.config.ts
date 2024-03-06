@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
 // require("@nomiclabs/hardhat-web3");
+require('solidity-coverage');
 require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
 
@@ -27,6 +28,9 @@ module.exports = {
     timeout: 200000, // 200 seconds max for running tests
 },
   solidity: {
+    coverage: {
+      enabled: true,
+    },
     compilers: [
       {
         version: "0.8.18",
