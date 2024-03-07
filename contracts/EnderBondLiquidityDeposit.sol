@@ -91,10 +91,11 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
         _;
     }
 
-    modifier onlyBond() {
-        if (msg.sender != enderBond) revert NotAllowed();
-        _;
-    }
+    // not used
+    // modifier onlyBond() {
+    //     if (msg.sender != enderBond) revert NotAllowed();
+    //     _;
+    // }
 
     function setsigner(address _signer) external onlyOwner {
         require(_signer != address(0), "Address can't be zero");
@@ -147,7 +148,8 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
 
         if (_type == 1) stEth = _addr;
         else if (_type == 2) lido = _addr;
-        else if (_type == 3) enderBond = _addr;
+        // not used
+        // else if (_type == 3) enderBond = _addr;
     }
 
     /**
@@ -167,8 +169,10 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
     ) external payable nonReentrant depositEnabled {
         if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
+        // token address zero is invalid
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee < 0 || bondFee > 10000) revert InvalidBondFee();
+        // uint256 cannot be minus number
+        if (bondFee > 10000) revert InvalidBondFee();
         address signAddress = _verify(userSign);
         require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
         // token transfer
