@@ -21,7 +21,7 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "../common";
+} from "../../common";
 
 export declare namespace EnderBond {
   export type SignDataStruct = {
@@ -37,10 +37,12 @@ export declare namespace EnderBond {
   ] & { user: string; key: string; signature: string };
 }
 
-export interface EnderBondInterface extends Interface {
+export interface MockEnderBondInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "SECONDS_IN_DAY"
+      | "_calculateRefractionData"
+      | "_findClosestS"
       | "bondFeeEnabled"
       | "bondIdAtMaturity"
       | "bondPause"
@@ -69,9 +71,11 @@ export interface EnderBondInterface extends Interface {
       | "epochRewardShareIndexByPass"
       | "epochRewardShareIndexForSend"
       | "epochRewardShareIndexSendByPass"
+      | "getAvailableBondFee"
       | "getInterest"
       | "getLoopCount"
       | "getPrivateAddress"
+      | "initAvailableBondFee"
       | "initialize"
       | "interval"
       | "isSet"
@@ -158,6 +162,20 @@ export interface EnderBondInterface extends Interface {
   encodeFunctionData(
     functionFragment: "SECONDS_IN_DAY",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_calculateRefractionData",
+    values: [
+      AddressLike,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_findClosestS",
+    values: [BigNumberish[], BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "bondFeeEnabled",
@@ -270,6 +288,10 @@ export interface EnderBondInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getAvailableBondFee",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getInterest",
     values: [BigNumberish]
   ): string;
@@ -279,6 +301,10 @@ export interface EnderBondInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getPrivateAddress",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initAvailableBondFee",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -462,6 +488,14 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "_calculateRefractionData",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_findClosestS",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "bondFeeEnabled",
     data: BytesLike
   ): Result;
@@ -562,6 +596,10 @@ export interface EnderBondInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getAvailableBondFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getInterest",
     data: BytesLike
   ): Result;
@@ -571,6 +609,10 @@ export interface EnderBondInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getPrivateAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "initAvailableBondFee",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -1084,11 +1126,11 @@ export namespace WithdrawalEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface EnderBond extends BaseContract {
-  connect(runner?: ContractRunner | null): EnderBond;
+export interface MockEnderBond extends BaseContract {
+  connect(runner?: ContractRunner | null): MockEnderBond;
   waitForDeployment(): Promise<this>;
 
-  interface: EnderBondInterface;
+  interface: MockEnderBondInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -1128,6 +1170,24 @@ export interface EnderBond extends BaseContract {
   ): Promise<this>;
 
   SECONDS_IN_DAY: TypedContractMethod<[], [bigint], "view">;
+
+  _calculateRefractionData: TypedContractMethod<
+    [
+      user: AddressLike,
+      _principal: BigNumberish,
+      _maturity: BigNumberish,
+      _tokenId: BigNumberish,
+      _bondfee: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  _findClosestS: TypedContractMethod<
+    [arr: BigNumberish[], _totalMaturity: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
   bondFeeEnabled: TypedContractMethod<[], [boolean], "view">;
 
@@ -1304,6 +1364,8 @@ export interface EnderBond extends BaseContract {
     "nonpayable"
   >;
 
+  getAvailableBondFee: TypedContractMethod<[], [bigint], "view">;
+
   getInterest: TypedContractMethod<[maturity: BigNumberish], [bigint], "view">;
 
   getLoopCount: TypedContractMethod<[], [bigint], "nonpayable">;
@@ -1312,6 +1374,12 @@ export interface EnderBond extends BaseContract {
     [_type: BigNumberish],
     [string],
     "view"
+  >;
+
+  initAvailableBondFee: TypedContractMethod<
+    [_amount: BigNumberish],
+    [void],
+    "nonpayable"
   >;
 
   initialize: TypedContractMethod<
@@ -1505,6 +1573,26 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "SECONDS_IN_DAY"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "_calculateRefractionData"
+  ): TypedContractMethod<
+    [
+      user: AddressLike,
+      _principal: BigNumberish,
+      _maturity: BigNumberish,
+      _tokenId: BigNumberish,
+      _bondfee: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "_findClosestS"
+  ): TypedContractMethod<
+    [arr: BigNumberish[], _totalMaturity: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "bondFeeEnabled"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
@@ -1676,6 +1764,9 @@ export interface EnderBond extends BaseContract {
     nameOrSignature: "epochRewardShareIndexSendByPass"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "getAvailableBondFee"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "getInterest"
   ): TypedContractMethod<[maturity: BigNumberish], [bigint], "view">;
   getFunction(
@@ -1684,6 +1775,9 @@ export interface EnderBond extends BaseContract {
   getFunction(
     nameOrSignature: "getPrivateAddress"
   ): TypedContractMethod<[_type: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "initAvailableBondFee"
+  ): TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<

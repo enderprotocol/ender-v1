@@ -218,6 +218,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IStEth__factory>;
     getContractFactory(
+      name: "MockEnderBond",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockEnderBond__factory>;
+    getContractFactory(
       name: "BondNFT",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BondNFT__factory>;
@@ -550,6 +554,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IStEth>;
     getContractAt(
+      name: "MockEnderBond",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockEnderBond>;
+    getContractAt(
       name: "BondNFT",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -850,6 +859,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IStEth>;
     deployContract(
+      name: "MockEnderBond",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockEnderBond>;
+    deployContract(
       name: "BondNFT",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BondNFT>;
@@ -1181,6 +1194,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IStEth>;
+    deployContract(
+      name: "MockEnderBond",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockEnderBond>;
     deployContract(
       name: "BondNFT",
       args: any[],

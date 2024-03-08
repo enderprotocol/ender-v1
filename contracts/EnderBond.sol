@@ -40,6 +40,7 @@ error NotEnderStaking();
 error NotEndToken();
 error NoTreasury();
 error ZeroValue();
+error InvalidAddress();
 
 /**
  * @title EnderBond contract
@@ -96,7 +97,7 @@ contract EnderBond is
     uint256 private amountRequired;
     uint256 private depositAmountRequired;
     uint256 private refractionAmountRequired;
-    uint256 private availableBondFee;
+    uint256 internal availableBondFee;
     uint256 private withdrawAmntFromSt;
     uint public interval;
     uint public lastTimeStamp;
@@ -244,6 +245,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         else if (_type == 8) endStaking = IEnderStaking(_addr);
         else if (_type == 9) sEndToken = _addr;
         else if (_type == 10) depositContract = IEnderBondLiquidityDeposit(_addr);
+        else revert InvalidAddress();
 
         emit AddressSet(_type, _addr);
     }
@@ -269,7 +271,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         emit BondYieldBaseRateSet(_bondYieldBaseRate);
     }
 
-    function getAddress(uint256 _type) external view returns (address addr) {
+    function getPrivateAddress(uint256 _type) external view returns (address addr) {
         if (_type == 0) revert ZeroAddress();
 
         if (_type == 1) addr = address(endTreasury);
@@ -282,6 +284,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         else if (_type == 8) addr = address(endStaking);
         else if (_type == 9) addr = sEndToken;
         else if (_type == 10) addr = address(depositContract);
+        else revert InvalidAddress();
     }
 
     /**
@@ -361,7 +364,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     }
 
     function userInfoDepositContract(uint256[] memory index, signData memory userSign) external onlyOwner{
-        if (index.length >= 0){
+        if (index.length > 0){
             for (uint256 i = 0; i < index.length; i++){
                 // // console.log("i am here");
                 (address user, uint256 principal, uint256 bondFees, uint256 maturity) = depositContract.depositedIntoBond(index[i]);
@@ -672,7 +675,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         uint256 low = 0;
         uint256 high;
         if(arr.length == 0){
-            high = 0;
+            return 0;
         }else{
             high = arr.length - 1;
         }
@@ -680,7 +683,9 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
         while (low <= high) {
             mid = (low + high) / 2;
-            if (arr[mid] == _totalMaturity || (arr[mid + 1] > _totalMaturity && arr[mid] < _totalMaturity)) {
+            if (mid == 0 || mid == arr.length -1) {
+                return arr[mid];
+            } else if (arr[mid] == _totalMaturity || (arr[mid + 1] > _totalMaturity && arr[mid] < _totalMaturity)) {
                 return arr[mid];
             } else if((arr[mid - 1] < _totalMaturity && arr[mid] > _totalMaturity)){
                 return arr[mid - 1];
@@ -690,14 +695,6 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             } else {
                 high = mid - 1;
             }
-        }
-        // // console.log("ARR[LOW]", arr[low]);
-        if (arr[low] > _totalMaturity) {
-            return arr[low];
-        } else if (arr[high] < _totalMaturity) {
-            return arr[high];
-        } else {
-            return 0;
         }
     }
 
@@ -737,14 +734,14 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
     /**
      * @dev Calculates pending rewards and related information for a bond.
-     * @param _principle The principle amount of the bond.
+     * @param _principal The principle amount of the bond.
      * @param _maturity The maturity of the bond.
      * @param _tokenId The unique identifier of the bond.
      * @return rewardPrinciple The principle amount used in reward calculations.
      */
     function calculateRefractionData(
         address user,
-        uint256 _principle,
+        uint256 _principal,
         uint256 _maturity,
         uint256 _tokenId,
         uint256 _bondfee
@@ -753,7 +750,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         uint avgRefractionIndex = _bondfee != 0 ? 
             100 + ((rateOfChange * _bondfee * (_maturity - 1)) / (2 * 1000000)) :
             100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
-        rewardPrinciple = (_principle * avgRefractionIndex) / 100;
+        rewardPrinciple = (_principal * avgRefractionIndex) / 100;
         secondsRefractionShareIndex[block.timestamp] = rewardShareIndex;
 
     }
