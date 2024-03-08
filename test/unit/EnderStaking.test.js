@@ -34,7 +34,7 @@
 //   describe("Check set END token", function () {
 //     it("Should not allow non-owner to set the end token address", async function () {
 //       await expect(enderStaking.connect(wallet1).setAddress(endTokenAddress))
-//         .to.be.revertedWith("Ownable: caller is not the owner");
+//         .to.be.revertedWith("Ownablae: caller is not the owner");
 //     });
 
 //     it("Should revert if the end token address is the zero address", async function () {

@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 const { BigNumber } = require("ethers");
 
+
 const { EigenLayerStrategyManagerAddress } = require("../utils/common");
 const exp = require("constants");
 const { sign } = require("crypto");
@@ -57,7 +58,7 @@ describe("EnderBond Deposit and Withdraw", function () {
     const SEnd = await ethers.getContractFactory("SEndToken");
     // const Oracle = await ethers.getContractFactory("EnderOracle");
 
-    [owner, signer, wallet1, signer1, signer2, signer3, signer4] = await ethers.getSigners();
+    [owner, signer, wallet1, signer1, signer2, signer3, signer4,] = await ethers.getSigners();
 
     stEth = await StEth.deploy();
     stEthAddress = await stEth.getAddress();
@@ -465,7 +466,6 @@ describe("EnderBond Deposit and Withdraw", function () {
         [signer1.address, "0", sig1]
       );
       await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
-      // //this fundtion will set the bondYeildShareIndex where it is used to calculate the user S0
       await enderBond.epochBondYieldShareIndex();
       expect(await enderBond.bondYieldShareIndex()).to.be.greaterThan(
         await enderBond.userBondYieldShareIndex(tokenId2)
@@ -477,28 +477,16 @@ describe("EnderBond Deposit and Withdraw", function () {
       await bondNFT.connect(signer1).transferFrom(signer1.address, signer4.address, tokenId2);
 
 
-      //increasing the time 1 day
+
 
       increaseTime(600);
       const initalBalanceOfEnderBond = await endToken.balanceOf(
         enderBondAddress
       );
-      //   await endToken.distributeRefractionFees();
 
       const initialBalanceOfuser1 = await endToken.balanceOf(signer1.address);
 
-      //as the distribution is done user now can withdraw the rewards
-      //   await enderBond.connect(signer1).calculateRefractionRewards(tokenId2);
 
-      //   await enderBond.connect(signer1).calculateRefractionRewards(tokenId);
-
-      //as he claimed the rewards
-      //   expect(await endToken.balanceOf(signer1.address)).to.be.greaterThan(
-      //     initialBalanceOfuser1
-      //   );
-
-      //now we hit the refraction function in the token contract
-      //which will update the rewardShareIndex in the enderbond
 
       const userAddressBefore = await endToken.balanceOf(signer1.address);
 
@@ -507,30 +495,21 @@ describe("EnderBond Deposit and Withdraw", function () {
       await sEnd.connect(owner).whitelist(enderStakingAddress, true);
       await sEnd.connect(owner).setStatus(2);
 
-      // await WETH.mint(signer1.address, depositPrincipalStEth);
-      // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
+
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       let sig3 = signatureDigest2();
       let receiptTokenAmount = await enderStaking.calculateSEndTokens(depositAmountEnd);
       await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
 
-      // Wait for the bond to mature
       await increaseTime(180 * 600);
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
       const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
 
       await enderStaking.connect(signer3).unstake(sEndAmount);
 
-      //   await endToken.distributeRefractionFees();
 
-      // await WETH.mint(signer1.address, depositPrincipalStEth);
-      // await WETH.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth)
-      // await withdrawAndSetup(signer1, tokenId);
-
-      // await withdrawAndSetup(signer4, tokenId2);
-
 
     });
 
@@ -591,7 +570,7 @@ describe("EnderBond Deposit and Withdraw", function () {
       await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
       await stEth
         .connect(signer1)
-        .approve(enderBondAddress, depositPrincipalStEth);
+        .approve(enderBondAddress, depositPrincipalStEth);      
       await enderTreasury.setAddress(instadappLitelidoStaking, 5);
       await enderTreasury.setStrategy([instadappLitelidoStaking], true);
       await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
@@ -842,231 +821,6 @@ describe("EnderBond Deposit and Withdraw", function () {
       await withdrawAndSetup(signer4, tokenId2);
     });
 
-
-    it("Ender protocol scenario 5:- BondFee is 0.01% and maturity is 90 days", async () => {
-      const maturity = 45;
-      const bondFee = 1;
-      const depositAmountEnd = expandTo18Decimals(5);
-      const depositPrincipalStEth = expandTo18Decimals(1);
-
-      const endTransfer = expandTo18Decimals(1);
-      await endToken.setFee(20);
-
-      //mint to signer1
-      await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
-
-      //first transfer
-      await endToken.connect(signer1).transfer(signer2.address, endTransfer);
-
-      //second transfer
-      await endToken.connect(signer1).transfer(signer2.address, endTransfer);
-
-      expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
-
-      expect(await enderBond.rewardShareIndex()).to.be.equal(0);
-      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-      console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
-
-      await stEth
-        .connect(signer1)
-        .approve(enderBondAddress, depositPrincipalStEth);
-      await enderTreasury.setAddress(instadappLiteAddress, 5);
-      await sleep(1200);
-      let sig1 = signatureDigest();
-      console.log("-------------deposit 1-------------------")
-      const tokenId = await depositAndSetup(
-        signer1,
-        depositPrincipalStEth,
-        maturity,
-        bondFee,
-        [signer1.address, "0", sig1]
-      );
-      console.log("-------------deposit 1-------------------")
-
-      await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
-      await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
-      await stEth
-        .connect(signer2)
-        .approve(enderBondAddress, depositPrincipalStEth);
-      let sig2 = signatureDigest1();
-      console.log("-------------deposit 2-------------------")
-
-      const tokenId1 = await depositAndSetup(
-        signer2,
-        depositPrincipalStEth,
-        maturity,
-        bondFee,
-        [signer2.address, "0", sig2]
-      );
-      console.log("-------------deposit 2-------------------")
-
-      increaseTime(6000);
-      await endToken.distributeRefractionFees();
-      const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
-      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-      await stEth
-        .connect(signer1)
-        .approve(enderBondAddress, depositPrincipalStEth);
-      await enderTreasury.setAddress(instadappLitelidoStaking, 5);
-      await enderTreasury.setStrategy([instadappLitelidoStaking], true);
-      await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
-      await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, "2000000000000000000");
-      await increaseTime(20 * 600);
-      console.log("-------------deposit 3-------------------")
-
-      const tokenId2 = await depositAndSetup(
-        signer1,
-        depositPrincipalStEth,
-        maturity,
-        bondFee,
-        [signer1.address, "0", sig1]
-      );
-      console.log("---------------------------------------------------3rd-deposit-----------------------------------");
-      await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
-      expect(await bondNFT.ownerOf(tokenId2)).to.be.equal(
-        await bondNFT.ownerOf(tokenId)
-      );
-      await bondNFT.connect(signer1).transferFrom(signer1.address, signer4.address, tokenId2);
-
-      //increasing the time 1 day
-      increaseTime(600);
-      const initalBalanceOfEnderBond = await endToken.balanceOf(
-        enderBondAddress
-      );
-      const initialBalanceOfuser1 = await endToken.balanceOf(signer1.address);
-      const userAddressBefore = await endToken.balanceOf(signer1.address);
-      await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
-      await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
-      await sEnd.connect(owner).whitelist(enderStakingAddress, true);
-      await sEnd.connect(owner).setStatus(2);
-      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-      let sig3 = signatureDigest2();
-      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
-      await increaseTime(14 * 600);
-      await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
-      const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
-      await enderStaking.connect(signer3).unstake(sEndAmount);
-      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-      await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth)
-      await withdrawAndSetup(signer1, tokenId);
-      console.log("Withdraw---------");
-      await increaseTime(30 * 600);
-      await enderBond.epochBondYieldShareIndex();
-      await withdrawAndSetup(signer2, tokenId1);
-    });
-
-    it("Ender protocol scenario 5:- Multiple deposit with different-different bond fees and maturity", async () => {
-      let maturity = 90;
-      let bondFee = 1;
-      const depositAmountEnd = expandTo18Decimals(5);
-      const depositPrincipalStEth = expandTo18Decimals(1);
-
-      const endTransfer = expandTo18Decimals(1);
-      await endToken.setFee(20);
-
-      //mint to signer1
-      await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
-
-      //first transfer
-      await endToken.connect(signer1).transfer(signer2.address, endTransfer);
-
-      //second transfer
-      await endToken.connect(signer1).transfer(signer2.address, endTransfer);
-
-      expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
-
-      expect(await enderBond.rewardShareIndex()).to.be.equal(0);
-      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-      console.log("get the stEth--------->>>>>>>", await stEth.connect(signer1).balanceOf(signer1.address));
-
-      await stEth
-        .connect(signer1)
-        .approve(enderBondAddress, depositPrincipalStEth);
-      await enderTreasury.setAddress(instadappLiteAddress, 5);
-      await sleep(1200);
-      let sig1 = signatureDigest();
-      const tokenId = await depositAndSetup(
-        signer1,
-        depositPrincipalStEth,
-        maturity,
-        bondFee,
-        [signer1.address, "0", sig1]
-      );
-      await endToken.connect(signer1).transfer(signer2.address, "1000000000000000000")
-      await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
-      await stEth
-        .connect(signer2)
-        .approve(enderBondAddress, depositPrincipalStEth);
-      let sig2 = signatureDigest1();
-
-      bondFee = 10000
-      maturity = 5
-
-
-      const tokenId1 = await depositAndSetup(
-        signer2,
-        depositPrincipalStEth,
-        maturity,
-        bondFee,
-        [signer2.address, "0", sig2]
-      );
-      increaseTime(6000);
-      await endToken.distributeRefractionFees();
-      const initialBalanceOfuser = await endToken.balanceOf(signer1.address);
-      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-      await stEth
-        .connect(signer1)
-        .approve(enderBondAddress, depositPrincipalStEth);
-      await enderTreasury.setAddress(instadappLitelidoStaking, 5);
-      await enderTreasury.setStrategy([instadappLitelidoStaking], true);
-      await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
-      await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, "2000000000000000000");
-      await increaseTime(20 * 600);
-
-      bondFee = 5000
-      maturity = 50
-
-      const tokenId2 = await depositAndSetup(
-        signer1,
-        depositPrincipalStEth,
-        maturity,
-        bondFee,
-        [signer1.address, "0", sig1]
-      );
-      await enderTreasury.depositInStrategy(stEthAddress, instadappLitelidoStaking, depositPrincipalStEth);
-      console.log("---------------------------------------------------3rd-deposit-----------------------------------");
-      expect(await bondNFT.ownerOf(tokenId2)).to.be.equal(
-        await bondNFT.ownerOf(tokenId)
-      );
-      await bondNFT.connect(signer1).transferFrom(signer1.address, signer4.address, tokenId2);
-
-      //increasing the time 1 day
-      increaseTime(600);
-      const initalBalanceOfEnderBond = await endToken.balanceOf(
-        enderBondAddress
-      );
-      const initialBalanceOfuser1 = await endToken.balanceOf(signer1.address);
-      const userAddressBefore = await endToken.balanceOf(signer1.address);
-      await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
-      await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
-      await sEnd.connect(owner).whitelist(enderStakingAddress, true);
-      await sEnd.connect(owner).setStatus(2);
-      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-      let sig3 = signatureDigest2();
-      await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig3]);
-      await increaseTime(90 * 600);
-      // await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth);
-      const sEndAmount = await sEnd.connect(signer3).balanceOf(signer3.address);
-      await enderStaking.connect(signer3).unstake(sEndAmount);
-
-
-      await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-      // await stEth.connect(signer1).transfer(instadappLiteAddress, depositPrincipalStEth)
-      // await withdrawAndSetup(signer1, tokenId);
-      // console.log("Withdraw");
-      // await withdrawAndSetup(signer4, tokenId2);
-    });
-
     it("Deposit Revert InvalidAmount()", async () => {
       let maturity = 90;
       let bondFee = 1;
@@ -1163,6 +917,32 @@ describe("EnderBond Deposit and Withdraw", function () {
       ).to.be.revertedWithCustomError(enderBond, "NotBondableToken");
 
     });
+    it("Should revert if an incorrect asset is passed to epochStakingReward", async function () {
+      const otherAsset = ethers.Wallet.createRandom().address; 
+  
+      await expect(
+          enderStaking.epochStakingReward(otherAsset)
+      ).to.be.revertedWithCustomError(enderStaking, "NotAllowed");
+  });
+
+  it("should return the same amount if rebasingIndex is 0", async function () {
+    const endAmount = ethers.parseEther("1"); 
+    const expectedSEndTokens = endAmount; 
+    expect(await enderStaking.calculateSEndTokens(endAmount)).to.equal(expectedSEndTokens);
+  });
+//   it("should return the correct hash", async function () {
+//     const sig = await signatureDigest2();
+//     const signature = [signer3.address, "0", sig];
+//     const user = signer1.address; 
+//     const key = "example_key";
+//     const expectedHash = ethers.utils.solidityKeccak256(
+//       ["bytes"],
+//       [ethers.utils.defaultAbiCoder.encode(["string", "address", "string"], ["userSign(address,string)", user, key])]
+//     );
+
+//     const hash = await signer._hash(user, key);
+//     expect(hash).to.equal(expectedHash);
+// });
 
     it("Deposit Revert InvalidAmount by Sending Ether", async () => {
       let maturity = 90;
@@ -1196,6 +976,51 @@ describe("EnderBond Deposit and Withdraw", function () {
 
 
     });
+ 
+    
+    it("Should set the correct addresses for valid input types", async function () {
+      //random addresses to test function
+      const newEndTokenAddress = ethers.Wallet.createRandom().address;
+      const newEnderBondAddress = ethers.Wallet.createRandom().address;
+      const newEnderDepositorAddress = ethers.Wallet.createRandom().address;
+      const newInstaDappReceiptTokenAddress = ethers.Wallet.createRandom().address;
+      const newLybraFinanceReceiptTokenAddress = ethers.Wallet.createRandom().address;
+      const newEigenLayerReceiptTokenAddress= ethers.Wallet.createRandom().address;
+
+      await enderTreasury.connect(owner).setAddress(newEndTokenAddress, 1);
+      await enderTreasury.connect(owner).setAddress(newEnderBondAddress, 2);
+      await enderTreasury.connect(owner).setAddress(newEnderDepositorAddress, 3);
+      await enderTreasury.connect(owner).setAddress(newInstaDappReceiptTokenAddress, 4);
+      await enderTreasury.connect(owner).setAddress(newLybraFinanceReceiptTokenAddress, 5);
+      await enderTreasury.connect(owner).setAddress(newEigenLayerReceiptTokenAddress, 6);
+      expect(await enderTreasury.getAddress(1)).to.equal(newEndTokenAddress);
+      expect(await enderTreasury.getAddress(2)).to.equal(newEnderBondAddress);
+      expect(await enderTreasury.getAddress(3)).to.equal(newEnderDepositorAddress);
+      expect(await enderTreasury.getAddress(4)).to.equal(newInstaDappReceiptTokenAddress);
+      expect(await enderTreasury.getAddress(5)).to.equal(newLybraFinanceReceiptTokenAddress);
+      expect(await enderTreasury.getAddress(6)).to.equal(newEigenLayerReceiptTokenAddress); 
+
+  });
+    it("Should return the correct addresses for valid input types", async function () {
+      //addresses of the contracts
+      const address1 = await enderTreasury.getAddress(1);
+      const address2 = await enderTreasury.getAddress(2);
+      const address3 = await enderTreasury.getAddress(3);
+      const address4 = await enderTreasury.getAddress(4);
+      const address5 = await enderTreasury.getAddress(5);
+      const address6 = await enderTreasury.getAddress(6);
+      expect(await enderTreasury.getAddress(1)).to.equal(address1);
+      expect(await enderTreasury.getAddress(2)).to.equal(address2);
+      expect(await enderTreasury.getAddress(3)).to.equal(address3);
+      expect(await enderTreasury.getAddress(4)).to.equal(address4);
+      expect(await enderTreasury.getAddress(5)).to.equal(address5);
+      expect(await enderTreasury.getAddress(6)).to.equal(address6);
+  });
+  it("Should return ZeroAddress for value 0", async function () {
+
+    expect(await enderTreasury.getAddress(0)).to.revertedWith("ZeroAddress");
+
+});
 
     it("Ender Bond:- setBondFeeEnabled", async () => {
       let maturity = 90;
@@ -1326,6 +1151,55 @@ describe("EnderBond Deposit and Withdraw", function () {
       await enderStaking.setStakingEnable(true);
     })
 
+    it("Should not allow staking when staking is disabled", async function () {
+      await enderStaking.setStakingEnable(false);
+      const depositAmountEnd = expandTo18Decimals(5);
+
+      let sig = await signatureDigest2();
+      await expect(
+          enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig])
+      ).to.be.reverted; 
+
+      await enderStaking.setStakingEnable(true);
+  });
+
+  it("Should not allow staking when staking contract is paused", async function () {
+    const depositAmountEnd = expandTo18Decimals(5);
+
+      await enderStaking.setStakingPause(true);
+
+      let sig = await signatureDigest2();
+      await expect(
+          enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig])
+      ).to.be.reverted; 
+
+      await enderStaking.setStakingPause(false); 
+  });
+
+  it("Should not allow unstaking when staking is disabled", async function () {
+    
+      await enderStaking.setStakingEnable(false);
+
+      const sEndAmount = expandTo18Decimals(1); 
+      await expect(
+          enderStaking.connect(signer3).unstake(sEndAmount)
+      ).to.be.reverted; 
+
+      await enderStaking.setStakingEnable(true); 
+  });
+
+  it("Should not allow unstaking when staking contract is paused", async function () {
+      await enderStaking.setStakingPause(true);
+
+      const sEndAmount = expandTo18Decimals(1); 
+      await expect(
+          enderStaking.connect(signer3).unstake(sEndAmount)
+      ).to.be.reverted; 
+
+      await enderStaking.setStakingPause(false);
+  });
+
+
     it("Ender staking:- setStakingEnable revert with invaild owner", async () => {
       let maturity = 90;
       let bondFee = 1;
@@ -1424,6 +1298,80 @@ describe("EnderBond Deposit and Withdraw", function () {
       const depositPrincipalStEth = expandTo18Decimals(1);
       await expect(enderStaking.connect(signer2).whitelist(false)).to.be.rejectedWith("Ownable: caller is not the owner");
     });
+
+
+    describe("Ender Staking Functionality", function () {
+      let depositAmountEnd;
+      let sEndAmountBeforeStake;
+      let sEndAmountAfterStake;
+      let sEndAmountBeforeUnstake;
+      let sEndAmountAfterUnstake;
+  
+      beforeEach(async function () {
+          depositAmountEnd = expandTo18Decimals(5);
+          // Setup more initial conditions if necessary
+      });
+  
+      it("Should allow users to stake tokens", async function () {
+          await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
+          await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
+          sEndAmountBeforeStake = await sEnd.balanceOf(signer3.address);
+  
+          let sig = await signatureDigest2();
+          await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig]);
+  
+          sEndAmountAfterStake = await sEnd.balanceOf(signer3.address);
+          expect(sEndAmountAfterStake).to.be.gt(sEndAmountBeforeStake);
+      });
+      
+    
+      it("calculates rebasing index correctly", async function () {
+
+        rewardAmount = ethers.parseEther("100"); 
+
+        await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
+        await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
+        sEndAmountBeforeStake = await sEnd.balanceOf(signer3.address);
+
+        let sig = await signatureDigest2();
+        await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig]);
+
+        sEndAmountAfterStake = await sEnd.balanceOf(signer3.address);
+        expect(sEndAmountAfterStake).to.be.gt(sEndAmountBeforeStake);
+        sEndAmountBeforeStake = await sEnd.balanceOf(signer3.address);
+        initialSEndTotalSupply = await sEnd.totalSupply();
+        initialRebasingIndex = await enderStaking.rebasingIndex();
+  
+        await endToken.connect(owner).mint(enderStakingAddress, rewardAmount);
+    
+        await enderStaking.connect(owner).epochStakingReward(stEthAddress);
+    
+        finalRebasingIndex = await enderStaking.rebasingIndex();
+        finalSEndTotalSupply = await sEnd.totalSupply();
+        sEndAmountAfterStake = await sEnd.balanceOf(signer3.address);
+    
+        // const totalEndInStakingAfterReward = await endToken.balanceOf(enderStakingAddress);
+        const expectedRebasingIndexAfterReward = 21000000000000000000n;
+        expect(finalRebasingIndex).to.equal(expectedRebasingIndexAfterReward, "Final rebasing index does not match the expected value after reward distribution");
+        expect(finalSEndTotalSupply).to.equal(initialSEndTotalSupply, "Total sEND supply should not change after rebasing");
+      });
+      
+
+      
+      it("Should allow users to unstake tokens", async function () {
+          await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
+          await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
+          let sig = await signatureDigest2();
+          await enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig]);
+  
+          sEndAmountBeforeUnstake = await sEnd.balanceOf(signer3.address);
+            await enderStaking.connect(signer3).unstake(sEndAmountBeforeUnstake);
+  
+          sEndAmountAfterUnstake = await sEnd.balanceOf(signer3.address);
+          expect(sEndAmountAfterUnstake).to.be.lt(sEndAmountBeforeUnstake);
+      });
+  });
+
   });
 
 
