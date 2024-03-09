@@ -110,6 +110,8 @@ export type { IStEth } from "./contracts/interfaces/ISTETH.sol/IStEth";
 export { IStEth__factory } from "./factories/contracts/interfaces/ISTETH.sol/IStEth__factory";
 export type { MockEnderBond } from "./contracts/mock/MockEnderBond";
 export { MockEnderBond__factory } from "./factories/contracts/mock/MockEnderBond__factory";
+export type { MockEnderStaking } from "./contracts/mock/MockEnderStaking";
+export { MockEnderStaking__factory } from "./factories/contracts/mock/MockEnderStaking__factory";
 export type { BondNFT } from "./contracts/NFT/BondNFT";
 export { BondNFT__factory } from "./factories/contracts/NFT/BondNFT__factory";
 export type { EnderOracle } from "./contracts/oracle/EnderOracle";
