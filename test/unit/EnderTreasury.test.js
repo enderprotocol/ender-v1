@@ -21,7 +21,7 @@ function expandTo18Decimals(n) {
   return ethers.parseUnits(n.toString(), 18);
 }
 
-describe("EnderBond Deposit and Withdraw", function () {
+describe("Treasury", function () {
   let owner, signer, signer1, signer2, signer3, signer4;
   let endTokenAddress,
     enderBondAddress,
@@ -84,11 +84,6 @@ describe("EnderBond Deposit and Withdraw", function () {
     });
     endTokenAddress = await endToken.getAddress();
 
-    // oracle = await upgrades.deployProxy(Oracle, [], {
-    //   initializer: "initialize",
-    // });
-
-    // oracleAddress = await oracle.getAddress();
 
     enderBond = await upgrades.deployProxy(
       EnderBond,
@@ -163,9 +158,7 @@ describe("EnderBond Deposit and Withdraw", function () {
     await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953", owner.address);
 
     await enderBond.setBool(true);
-    // await endToken.grantRole()
 
-    //signature
     sig= await signatureDigest();
     sig_1 = await signatureDigest1();
     sig_2 = await signatureDigest2();

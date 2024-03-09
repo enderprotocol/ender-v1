@@ -428,6 +428,58 @@ describe("Initialization", function () {
           enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", validSig])
         ).to.not.be.reverted; 
     });
+    
+    it("Should fail to stake with an invalid signature", async function () {
+      await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
+      await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
+      await enderStaking.whitelist(true);
+      
+      let invalidSignature = await signer.signTypedData(
+        {
+          name: "stakingContract",
+          version: "1",
+          chainId: 31337,
+          verifyingContract: enderStakingAddress,
+        },
+        {
+          userSign: [
+            {
+              name: 'user',
+              type: 'address',
+            },
+            {
+              name: 'key',
+              type: 'string',
+            },
+          ],
+        },
+        {
+          user: signer.address,
+          key: "0",
+        }
+      );
+  
+      await expect(enderStaking.connect(signer3).stake(depositAmountEnd, {
+        user: signer3.address,
+        key: "0",
+        signature: invalidSignature
+      })).to.be.reverted;
+  });
+  it("Should revert when userSign.user does not match msg.sender", async function () {
+    await enderStaking.whitelist(true);
+
+    await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
+    await endToken.connect(signer1).approve(enderStakingAddress, depositAmountEnd);
+
+    let validSignature = await signatureDigest1();
+    
+    await expect(enderStaking.connect(signer3).stake(depositAmountEnd, {
+      user: signer1.address,
+      key: "0",
+      signature: validSignature
+    })).to.be.reverted;
+});
+
     it("Should fail to stake tokens with an invalid signature", async function () {
       await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
       await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
