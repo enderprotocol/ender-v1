@@ -9,6 +9,8 @@ import type * as ownedUpgradeabilityProxySol from "./OwnedUpgradeabilityProxy.so
 export type { ownedUpgradeabilityProxySol };
 import type * as interfaces from "./interfaces";
 export type { interfaces };
+import type * as mock from "./mock";
+export type { mock };
 import type * as oracle from "./oracle";
 export type { oracle };
 import type * as strategy from "./strategy";
