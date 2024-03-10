@@ -25,4 +25,8 @@ contract MockEnderBond is EnderBond {
     ) external {
         calculateRefractionData(user, _principal, _maturity, _tokenId, _bondfee);
     }
+
+    function verify(signData memory userSign) external view returns (address) {
+        return _verify(userSign);
+    }
 }
