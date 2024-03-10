@@ -29,3 +29,4 @@ deployments/sepolia
 # OpenZeppelin upgradeable files
 .openzeppelin/
 /flatten
+typechain-types
