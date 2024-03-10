@@ -160,6 +160,12 @@ describe("Initialization", function () {
     sig= await signatureDigest();
     sig_1 = await signatureDigest1();
     sig_2 = await signatureDigest2();
+    
+    it("should fail on second initialization attempt", async function () {            
+      await expect(enderStaking.initialize(endTokenAddress, sEndTokenAddress, stEthAddress, signer.address))
+        .to.be.revertedWith("Initializable: contract is already initialized"); 
+  });
+
   });
 
     describe("Ender Staking Functionality", function () {
@@ -174,6 +180,7 @@ describe("Initialization", function () {
       });
   
       it("Should allow users to stake tokens", async function () {
+      enderStaking.setStakingPause(true);
           await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
           await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
           sEndAmountBeforeStake = await sEnd.balanceOf(signer3.address);
@@ -184,6 +191,7 @@ describe("Initialization", function () {
           sEndAmountAfterStake = await sEnd.balanceOf(signer3.address);
           expect(sEndAmountAfterStake).to.be.gt(sEndAmountBeforeStake);
       });
+
       it("Should revert if an incorrect asset is passed to epochStakingReward", async function () {
         const otherAsset = ethers.Wallet.createRandom().address; 
     
@@ -206,7 +214,37 @@ describe("Initialization", function () {
         const depositPrincipalStEth = expandTo18Decimals(1);
         await enderStaking.setStakingEnable(true);
       })
+  it ("Should revert if non owner tries to set address", async function (){
+    await expect(
+      sEnd.connect(signer3).setAddress(enderStakingAddress, 1)
+  ).to.be.reverted; 
+
+  });
   
+  it("Should revert when stakingContractPause is false and stakingContractPaused modifier is invoked", async function () {
+    // Set stakingContractPause to false
+    await enderStaking.connect(owner).setStakingPause(false);
+    
+    // Attempt to stake, which should fail because the modifier should revert the transaction
+    let sig = await signatureDigest2();
+    await expect(enderStaking.connect(signer3).stake(depositAmountEnd, {
+        user: signer3.address,
+        key: "0",
+        signature: sig
+    })).to.be.reverted;
+});
+it("Should revert if called by a non-owner", async function () {
+  // Attempt to call `setAddress` from a non-owner account
+  await expect(enderStaking.connect(signer1).setAddress(enderStakingAddress, 1))
+      .to.be.revertedWith("Ownable: caller is not the owner");
+});
+
+it("Should revert if attempting to set a zero address", async function () {
+  zero ="0x0000000000000000000000000000000000000000";
+  // Attempt to call `setAddress` with address(0)
+  await expect(enderStaking.connect(owner).setAddress(zero, 1))
+      .to.be.revertedWithCustomError(enderStaking, "ZeroAddress");
+});
       it("Should not allow staking when staking is disabled", async function () {
         await enderStaking.setStakingEnable(false);
         const depositAmountEnd = expandTo18Decimals(5);
@@ -218,6 +256,17 @@ describe("Initialization", function () {
   
         await enderStaking.setStakingEnable(true);
     });
+    it("Should not allow staking when amount is 0", async function () {
+      await enderStaking.setStakingEnable(true);
+      const depositAmountEnd = expandTo18Decimals(0);
+
+      let sig = await signatureDigest2();
+      await expect(
+          enderStaking.connect(signer3).stake(depositAmountEnd, [signer3.address, "0", sig])
+      ).to.be.reverted; 
+
+      await enderStaking.setStakingEnable(true);
+  });
   
     it("Should not allow staking when staking contract is paused", async function () {
       const depositAmountEnd = expandTo18Decimals(5);
@@ -242,7 +291,29 @@ describe("Initialization", function () {
         ).to.be.reverted; 
   
         await enderStaking.setStakingEnable(true); 
-    });
+    });    
+    it("Should not allow unstaking when value is zero", async function () {
+      
+      await enderStaking.setStakingEnable(true);
+
+      const sEndAmount = expandTo18Decimals(0); 
+      await expect(
+          enderStaking.connect(signer3).unstake(sEndAmount)
+      ).to.be.reverted; 
+
+      await enderStaking.setStakingEnable(true); 
+  });
+    it("Should not allow unstaking when unstaking is disabled", async function () {
+      
+      await enderStaking.setUnstakeEnable(false);
+
+      const sEndAmount = expandTo18Decimals(1); 
+      await expect(
+          enderStaking.connect(signer3).unstake(sEndAmount)
+      ).to.be.reverted; 
+
+      await enderStaking.setUnstakeEnable(true); 
+  });
   
     it("Should not allow unstaking when staking contract is paused", async function () {
         await enderStaking.setStakingPause(true);
@@ -255,6 +326,8 @@ describe("Initialization", function () {
         await enderStaking.setStakingPause(false);
     });
   
+
+
   
       it("Ender staking:- setStakingEnable revert with invaild owner", async () => {
         let maturity = 90;
@@ -407,6 +480,9 @@ describe("Initialization", function () {
     });
         
       it("Should allow users to unstake tokens", async function () {
+        await enderStaking.setUnstakeEnable(true);
+        await enderStaking.setStakingEnable(true); 
+
           await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
           await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
           let sig = await signatureDigest2();
@@ -479,6 +555,27 @@ describe("Initialization", function () {
       signature: validSignature
     })).to.be.reverted;
 });
+it("Should revert when userSign.user does not match msg.sender", async function () {
+  // Enable whitelisting to enforce signature verification
+  await enderStaking.connect(owner).whitelist(true);
+
+  // Mint and approve tokens for signer3
+  await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
+  await endToken.connect(signer3).approve(enderStakingAddress, depositAmountEnd);
+
+  // Create a valid signature with signer3's data
+  let validSignature = await signatureDigest2();
+
+  // Attempt to stake using signer1, but with signer3's signature
+  await expect(
+    enderStaking.connect(signer1).stake(depositAmountEnd, {
+      user: signer3.address,
+      key: "0",
+      signature: validSignature
+    })
+  ).to.be.reverted;
+});
+
 
     it("Should fail to stake tokens with an invalid signature", async function () {
       await endToken.connect(owner).mint(signer3.address, depositAmountEnd);

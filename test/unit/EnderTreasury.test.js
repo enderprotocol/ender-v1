@@ -29,7 +29,9 @@ describe("Treasury", function () {
     enderTreasuryAddress,
     enderStakingAddress,
     mockWETHAddress,
-    instadappLiteAddress;
+    instadappLiteAddress,
+    eigenLayer,
+    lybraFinance;
 
   let endToken,
     enderBond,
@@ -43,20 +45,20 @@ describe("Treasury", function () {
     WETH,
     stEth,
     bondNFT;
-  // oracle,
-  // oracleAddress;
+
 
   this.beforeEach(async function () {
     const wETH = await ethers.getContractFactory("mockWETH");
     const StEth = await ethers.getContractFactory("StETH");
     const InstadappLite = await ethers.getContractFactory("StinstaToken");
+    const eigenLayer=  await ethers.getContractFactory("StETH");
+    const lybraFinance =  await ethers.getContractFactory("StETH");
     const EndToken = await ethers.getContractFactory("EndToken");
     const EnderBondLiquidityBond = await ethers.getContractFactory("EnderBondLiquidityDeposit");
     const EnderBond = await ethers.getContractFactory("EnderBond");
     const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
     const EnderStaking = await ethers.getContractFactory("EnderStaking");
     const SEnd = await ethers.getContractFactory("SEndToken");
-    // const Oracle = await ethers.getContractFactory("EnderOracle");
 
     [owner, signer, wallet1, signer1, signer2, signer3, signer4,] = await ethers.getSigners();
 
@@ -200,51 +202,32 @@ describe("Treasury", function () {
 
     });
  
-    //need to deploy mocks and add correct addresses
-  //   it("Should set the correct addresses for valid input types", async function () {
-  //     //random addresses to test function
-  //     const newEndTokenAddress = endTokenAddress;
-  //     const newEnderBondAddress = enderBondAddress;
-  //     const newEnderDepositorAddress = "0x0B306BF915C4d645ff596e518fAf3F9669b97016";
-  //     const newInstaDappReceiptTokenAddress = instadappLiteAddress;
-  //     const newLybraFinanceReceiptTokenAddress = "0x0B306BF915C4d645ff596e518fAf3F9669b97016";
-  //     const newEigenLayerReceiptTokenAddress= "0x0B306BF915C4d645ff596e518fAf3F9669b97016";
+//use .only to test this
 
-  //     await enderTreasury.connect(owner).setAddress(newEndTokenAddress, 1);
-  //     await enderTreasury.connect(owner).setAddress(newEnderBondAddress, 2);
-  //     await enderTreasury.connect(owner).setAddress(newEnderDepositorAddress, 3);
-  //     await enderTreasury.connect(owner).setAddress(newInstaDappReceiptTokenAddress, 4);
-  //     await enderTreasury.connect(owner).setAddress(newLybraFinanceReceiptTokenAddress, 5);
-  //     await enderTreasury.connect(owner).setAddress(newEigenLayerReceiptTokenAddress, 6);
-  //     expect(await enderTreasury.getAddress(1)).to.equal(newEndTokenAddress);
-  //     expect(await enderTreasury.getAddress(2)).to.equal(newEnderBondAddress);
-  //     expect(await enderTreasury.getAddress(3)).to.equal(newEnderDepositorAddress);
-  //     expect(await enderTreasury.getAddress(4)).to.equal(newInstaDappReceiptTokenAddress);
-  //     expect(await enderTreasury.getAddress(5)).to.equal(newLybraFinanceReceiptTokenAddress);
-  //     expect(await enderTreasury.getAddress(6)).to.equal(newEigenLayerReceiptTokenAddress); 
+//     it("Should return the correct addresses for valid input types", async function () {
+//            const newEnderDepositorAddress = "0x0B306BF915C4d645ff596e518fAf3F9669b97016";
+//            await enderTreasury.setAddress(instadappLiteAddress, 5);
 
-  // });
+//      await enderTreasury.connect(owner).setAddress(newEnderDepositorAddress, 1);
+//      await enderTreasury.connect(owner).setAddress(newEnderDepositorAddress, 2);
+//      await enderTreasury.connect(owner).setAddress(newEnderDepositorAddress, 3);
+//      await enderTreasury.connect(owner).setAddress(newEnderDepositorAddress, 4);
+//      await enderTreasury.connect(owner).setAddress(newEnderDepositorAddress, 5);
+//      await enderTreasury.connect(owner).setAddress(newEnderDepositorAddress, 6);
 
-    it("Should return the correct addresses for valid input types", async function () {
-      //addresses of the contracts
-      const address1 = await enderTreasury.getAddress(1);
-      const address2 = await enderTreasury.getAddress(2);
-      const address3 = await enderTreasury.getAddress(3);
-      const address4 = await enderTreasury.getAddress(4);
-      const address5 = await enderTreasury.getAddress(5);
-      const address6 = await enderTreasury.getAddress(6);
-      expect(await enderTreasury.getAddress(1)).to.equal(address1);
-      expect(await enderTreasury.getAddress(2)).to.equal(address2);
-      expect(await enderTreasury.getAddress(3)).to.equal(address3);
-      expect(await enderTreasury.getAddress(4)).to.equal(address4);
-      expect(await enderTreasury.getAddress(5)).to.equal(address5);
-      expect(await enderTreasury.getAddress(6)).to.equal(address6);
-  });
+//       expect(await enderTreasury.getAddress(1)).to.equal(newEnderDepositorAddress);
+//       expect(await enderTreasury.getAddress(2)).to.equal(newEnderDepositorAddress);
+//       expect(await enderTreasury.getAddress(3)).to.equal(newEnderDepositorAddress);
+//       expect(await enderTreasury.getAddress(4)).to.equal(newEnderDepositorAddress);
+//       expect(await enderTreasury.getAddress(5)).to.equal(instadappLiteAddress);
+//       expect(await enderTreasury.getAddress(6)).to.equal(newEnderDepositorAddress);
+//   });
   it("Should return ZeroAddress for value 0", async function () {
 
-    expect(await enderTreasury.getAddress(0)).to.revertedWith("ZeroAddress");
+    expect(await enderTreasury.getAddress(0)).to.be.revertedWith("ZeroAddress");
 
 });
+
 
 
     it("setBondYieldBaseRate", async () => {
@@ -322,6 +305,10 @@ describe("Treasury", function () {
       await expect(enderTreasury.connect(owner).withdrawBondFee(stEthAddress, 1));
 
     });
+    describe("withdrawBondFee functionality", function () {
+
+    });
+    
     it("Deposit Revert InvalidAmount()", async () => {
       let maturity = 90;
       let bondFee = 1;
