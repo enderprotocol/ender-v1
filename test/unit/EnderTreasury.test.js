@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
-const { BigNumber } = require("ethers");
+const { BigNumber, ZeroAddress } = require("ethers");
 
 
 const { EigenLayerStrategyManagerAddress } = require("../utils/common");
@@ -201,7 +201,56 @@ describe("Treasury", function () {
 
 
     });
- 
+
+    it ("should fail to initialize again", async function(){
+      await expect(enderTreasury.initializeTreasury(        
+        endTokenAddress,
+        enderStakingAddress,
+        enderBondAddress,
+        instadappLiteAddress,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
+        70,
+        30)).to.be.revertedWith("Initializable: contract is already initialized"); 
+    })
+    it("Should revert when called by wrong address", async function () {
+
+        const amount = ethers.parseEther("1");
+
+        await expect(enderTreasury.connect(wallet1).depositTreasury({
+          account: wallet1.address,
+          stakingToken: stEthAddress,
+          tokenAmt: amount,
+        }, amount))
+          .to.be.revertedWithCustomError(enderTreasury, "NotAllowed");
+  
+        await expect(enderTreasury.connect(wallet1).withdraw({
+          account: wallet1.address,
+          stakingToken: stEthAddress,
+          tokenAmt: amount,
+        }, amount))
+          .to.be.revertedWithCustomError(enderTreasury, "NotAllowed");
+  
+        await expect(enderTreasury.connect(wallet1).collect(wallet1.address, amount))
+          .to.be.revertedWithCustomError(enderTreasury, "NotAllowed");
+  
+        await expect(enderTreasury.connect(wallet1).mintEndToUser(wallet1.address, amount))
+          .to.be.revertedWithCustomError(enderTreasury, "NotAllowed");
+  
+        await expect(enderTreasury.connect(wallet1).stakeRebasingReward(wallet1.address))
+          .to.be.revertedWithCustomError(enderTreasury, "NotAllowed");
+        const wrongStrategyAddress = "0x2D4C407BBe49438ED859fe965b140dcF1aaB71a9";
+
+        await expect(enderTreasury.connect(wallet1).withdrawFromStrategy(stEthAddress, wrongStrategyAddress, amount))
+          .to.be.revertedWithCustomError(enderTreasury, "NotAllowed");
+  
+      });
+    it("Should revert when called by non-owner", async function () {
+        await expect(enderTreasury.connect(wallet1).withdrawBondFee(stEthAddress, ethers.parseEther("1.0")))
+          .to.be.revertedWith("Ownable: caller is not the owner");
+      });
+  
+  
 //use .only to test this
 
 //     it("Should return the correct addresses for valid input types", async function () {
@@ -228,6 +277,36 @@ describe("Treasury", function () {
 
 });
 
+
+it("Invalid deposit in strategy", async function () {
+    const asset = stEthAddress;
+    const strategy = instadappLiteAddress;
+    const amount = ethers.parseEther("2.0");
+
+    const invalidAmount = ethers.parseEther("0");
+
+    expect(await enderTreasury.strategies(instadappLiteAddress)).to.equal(true);
+
+    await expect(enderTreasury.connect(owner).depositInStrategy(asset, strategy, invalidAmount))
+      .to.be.revertedWithCustomError(enderTreasury, "ZeroAmount");
+
+    const invalidAsset = ethers.ZeroAddress;
+    await expect(enderTreasury.connect(owner).depositInStrategy(invalidAsset, strategy, amount))
+      .to.be.revertedWithCustomError(enderTreasury, "ZeroAddress");
+  });
+  it("Invalid deposit in strategy zero address", async function () {
+    const asset = stEthAddress;
+    const strategy = ZeroAddress;
+    const amount = ethers.parseEther("2");
+
+    const invalidAmount = ethers.parseEther("0");
+
+    expect(await enderTreasury.strategies(instadappLiteAddress)).to.equal(true);
+
+    const invalidAsset = ethers.ZeroAddress;
+    await expect(enderTreasury.connect(owner).depositInStrategy(invalidAsset, strategy, amount))
+      .to.be.revertedWithCustomError(enderTreasury, "ZeroAddress");
+  });
 
 
     it("setBondYieldBaseRate", async () => {

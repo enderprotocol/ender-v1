@@ -160,7 +160,7 @@ describe("Initialization", function () {
     sig= await signatureDigest();
     sig_1 = await signatureDigest1();
     sig_2 = await signatureDigest2();
-    
+
     it("should fail on second initialization attempt", async function () {            
       await expect(enderStaking.initialize(endTokenAddress, sEndTokenAddress, stEthAddress, signer.address))
         .to.be.revertedWith("Initializable: contract is already initialized"); 
@@ -178,7 +178,7 @@ describe("Initialization", function () {
       beforeEach(async function () {
           depositAmountEnd = expandTo18Decimals(5);
       });
-  
+
       it("Should allow users to stake tokens", async function () {
       enderStaking.setStakingPause(true);
           await endToken.connect(owner).mint(signer3.address, depositAmountEnd);
@@ -220,12 +220,31 @@ describe("Initialization", function () {
   ).to.be.reverted; 
 
   });
-  
+  it("unstake is reverted with not allowed staking contract paused", async () => {
+    let stakingContractPause = await enderStaking.stakingContractPause();
+    expect(stakingContractPause).to.equal(true);
+
+    await enderStaking.setStakingPause(false);
+    stakingContractPause = await enderStaking.stakingContractPause();
+    expect(stakingContractPause).to.equal(false);
+
+    await expect(enderStaking.unstake(10)).to.be.revertedWithCustomError(enderStaking, "NotAllowed");
+
+    await enderStaking.setStakingPause(true);
+    stakingContractPause = await enderStaking.stakingContractPause();
+    expect(stakingContractPause).to.equal(true);
+});
+it("should revert when unstaking with InvalidAmount", async () => {
+  await expect(enderStaking.unstake(0)).to.be.revertedWithCustomError(enderStaking, "InvalidAmount");
+});
+
+  it("should fail to initialize again", async function () {            
+    await expect(enderStaking.initialize(endTokenAddress, sEndTokenAddress, stEthAddress, signer.address))
+      .to.be.revertedWith("Initializable: contract is already initialized"); 
+});
   it("Should revert when stakingContractPause is false and stakingContractPaused modifier is invoked", async function () {
-    // Set stakingContractPause to false
     await enderStaking.connect(owner).setStakingPause(false);
     
-    // Attempt to stake, which should fail because the modifier should revert the transaction
     let sig = await signatureDigest2();
     await expect(enderStaking.connect(signer3).stake(depositAmountEnd, {
         user: signer3.address,
