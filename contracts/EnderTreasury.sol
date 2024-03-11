@@ -276,12 +276,12 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         if (_withdrawAmt == 0) revert ZeroAmount();
         // ym: _strategy == address(0) can be removed as we are already checking in validStrategy
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
-        address receiptToken = _strategy;
+        // ym: receiptToken should be asset token, otherwise there is no approve function
+        address receiptToken = _asset;
         if (_strategy == instadapp) {
             //Todo set the asset as recipt tokens and need to check the assets ratio while depolying on mainnet
             _withdrawAmt = IInstadappLite(instadapp).viewStinstaTokensValue(_withdrawAmt);
-            // ym:  dont need to approve as we are using same contract
-            // IERC20(receiptToken).approve(instadapp, _withdrawAmt);
+            IERC20(receiptToken).approve(instadapp, _withdrawAmt);
             _returnAmount = IInstadappLite(instadapp).withdrawStinstaTokens(_withdrawAmt);
             instaDappWithdrawlValuations += _returnAmount;
         } else if (_strategy == lybraFinance) {
@@ -304,11 +304,13 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param param Withdraw parameter
      */
     function withdraw(EndRequest memory param, uint256 amountRequired) external onlyBond {
-        if (amountRequired > IERC20(param.stakingToken).balanceOf(address(this))) {
+        if (param.stakingToken != address(0) && amountRequired > IERC20(param.stakingToken).balanceOf(address(this))) {
             withdrawFromStrategy(param.stakingToken, priorityStrategy, amountRequired);
         }
         epochWithdrawl += param.tokenAmt;
-        fundsInfo[param.stakingToken] -= param.tokenAmt;
+        // ym: fundsInfo has no zero address token
+        if(param.stakingToken != address(0))
+            fundsInfo[param.stakingToken] -= param.tokenAmt;
 
         // bond token transfer
         _transferFunds(param.account, param.stakingToken, param.tokenAmt);
@@ -356,13 +358,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             epochDeposit -
             balanceLastEpoch;
         
-        // console.log("balance", IERC20(_stEthAddress).balanceOf(address(this)));
-        // console.log("epochWithdrawl", epochWithdrawl);
-        // console.log("instaDappDepositValuations", instaDappDepositValuations);
-        // console.log("stReturn", stReturn);
-        // console.log("epochDeposit", epochDeposit);
-        // console.log("balanceLastEpoch", balanceLastEpoch);
-        // console.log("totalReturn", totalReturn);
     }
 
     /**
