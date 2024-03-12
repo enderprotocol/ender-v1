@@ -19,8 +19,7 @@ function expandTo16Decimals(n) {
 }
 
 describe("enderBondLiquidityDeposit testing", function () {
-    let
-        owner,
+    let owner,
         signer,
         admin,
         wallet,
@@ -28,7 +27,6 @@ describe("enderBondLiquidityDeposit testing", function () {
         signer2,
         signer3,
         signer4,
-
         wEthAddress,
         stEthAddress,
         enderBondAddress,
@@ -39,7 +37,6 @@ describe("enderBondLiquidityDeposit testing", function () {
         bondNFTAddress,
         instadappLiteAddress,
         enderStakingAddress,
-
         wEth,
         stEth,
         enderBond,
@@ -50,7 +47,6 @@ describe("enderBondLiquidityDeposit testing", function () {
         bondNFT,
         instadappLitelidoStaking,
         enderStaking,
-
         signature,
         signature2;
 
@@ -59,7 +55,9 @@ describe("enderBondLiquidityDeposit testing", function () {
         const stEthFactory = await ethers.getContractFactory("StETH");
         const instadappLiteFactory = await ethers.getContractFactory("StinstaToken");
         const endTokenFactory = await ethers.getContractFactory("EndToken");
-        const enderBondLiquidityBondFactory = await ethers.getContractFactory("EnderBondLiquidityDeposit");
+        const enderBondLiquidityBondFactory = await ethers.getContractFactory(
+            "EnderBondLiquidityDeposit",
+        );
         const enderBondFactory = await ethers.getContractFactory("EnderBond");
         const enderTreasuryFactory = await ethers.getContractFactory("EnderTreasury");
         const enderStakingFactory = await ethers.getContractFactory("EnderStaking");
@@ -89,12 +87,17 @@ describe("enderBondLiquidityDeposit testing", function () {
             [stEthAddress, stEthAddress, owner.address, owner.address],
             {
                 initializer: "initialize",
-            }
+            },
         );
         enderBondLiquidityDepositAddress = await enderBondLiquidityDeposit.getAddress();
 
         //deploy insta app Lido Staking
-        instadappLitelidoStaking = await instadappLiteFactory.deploy("InstaToken", "Inst", owner.address, stEthAddress);
+        instadappLitelidoStaking = await instadappLiteFactory.deploy(
+            "InstaToken",
+            "Inst",
+            owner.address,
+            stEthAddress,
+        );
         instadappLiteAddress = await instadappLitelidoStaking.getAddress();
 
         //deploy endToken
@@ -109,7 +112,7 @@ describe("enderBondLiquidityDeposit testing", function () {
             [endTokenAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
-            }
+            },
         );
         enderBondAddress = await enderBond.getAddress();
 
@@ -122,7 +125,7 @@ describe("enderBondLiquidityDeposit testing", function () {
             [endTokenAddress, sEndTokenAddress, stEthAddress, signer.address],
             {
                 initializer: "initialize",
-            }
+            },
         );
         enderStakingAddress = await enderStaking.getAddress();
 
@@ -137,11 +140,11 @@ describe("enderBondLiquidityDeposit testing", function () {
                 ethers.ZeroAddress,
                 ethers.ZeroAddress,
                 70,
-                30
+                30,
             ],
             {
                 initializer: "initializeTreasury",
-            }
+            },
         );
         enderTreasuryAddress = await enderTreasury.getAddress();
 
@@ -178,15 +181,20 @@ describe("enderBondLiquidityDeposit testing", function () {
         await enderBond.setAddress(stEthAddress, 6);
 
         await endToken.grantRole(MINTER_ROLE, enderStakingAddress);
-        await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953", enderBondAddress);
-        await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953", owner.address);
+        await endToken.grantRole(
+            "0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953",
+            enderBondAddress,
+        );
+        await endToken.grantRole(
+            "0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953",
+            owner.address,
+        );
 
         await enderBond.setBool(true);
 
         //signature
         signature = await signatureDigest1();
         signature2 = await signatureDigest2();
-
     });
 
     it("setting ender deposit contract to live", async () => {
@@ -195,8 +203,9 @@ describe("enderBondLiquidityDeposit testing", function () {
 
     it("setting", async () => {
         // invalid signer
-        await expect(enderBondLiquidityDeposit.connect(owner).setsigner(ethers.ZeroAddress))
-            .to.be.revertedWith("Address can't be zero");
+        await expect(
+            enderBondLiquidityDeposit.connect(owner).setsigner(ethers.ZeroAddress),
+        ).to.be.revertedWith("Address can't be zero");
 
         await enderBondLiquidityDeposit.connect(owner).setsigner(signer.address);
         const signerAddress = await enderBondLiquidityDeposit.signer();
@@ -217,15 +226,14 @@ describe("enderBondLiquidityDeposit testing", function () {
         // set it back
         await enderBondLiquidityDeposit.connect(owner).setMinDepAmount(oldAmount);
 
-
         // set zero address
-        await expect(enderBondLiquidityDeposit.connect(owner).setAddress(ethers.ZeroAddress, 1))
-        .to.be.revertedWithCustomError(enderBondLiquidityDeposit, 'ZeroAddress()');
+        await expect(
+            enderBondLiquidityDeposit.connect(owner).setAddress(ethers.ZeroAddress, 1),
+        ).to.be.revertedWithCustomError(enderBondLiquidityDeposit, "ZeroAddress()");
 
         // set address
         const oldStEthAddress = await enderBondLiquidityDeposit.stEth();
         const oldLidoAddress = await enderBondLiquidityDeposit.lido();
-
 
         const randomTestAddress = "0x85df364E61C35aBd0384DBb33598b6cCd2d90588";
 
@@ -252,11 +260,19 @@ describe("enderBondLiquidityDeposit testing", function () {
         await wEth.mint(signer1.address, depositPrincipalStEth);
         await wEth.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
         await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-        await stEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
+        await stEth
+            .connect(signer1)
+            .approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
 
-        await expect(enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]))
-            .to.be
-            .revertedWithCustomError(enderBondLiquidityDeposit, 'InvalidAmount()');
+        await expect(
+            enderBondLiquidityDeposit
+                .connect(signer1)
+                .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                    signer1.address,
+                    "0",
+                    signature,
+                ]),
+        ).to.be.revertedWithCustomError(enderBondLiquidityDeposit, "InvalidAmount()");
     });
 
     it("Deposit:- invalid deposit params", async () => {
@@ -268,55 +284,108 @@ describe("enderBondLiquidityDeposit testing", function () {
         await wEth.mint(signer1.address, depositPrincipalStEth);
         await wEth.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
         await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-        await stEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
+        await stEth
+            .connect(signer1)
+            .approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
 
         const invalidPrincipalStEth = expandTo16Decimals(2);
-        await expect(enderBondLiquidityDeposit.connect(signer1).deposit(invalidPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]))
-            .to.be
-            .revertedWithCustomError(enderBondLiquidityDeposit, 'InvalidAmount()');
+        await expect(
+            enderBondLiquidityDeposit
+                .connect(signer1)
+                .deposit(invalidPrincipalStEth, maturity, bondFee, stEthAddress, [
+                    signer1.address,
+                    "0",
+                    signature,
+                ]),
+        ).to.be.revertedWithCustomError(enderBondLiquidityDeposit, "InvalidAmount()");
 
         const bigMaturity = 366;
-        await expect(enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, bigMaturity, bondFee, stEthAddress, [signer1.address, "0", signature]))
-            .to.be
-            .revertedWithCustomError(enderBondLiquidityDeposit, 'InvalidMaturity()');
+        await expect(
+            enderBondLiquidityDeposit
+                .connect(signer1)
+                .deposit(depositPrincipalStEth, bigMaturity, bondFee, stEthAddress, [
+                    signer1.address,
+                    "0",
+                    signature,
+                ]),
+        ).to.be.revertedWithCustomError(enderBondLiquidityDeposit, "InvalidMaturity()");
 
         const smallMaturity = 6;
-        await expect(enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, smallMaturity, bondFee, stEthAddress, [signer1.address, "0", signature]))
-            .to.be
-            .revertedWithCustomError(enderBondLiquidityDeposit, 'InvalidMaturity()');
+        await expect(
+            enderBondLiquidityDeposit
+                .connect(signer1)
+                .deposit(depositPrincipalStEth, smallMaturity, bondFee, stEthAddress, [
+                    signer1.address,
+                    "0",
+                    signature,
+                ]),
+        ).to.be.revertedWithCustomError(enderBondLiquidityDeposit, "InvalidMaturity()");
 
-        const invalidTokenAddress = '0x0c06B6D4EC451987e8C0B772ffcf7F080c46447A';
-        await expect(enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, invalidTokenAddress, [signer1.address, "0", signature]))
-            .to.be
-            .revertedWithCustomError(enderBondLiquidityDeposit, 'NotBondableToken()');
+        const invalidTokenAddress = "0x0c06B6D4EC451987e8C0B772ffcf7F080c46447A";
+        await expect(
+            enderBondLiquidityDeposit
+                .connect(signer1)
+                .deposit(depositPrincipalStEth, maturity, bondFee, invalidTokenAddress, [
+                    signer1.address,
+                    "0",
+                    signature,
+                ]),
+        ).to.be.revertedWithCustomError(enderBondLiquidityDeposit, "NotBondableToken()");
 
         const invalidBondFee = 100001;
-        await expect(enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, invalidBondFee, stEthAddress, [signer1.address, "0", signature]))
-            .to.be
-            .revertedWithCustomError(enderBondLiquidityDeposit, 'InvalidBondFee()');
+        await expect(
+            enderBondLiquidityDeposit
+                .connect(signer1)
+                .deposit(depositPrincipalStEth, maturity, invalidBondFee, stEthAddress, [
+                    signer1.address,
+                    "0",
+                    signature,
+                ]),
+        ).to.be.revertedWithCustomError(enderBondLiquidityDeposit, "InvalidBondFee()");
 
         // invalid amount of eth
         const principalAmount = expandTo18Decimals(3);
         const differentEthAmount = expandTo18Decimals(2);
-        await expect(enderBondLiquidityDeposit.connect(signer1).deposit(principalAmount, maturity, bondFee, ethers.ZeroAddress, [signer1.address, "0", signature],
-            {
-                value: differentEthAmount
-            }))
-            .to.be
-            .revertedWithCustomError(enderBondLiquidityDeposit, 'InvalidAmount()');
+        await expect(
+            enderBondLiquidityDeposit
+                .connect(signer1)
+                .deposit(
+                    principalAmount,
+                    maturity,
+                    bondFee,
+                    ethers.ZeroAddress,
+                    [signer1.address, "0", signature],
+                    {
+                        value: differentEthAmount,
+                    },
+                ),
+        ).to.be.revertedWithCustomError(enderBondLiquidityDeposit, "InvalidAmount()");
 
         const invalidSignature = signature2;
-        await expect(enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", invalidSignature]))
-            .to.be.revertedWith('user is not whitelisted');
-
+        await expect(
+            enderBondLiquidityDeposit
+                .connect(signer1)
+                .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                    signer1.address,
+                    "0",
+                    invalidSignature,
+                ]),
+        ).to.be.revertedWith("user is not whitelisted");
 
         // deposit enable is false
         await enderBondLiquidityDeposit.connect(owner).setDepositEnable(false);
         let depositEnable = await enderBondLiquidityDeposit.depositEnable();
         expect(depositEnable).to.be.equal(false);
 
-        await expect(enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]))
-        .to.be.revertedWithCustomError(enderBondLiquidityDeposit, 'NotAllowed()');
+        await expect(
+            enderBondLiquidityDeposit
+                .connect(signer1)
+                .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                    signer1.address,
+                    "0",
+                    signature,
+                ]),
+        ).to.be.revertedWithCustomError(enderBondLiquidityDeposit, "NotAllowed()");
 
         await enderBondLiquidityDeposit.connect(owner).setDepositEnable(true);
         depositEnable = await enderBondLiquidityDeposit.depositEnable();
@@ -331,8 +400,16 @@ describe("enderBondLiquidityDeposit testing", function () {
         await wEth.mint(signer1.address, depositPrincipalStEth);
         await wEth.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
         await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-        await stEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
-        await enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]);
+        await stEth
+            .connect(signer1)
+            .approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
+        await enderBondLiquidityDeposit
+            .connect(signer1)
+            .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                signer1.address,
+                "0",
+                signature,
+            ]);
     });
 
     it("enderBondLiquidityDeposit:- deposit function also checking reward share index", async () => {
@@ -346,9 +423,17 @@ describe("enderBondLiquidityDeposit testing", function () {
         await wEth.connect(signer1).approve(stEthAddress, depositPrincipalStEth);
 
         await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-        await stEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
+        await stEth
+            .connect(signer1)
+            .approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
 
-        await enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]);
+        await enderBondLiquidityDeposit
+            .connect(signer1)
+            .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                signer1.address,
+                "0",
+                signature,
+            ]);
 
         await wEth.mint(signer2.address, depositPrincipalStEth);
         await wEth.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
@@ -357,9 +442,17 @@ describe("enderBondLiquidityDeposit testing", function () {
         await wEth.mint(signer1.address, depositPrincipalStEth);
 
         await wEth.connect(signer1).transfer(stEthAddress, depositPrincipalStEth);
-        await stEth.connect(signer2).approve(enderBondLiquidityDepositAddress, 1500000000000000000n);
+        await stEth
+            .connect(signer2)
+            .approve(enderBondLiquidityDepositAddress, 1500000000000000000n);
 
-        await enderBondLiquidityDeposit.connect(signer2).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer2.address, "0", signature2]);
+        await enderBondLiquidityDeposit
+            .connect(signer2)
+            .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                signer2.address,
+                "0",
+                signature2,
+            ]);
     });
 
     it("enderBondLiquidityDeposit:- multiple deposit", async () => {
@@ -375,9 +468,17 @@ describe("enderBondLiquidityDeposit testing", function () {
         await enderBond.whitelist(false);
 
         await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-        await stEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
+        await stEth
+            .connect(signer1)
+            .approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
 
-        await enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]);
+        await enderBondLiquidityDeposit
+            .connect(signer1)
+            .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                signer1.address,
+                "0",
+                signature,
+            ]);
 
         await wEth.mint(signer1.address, depositPrincipalStEth);
         await wEth.connect(signer1).transfer(stEthAddress, depositPrincipalStEth);
@@ -386,14 +487,25 @@ describe("enderBondLiquidityDeposit testing", function () {
         await wEth.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
 
         await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
-        await stEth.connect(signer2).approve(enderBondLiquidityDepositAddress, 1500000000000000000n);
+        await stEth
+            .connect(signer2)
+            .approve(enderBondLiquidityDepositAddress, 1500000000000000000n);
 
-        await enderBondLiquidityDeposit.connect(signer2).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer2.address, "0", signature2]);
+        await enderBondLiquidityDeposit
+            .connect(signer2)
+            .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                signer2.address,
+                "0",
+                signature2,
+            ]);
 
         await enderBond.setAddress(enderBondLiquidityDepositAddress, 10);
         await enderBond.setAddress(enderTreasuryAddress, 1);
 
-        await enderBondLiquidityDeposit.approvalForBond(enderBondAddress, await stEth.balanceOf(enderBondLiquidityDepositAddress));
+        await enderBondLiquidityDeposit.approvalForBond(
+            enderBondAddress,
+            await stEth.balanceOf(enderBondLiquidityDepositAddress),
+        );
         await enderBond.userInfoDepositContract([1, 2], [signer1.address, "0", signature]);
     });
 
@@ -405,14 +517,30 @@ describe("enderBondLiquidityDeposit testing", function () {
         await enderBondLiquidityDeposit.setDepositEnable(true);
 
         await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-        await stEth.connect(signer1).approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
+        await stEth
+            .connect(signer1)
+            .approve(enderBondLiquidityDepositAddress, depositPrincipalStEth);
 
-        await enderBondLiquidityDeposit.connect(signer1).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer1.address, "0", signature]);
+        await enderBondLiquidityDeposit
+            .connect(signer1)
+            .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                signer1.address,
+                "0",
+                signature,
+            ]);
 
         await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
-        await stEth.connect(signer2).approve(enderBondLiquidityDepositAddress, 1500000000000000000n);
+        await stEth
+            .connect(signer2)
+            .approve(enderBondLiquidityDepositAddress, 1500000000000000000n);
 
-        await enderBondLiquidityDeposit.connect(signer2).deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [signer2.address, "0", signature2]);
+        await enderBondLiquidityDeposit
+            .connect(signer2)
+            .deposit(depositPrincipalStEth, maturity, bondFee, stEthAddress, [
+                signer2.address,
+                "0",
+                signature2,
+            ]);
     });
 
     it("testing the stEth", async () => {
@@ -438,7 +566,7 @@ describe("enderBondLiquidityDeposit testing", function () {
         await wEth.connect(signer2).approve(stEthAddress, depositPrincipalStEth);
 
         await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
-    })
+    });
 
     async function signatureDigest1() {
         let sig = await owner.signTypedData(
@@ -451,22 +579,22 @@ describe("enderBondLiquidityDeposit testing", function () {
             {
                 userSign: [
                     {
-                        name: 'user',
-                        type: 'address',
+                        name: "user",
+                        type: "address",
                     },
                     {
-                        name: 'key',
-                        type: 'string',
+                        name: "key",
+                        type: "string",
                     },
                 ],
             },
             {
                 user: signer1.address,
                 key: "0",
-            }
-        )
+            },
+        );
         return sig;
-    };
+    }
 
     async function signatureDigest2() {
         let sig = await owner.signTypedData(
@@ -479,24 +607,22 @@ describe("enderBondLiquidityDeposit testing", function () {
             {
                 userSign: [
                     {
-                        name: 'user',
-                        type: 'address',
+                        name: "user",
+                        type: "address",
                     },
                     {
-                        name: 'key',
-                        type: 'string',
+                        name: "key",
+                        type: "string",
                     },
                 ],
             },
             {
                 user: signer2.address,
                 key: "0",
-            }
-        )
+            },
+        );
         return sig;
-    };
-
+    }
 });
-
 
 // npx hardhat coverage --testfiles test/unit/EnderBondLiquidityDeposit.test.js

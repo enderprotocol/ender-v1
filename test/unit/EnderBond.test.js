@@ -20,55 +20,53 @@ function expandTo16Decimals(n) {
 }
 
 describe("enderBond setting funtions and missing testing", function () {
-    let 
-    owner, 
-    signer,
-    admin, 
-    wallet,
-    signer1, 
-    signer2, 
-    signer3, 
-    signer4,
-
-    wEthAddress,
-    stEthAddress,
-    enderBondAddress,
-    mockEnderBondAddress,
-    mockEnderBondV1Address,
-    mockEnderBondV2Address,
-    mockEnderBondV3Address,
-    enderBondLiquidityDepositAddress,
-    endTokenAddress,
-    sEndTokenAddress,
-    enderTreasuryAddress,
-    bondNFTAddress,
-    instadappLiteAddress,
-    enderStakingAddress,
-
-    wEth,
-    stEth,
-    enderBond,
-    mockEnderBond,
-    mockEnderBondV1,
-    mockEnderBondV2,
-    mockEnderBondV3,
-    enderBondLiquidityDeposit,
-    endToken,
-    sEndToken,
-    enderTreasury,
-    bondNFT,
-    instadappLitelidoStaking,
-    enderStaking,
-    
-    signature, 
-    signature1;
+    let owner,
+        signer,
+        admin,
+        wallet,
+        signer1,
+        signer2,
+        signer3,
+        signer4,
+        wEthAddress,
+        stEthAddress,
+        enderBondAddress,
+        mockEnderBondAddress,
+        mockEnderBondV1Address,
+        mockEnderBondV2Address,
+        mockEnderBondV3Address,
+        enderBondLiquidityDepositAddress,
+        endTokenAddress,
+        sEndTokenAddress,
+        enderTreasuryAddress,
+        bondNFTAddress,
+        instadappLiteAddress,
+        enderStakingAddress,
+        wEth,
+        stEth,
+        enderBond,
+        mockEnderBond,
+        mockEnderBondV1,
+        mockEnderBondV2,
+        mockEnderBondV3,
+        enderBondLiquidityDeposit,
+        endToken,
+        sEndToken,
+        enderTreasury,
+        bondNFT,
+        instadappLitelidoStaking,
+        enderStaking,
+        signature,
+        signature1;
 
     before(async function () {
         const wEthFactory = await ethers.getContractFactory("mockWETH");
         const stEthFactory = await ethers.getContractFactory("StETH");
         const instadappLiteFactory = await ethers.getContractFactory("StinstaToken");
         const endTokenFactory = await ethers.getContractFactory("EndToken");
-        const enderBondLiquidityBondFactory = await ethers.getContractFactory("EnderBondLiquidityDeposit");
+        const enderBondLiquidityBondFactory = await ethers.getContractFactory(
+            "EnderBondLiquidityDeposit",
+        );
         const enderBondFactory = await ethers.getContractFactory("EnderBond");
         const enderTreasuryFactory = await ethers.getContractFactory("EnderTreasury");
         const enderStakingFactory = await ethers.getContractFactory("EnderStaking");
@@ -78,10 +76,10 @@ describe("enderBond setting funtions and missing testing", function () {
         const MockEnderBondV1 = await ethers.getContractFactory("MockEnderBondV1");
         const MockEnderBondV2 = await ethers.getContractFactory("MockEnderBondV2");
         const MockEnderBondV3 = await ethers.getContractFactory("MockEnderBondV3");
-    
+
         //Owner and signers addresses
         [owner, signer, wallet, signer1, signer2, signer3, signer4] = await ethers.getSigners();
-    
+
         //delpoy stEth
         stEth = await stEthFactory.deploy();
         stEthAddress = await stEth.getAddress();
@@ -89,40 +87,45 @@ describe("enderBond setting funtions and missing testing", function () {
         //deploy wEth
         wEth = await wEthFactory.connect(owner).deploy("wrappedETH", "weth", owner.address);
         wEthAddress = await wEth.getAddress();
-    
+
         //deploy sEnd
         sEndToken = await upgrades.deployProxy(sEndTokenFactory, [], {
-          initializer: "initialize",
+            initializer: "initialize",
         });
         sEndTokenAddress = await sEndToken.connect(owner).getAddress();
-    
+
         //deploy enderBondLiquidityDeposit
         enderBondLiquidityDeposit = await upgrades.deployProxy(
-          enderBondLiquidityBondFactory,
-          [stEthAddress, stEthAddress, owner.address, owner.address],
-          {
-            initializer: "initialize",
-          }
+            enderBondLiquidityBondFactory,
+            [stEthAddress, stEthAddress, owner.address, owner.address],
+            {
+                initializer: "initialize",
+            },
         );
         enderBondLiquidityDepositAddress = await enderBondLiquidityDeposit.getAddress();
-    
+
         //deploy insta app Lido Staking
-        instadappLitelidoStaking = await instadappLiteFactory.deploy("InstaToken", "Inst", owner.address, stEthAddress);
+        instadappLitelidoStaking = await instadappLiteFactory.deploy(
+            "InstaToken",
+            "Inst",
+            owner.address,
+            stEthAddress,
+        );
         instadappLiteAddress = await instadappLitelidoStaking.getAddress();
 
         //deploy endToken
         endToken = await upgrades.deployProxy(endTokenFactory, [], {
-          initializer: "initialize",
+            initializer: "initialize",
         });
         endTokenAddress = await endToken.getAddress();
-    
+
         //deploy enderBond
         enderBond = await upgrades.deployProxy(
-          enderBondFactory,
-          [endTokenAddress, ethers.ZeroAddress, signer.address],
-          {
-            initializer: "initialize",
-          }
+            enderBondFactory,
+            [endTokenAddress, ethers.ZeroAddress, signer.address],
+            {
+                initializer: "initialize",
+            },
         );
         enderBondAddress = await enderBond.getAddress();
 
@@ -135,7 +138,7 @@ describe("enderBond setting funtions and missing testing", function () {
             [endTokenAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
-            }
+            },
         );
         mockEnderBondAddress = await mockEnderBond.getAddress();
 
@@ -148,7 +151,7 @@ describe("enderBond setting funtions and missing testing", function () {
             [endTokenAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
-            }
+            },
         );
         mockEnderBondV1Address = await mockEnderBondV1.getAddress();
 
@@ -161,7 +164,7 @@ describe("enderBond setting funtions and missing testing", function () {
             [endTokenAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
-            }
+            },
         );
         mockEnderBondV2Address = await mockEnderBondV2.getAddress();
 
@@ -174,45 +177,45 @@ describe("enderBond setting funtions and missing testing", function () {
             [endTokenAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
-            }
+            },
         );
         mockEnderBondV3Address = await mockEnderBondV3.getAddress();
 
         //set mockEnderBondV3 address in endToken
         await endToken.setBond(mockEnderBondV3Address);
-    
+
         //deploy ender Staking contract
         enderStaking = await upgrades.deployProxy(
-          enderStakingFactory,
-          [endTokenAddress, sEndTokenAddress, stEthAddress, signer.address],
-          {
-            initializer: "initialize",
-          }
+            enderStakingFactory,
+            [endTokenAddress, sEndTokenAddress, stEthAddress, signer.address],
+            {
+                initializer: "initialize",
+            },
         );
         enderStakingAddress = await enderStaking.getAddress();
-    
+
         //deploy ender Treasury contract
         enderTreasury = await upgrades.deployProxy(
-          enderTreasuryFactory,
-          [
-            endTokenAddress,
-            enderStakingAddress,
-            enderBondAddress,
-            instadappLiteAddress,
-            ethers.ZeroAddress,
-            ethers.ZeroAddress,
-            70,
-            30
-          ],
-          {
-            initializer: "initializeTreasury",
-          }
+            enderTreasuryFactory,
+            [
+                endTokenAddress,
+                enderStakingAddress,
+                enderBondAddress,
+                instadappLiteAddress,
+                ethers.ZeroAddress,
+                ethers.ZeroAddress,
+                70,
+                30,
+            ],
+            {
+                initializer: "initializeTreasury",
+            },
         );
         enderTreasuryAddress = await enderTreasury.getAddress();
 
         //deploy bond NFT contract
         bondNFT = await upgrades.deployProxy(bondNftFactory, [enderBondAddress, baseURI], {
-          initializer: "initialize",
+            initializer: "initialize",
         });
         await bondNFT.waitForDeployment();
         bondNFTAddress = await bondNFT.getAddress();
@@ -234,18 +237,24 @@ describe("enderBond setting funtions and missing testing", function () {
 
         await endToken.grantRole(MINTER_ROLE, owner.address);
         await endToken.setFee(20);
-    
+
         await endToken.setExclude([enderBondAddress], true);
         await endToken.setExclude([enderTreasuryAddress], true);
         await endToken.setExclude([enderStakingAddress], true);
-    
+
         await enderBond.setAddress(enderStakingAddress, 8);
         await enderBond.setAddress(stEthAddress, 6);
-    
+
         await endToken.grantRole(MINTER_ROLE, enderStakingAddress);
-        await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953", enderBondAddress);
-        await endToken.grantRole("0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953", owner.address);
-    
+        await endToken.grantRole(
+            "0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953",
+            enderBondAddress,
+        );
+        await endToken.grantRole(
+            "0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953",
+            owner.address,
+        );
+
         await enderBond.setBool(true);
 
         // mockEnderBond setting
@@ -279,13 +288,13 @@ describe("enderBond setting funtions and missing testing", function () {
         //signature
         signature = await signatureDigest(owner, enderBondAddress, signer1);
         signature1 = await signatureDigest(owner, enderBondAddress, signer2);
-
     });
 
-    it("should fail on second initialization attempt", async function () {            
+    it("should fail on second initialization attempt", async function () {
         // Attempt to re-initialize
-        await expect(enderBond.initialize(endTokenAddress, ethers.ZeroAddress, signer.address))
-          .to.be.revertedWith("Initializable: contract is already initialized");
+        await expect(
+            enderBond.initialize(endTokenAddress, ethers.ZeroAddress, signer.address),
+        ).to.be.revertedWith("Initializable: contract is already initialized");
     });
 
     it("epochRewardShareIndexByPass function test", async () => {
@@ -303,7 +312,8 @@ describe("enderBond setting funtions and missing testing", function () {
 
         expect(timeNow).to.eq(lastTimeNow);
 
-        const afterDayToRefractionShareUpdation = await mockEnderBondV1.getDayToRefractionShareUpdation(Number(timeNow));
+        const afterDayToRefractionShareUpdation =
+            await mockEnderBondV1.getDayToRefractionShareUpdation(Number(timeNow));
         expect(afterDayToRefractionShareUpdation[0]).to.eq(beforelastSecOfRefraction);
     });
 
@@ -320,18 +330,19 @@ describe("enderBond setting funtions and missing testing", function () {
         const timeNow = BigInt(timestampBefore) / secondInDay;
         const lastTimeNow = lastSecOfSendReward / secondInDay;
 
-        console.log("d ->", beforelastSecOfSendReward, lastSecOfSendReward,timeNow )
+        console.log("d ->", beforelastSecOfSendReward, lastSecOfSendReward, timeNow);
 
         expect(timeNow).to.eq(lastTimeNow);
 
-        let afterDayToRefractionShareUpdationSend = await mockEnderBondV1.getDayToRefractionShareUpdationSend(Number(timeNow));
+        let afterDayToRefractionShareUpdationSend =
+            await mockEnderBondV1.getDayToRefractionShareUpdationSend(Number(timeNow));
         expect(afterDayToRefractionShareUpdationSend[0]).to.eq(beforelastSecOfSendReward);
 
         await mockEnderBondV1.epochRewardShareIndexSendByPass();
 
-        afterDayToRefractionShareUpdationSend = await mockEnderBondV1.getDayToRefractionShareUpdationSend(Number(timeNow));
+        afterDayToRefractionShareUpdationSend =
+            await mockEnderBondV1.getDayToRefractionShareUpdationSend(Number(timeNow));
         expect(afterDayToRefractionShareUpdationSend[0]).to.eq(beforelastSecOfSendReward);
-
     });
 
     it("setting interval", async () => {
@@ -343,8 +354,14 @@ describe("enderBond setting funtions and missing testing", function () {
     });
 
     it("setting address", async () => {
-        await expect(enderBond.setAddress(ethers.ZeroAddress, 1)).to.be.revertedWithCustomError(enderBond, "ZeroAddress()");
-        await expect(enderBond.setAddress(signatureAddr, 0)).to.be.revertedWithCustomError(enderBond, "InvalidAddress()");
+        await expect(enderBond.setAddress(ethers.ZeroAddress, 1)).to.be.revertedWithCustomError(
+            enderBond,
+            "ZeroAddress()",
+        );
+        await expect(enderBond.setAddress(signatureAddr, 0)).to.be.revertedWithCustomError(
+            enderBond,
+            "InvalidAddress()",
+        );
     });
 
     it("setting new signer", async () => {
@@ -356,7 +373,10 @@ describe("enderBond setting funtions and missing testing", function () {
         expect(newSigner).to.equal(signerAddr);
         expect(newSigner).to.not.equal(oldSigner);
 
-        await expect(enderBond.setsigner(ethers.ZeroAddress)).to.be.revertedWithCustomError(enderBond, "ZeroAddress()");
+        await expect(enderBond.setsigner(ethers.ZeroAddress)).to.be.revertedWithCustomError(
+            enderBond,
+            "ZeroAddress()",
+        );
     });
 
     it("setting minimum deposit amount", async () => {
@@ -384,7 +404,10 @@ describe("enderBond setting funtions and missing testing", function () {
     });
 
     it("getting addresses", async () => {
-        await expect(enderBond.getPrivateAddress(0)).to.be.revertedWithCustomError(enderBond, "ZeroAddress()");
+        await expect(enderBond.getPrivateAddress(0)).to.be.revertedWithCustomError(
+            enderBond,
+            "ZeroAddress()",
+        );
 
         const addr1 = await enderBond.getPrivateAddress(1);
         expect(addr1).to.equal(enderTreasuryAddress);
@@ -411,7 +434,7 @@ describe("enderBond setting funtions and missing testing", function () {
 
         const addr8 = await enderBond.getPrivateAddress(8);
         expect(addr8).to.equal(enderStakingAddress);
-        
+
         const addr9 = await enderBond.getPrivateAddress(9);
         expect(addr9).to.equal(sEndTokenAddress);
 
@@ -419,7 +442,10 @@ describe("enderBond setting funtions and missing testing", function () {
         const addr10 = await enderBond.getPrivateAddress(10);
         expect(addr10).to.equal(enderBondLiquidityDepositAddress);
 
-        await expect(enderBond.getPrivateAddress(11)).to.be.revertedWithCustomError(enderBond, "InvalidAddress()");
+        await expect(enderBond.getPrivateAddress(11)).to.be.revertedWithCustomError(
+            enderBond,
+            "InvalidAddress()",
+        );
     });
 
     it("setting available bond fee", async () => {
@@ -433,9 +459,11 @@ describe("enderBond setting funtions and missing testing", function () {
         await mockEnderBondV2.connect(signer1).setAvailableBondFee(bondFeeAmt);
         const availableBondFee = await mockEnderBondV2.getAvailableBondFee();
 
-        await expect(mockEnderBondV2.connect(signer2).setAvailableBondFee(bondFeeAmt)).to.be.revertedWithCustomError(mockEnderBondV2, "NoTreasury()");
+        await expect(
+            mockEnderBondV2.connect(signer2).setAvailableBondFee(bondFeeAmt),
+        ).to.be.revertedWithCustomError(mockEnderBondV2, "NoTreasury()");
 
-        expect(availableBondFee).to.equal(originalAvailableBondFee-BigInt(bondFeeAmt));
+        expect(availableBondFee).to.equal(originalAvailableBondFee - BigInt(bondFeeAmt));
     });
 
     it("deposit revert owing to disabled", async () => {
@@ -453,20 +481,23 @@ describe("enderBond setting funtions and missing testing", function () {
         await expect(
             enderBond
                 .connect(signer)
-                .deposit(signer, 10, maturity, bondFee, stEthAddress, [signer1.address, "0", sig1])
-            ).to.be.revertedWithCustomError(enderBond, "NotAllowed()");
+                .deposit(signer, 10, maturity, bondFee, stEthAddress, [signer1.address, "0", sig1]),
+        ).to.be.revertedWithCustomError(enderBond, "NotAllowed()");
     });
 
-    describe("withdraw & _withdraw function test", function() {
+    describe("withdraw & _withdraw function test", function () {
         it("withdraw revert owing to not allowed", async () => {
             let isWithdrawPause = await enderBond.isWithdrawPause();
             expect(isWithdrawPause).to.equal(true);
-    
+
             await enderBond.setWithdrawPause(false);
             isWithdrawPause = await enderBond.isWithdrawPause();
             expect(isWithdrawPause).to.equal(false);
-    
-            await expect(enderBond.withdraw(1)).to.be.revertedWithCustomError(enderBond, "NotAllowed()");
+
+            await expect(enderBond.withdraw(1)).to.be.revertedWithCustomError(
+                enderBond,
+                "NotAllowed()",
+            );
         });
 
         it("withdraw is reverted with BondAlreadyWithdrawn custom error", async () => {
@@ -479,10 +510,9 @@ describe("enderBond setting funtions and missing testing", function () {
             await enderBond.setWithdrawPause(true);
             await enderBond.setAddress(enderTreasuryAddress, 1);
             await enderBond.setAddress(owner.address, 10);
-            await stEth.submit({ value: ethers.parseEther("1.0") });      
-            await stEth
-                .approve(enderBondAddress, depositPrincipalStEth);
-    
+            await stEth.submit({ value: ethers.parseEther("1.0") });
+            await stEth.approve(enderBondAddress, depositPrincipalStEth);
+
             await enderBond.deposit(
                 owner,
                 depositPrincipalStEth,
@@ -490,24 +520,24 @@ describe("enderBond setting funtions and missing testing", function () {
                 bondFee,
                 stEthAddress,
                 [owner.address, "0", sig1],
-                {value: depositPrincipalStEth}
+                { value: depositPrincipalStEth },
             );
             filter = enderBond.filters.Deposit;
             const events = await enderBond.queryFilter(filter, -1);
-        
+
             const event1 = events[0];
-        
+
             const args1 = event1.args;
             const tokenId = args1.tokenId;
             await time.increase(7200);
             await enderBond.withdraw(tokenId);
-    
-            await expect(enderBond.withdraw(1)).to.be.revertedWithCustomError(enderBond, "BondAlreadyWithdrawn()");
+
+            await expect(enderBond.withdraw(1)).to.be.revertedWithCustomError(
+                enderBond,
+                "BondAlreadyWithdrawn()",
+            );
         });
-
     });
-
-    
 
     it("bond revert owing to not allowed", async () => {
         let bondPause = await enderBond.bondPause();
@@ -528,14 +558,17 @@ describe("enderBond setting funtions and missing testing", function () {
         await expect(
             enderBond
                 .connect(signer)
-                .deposit(signer, 10, maturity, bondFee, stEthAddress, [signer1.address, "0", sig1])
-            ).to.be.revertedWithCustomError(enderBond, "NotAllowed()");
+                .deposit(signer, 10, maturity, bondFee, stEthAddress, [signer1.address, "0", sig1]),
+        ).to.be.revertedWithCustomError(enderBond, "NotAllowed()");
 
         await enderBond.setWithdrawPause(true);
         const isWithdrawPause = await enderBond.isWithdrawPause();
         expect(isWithdrawPause).to.equal(true);
 
-        await expect(enderBond.withdraw(1)).to.be.revertedWithCustomError(enderBond, "NotAllowed()");
+        await expect(enderBond.withdraw(1)).to.be.revertedWithCustomError(
+            enderBond,
+            "NotAllowed()",
+        );
 
         await enderBond.setBondPause(true);
         bondPause = await enderBond.bondPause();
@@ -596,78 +629,88 @@ describe("enderBond setting funtions and missing testing", function () {
         expect(sVal).to.equal(11);
         sVal = await mockEnderBond._findClosestS([9], 10);
         expect(sVal).to.equal(9);
-        sVal = await mockEnderBond._findClosestS([1, 8, 9, 10, 10, 10, 10, 10, 10, 11, 13, 15, 16, 18], 10);
+        sVal = await mockEnderBond._findClosestS(
+            [1, 8, 9, 10, 10, 10, 10, 10, 10, 11, 13, 15, 16, 18],
+            10,
+        );
         expect(sVal).to.equal(10);
         sVal = await mockEnderBond._findClosestS([], 10);
         expect(sVal).to.equal(0);
     });
 
-    describe("setIndexesOfUser function test", function() {
+    describe("setIndexesOfUser function test", function () {
         it("setIndexesOfUser setting", async () => {
             const refractionSIndex = 1;
             const stakingSendIndex = 2;
             const YieldIndex = 3;
             const tokenIds = [1, 2];
-            await enderBond.setIndexesOfUser(tokenIds, refractionSIndex, stakingSendIndex, YieldIndex);
+            await enderBond.setIndexesOfUser(
+                tokenIds,
+                refractionSIndex,
+                stakingSendIndex,
+                YieldIndex,
+            );
             const bond_1 = await enderBond.bonds(1);
-    
+
             expect(bond_1.refractionSIndex).to.equal(refractionSIndex);
             expect(bond_1.stakingSendIndex).to.equal(stakingSendIndex);
             expect(bond_1.YieldIndex).to.equal(YieldIndex);
-    
+
             const bond_2 = await enderBond.bonds(2);
-    
+
             expect(bond_2.refractionSIndex).to.equal(refractionSIndex);
             expect(bond_2.stakingSendIndex).to.equal(stakingSendIndex);
-            expect(bond_2.YieldIndex).to.equal(YieldIndex); 
+            expect(bond_2.YieldIndex).to.equal(YieldIndex);
         });
-    
+
         it("setIndexesOfUser is reverted with invalid caller", async () => {
             const refractionSIndex = 1;
             const stakingSendIndex = 2;
             const YieldIndex = 3;
             const tokenIds = [1, 2];
             await expect(
-                enderBond.connect(signer1).setIndexesOfUser(tokenIds, refractionSIndex, stakingSendIndex, YieldIndex)
-            ).to.be.rejectedWith("Ownable: caller is not the owner");        
+                enderBond
+                    .connect(signer1)
+                    .setIndexesOfUser(tokenIds, refractionSIndex, stakingSendIndex, YieldIndex),
+            ).to.be.rejectedWith("Ownable: caller is not the owner");
         });
-    
+
         it("setIndexOfUser is reverted with ZeroValue custom error", async () => {
             const refractionSIndex = 1;
             const stakingSendIndex = 2;
             const YieldIndex = 3;
             const tokenIds = [1, 2];
-    
+
             await expect(
-                enderBond.setIndexesOfUser(tokenIds, 0, stakingSendIndex, YieldIndex)
+                enderBond.setIndexesOfUser(tokenIds, 0, stakingSendIndex, YieldIndex),
             ).to.be.revertedWithCustomError(enderBond, "ZeroValue()");
-    
+
             await expect(
-                enderBond.setIndexesOfUser(tokenIds, refractionSIndex, 0, YieldIndex)
+                enderBond.setIndexesOfUser(tokenIds, refractionSIndex, 0, YieldIndex),
             ).to.be.revertedWithCustomError(enderBond, "ZeroValue()");
-    
+
             await expect(
-                enderBond.setIndexesOfUser(tokenIds, refractionSIndex, stakingSendIndex, 0)
+                enderBond.setIndexesOfUser(tokenIds, refractionSIndex, stakingSendIndex, 0),
             ).to.be.revertedWithCustomError(enderBond, "ZeroValue()");
         });
     });
 
     it("setInterval is reverted with invalid caller", async () => {
-        await expect(
-            enderBond.connect(signer1).setInterval(10)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(enderBond.connect(signer1).setInterval(10)).to.be.revertedWith(
+            "Ownable: caller is not the owner",
+        );
     });
 
     it("setBool is reverted with invalid caller", async () => {
-        await expect(
-            enderBond.connect(signer1).setBool(true)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(enderBond.connect(signer1).setBool(true)).to.be.revertedWith(
+            "Ownable: caller is not the owner",
+        );
     });
 
     it("setAddress is reverted with invalid caller", async () => {
-        await expect(
-            enderBond.connect(signer1).setAddress(owner.address, 5)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(enderBond.connect(signer1).setAddress(owner.address, 5)).to.be.revertedWith(
+            "Ownable: caller is not the owner",
+        );
     });
 
     it("setting the lido and keeper address", async () => {
@@ -684,38 +727,40 @@ describe("enderBond setting funtions and missing testing", function () {
     });
 
     it("setsigner is reverted with invalid caller", async () => {
-        await expect(
-            enderBond.connect(signer1).setsigner(owner)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(enderBond.connect(signer1).setsigner(owner)).to.be.revertedWith(
+            "Ownable: caller is not the owner",
+        );
     });
 
     it("setMinDepAmount is reverted with invalid caller", async () => {
-        await expect(
-            enderBond.connect(signer1).setMinDepAmount(10)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(enderBond.connect(signer1).setMinDepAmount(10)).to.be.revertedWith(
+            "Ownable: caller is not the owner",
+        );
     });
 
     it("setTxFees is reverted with invalid caller", async () => {
-        await expect(
-            enderBond.connect(signer1).setTxFees(5)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(enderBond.connect(signer1).setTxFees(5)).to.be.revertedWith(
+            "Ownable: caller is not the owner",
+        );
     });
 
     it("setBondYieldBaseRate is reverted with invalid caller", async () => {
-        await expect(
-            enderBond.connect(signer1).setBondYieldBaseRate(5)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(enderBond.connect(signer1).setBondYieldBaseRate(5)).to.be.revertedWith(
+            "Ownable: caller is not the owner",
+        );
     });
 
     it("setBondableTokens is reverted with invalid caller", async () => {
         await expect(
-            enderBond.connect(signer1).setBondableTokens([stEthAddress], true)
+            enderBond.connect(signer1).setBondableTokens([stEthAddress], true),
         ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("userInfoDepositContract is reverted with invalid caller", async () => {
         await expect(
-            enderBond.connect(signer1).userInfoDepositContract([1,2], [signer1.address, "0", signature])
+            enderBond
+                .connect(signer1)
+                .userInfoDepositContract([1, 2], [signer1.address, "0", signature]),
         ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -725,37 +770,37 @@ describe("enderBond setting funtions and missing testing", function () {
 
     it("deductFeesFromTransfer is reverted with NotBondNFT error", async () => {
         await expect(
-            enderBond.connect(signer1).deductFeesFromTransfer(1)
+            enderBond.connect(signer1).deductFeesFromTransfer(1),
         ).to.be.revertedWithCustomError(enderBond, "NotBondNFT()");
     });
 
     it("epochRewardShareIndex is reverted with NotEndToken", async () => {
         await expect(
-            enderBond.connect(signer1).epochRewardShareIndex(1)
+            enderBond.connect(signer1).epochRewardShareIndex(1),
         ).to.be.revertedWithCustomError(enderBond, "NotEndToken()");
     });
 
-    describe("epochRewardShareIndexForSend function test", function() {
+    describe("epochRewardShareIndexForSend function test", function () {
         it("epochRewardShareIndexForSend is reverted with invalid sender", async () => {
             await expect(
-                enderBond.connect(signer1).epochRewardShareIndexForSend(1)
+                enderBond.connect(signer1).epochRewardShareIndexForSend(1),
             ).to.be.revertedWithCustomError(enderBond, "NotEnderStaking()");
         });
     });
 
-    describe("resetEndMint function test", function() {
-        it("resetEndMint is reverted with invalid sender", async() => {
-            await expect(
-                enderBond.connect(signer1).resetEndMint()
-            ).to.be.revertedWithCustomError(enderBond, "NoTreasury()");
-        });    
+    describe("resetEndMint function test", function () {
+        it("resetEndMint is reverted with invalid sender", async () => {
+            await expect(enderBond.connect(signer1).resetEndMint()).to.be.revertedWithCustomError(
+                enderBond,
+                "NoTreasury()",
+            );
+        });
     });
 
-    describe("deposit function test", function() {
-
+    describe("deposit function test", function () {
         beforeEach(async () => {
             await mockEnderBond.setAddress(enderTreasuryAddress, 1);
-        })
+        });
 
         it("deposit call with zero token address", async () => {
             let maturity = 10;
@@ -763,109 +808,107 @@ describe("enderBond setting funtions and missing testing", function () {
             const depositPrincipalStEth = expandTo16Decimals(1) * BigInt(2);
             await endToken.setFee(20);
 
-            expect(await mockEnderBond.rewardShareIndex()).to.be.equal(0);                                                   
-            await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });      
-            await stEth
-                .connect(signer1)
-                .approve(mockEnderBondAddress, depositPrincipalStEth);
-    
-            let mocksig = signatureDigest(signer, mockEnderBondAddress, signer1);        
+            expect(await mockEnderBond.rewardShareIndex()).to.be.equal(0);
+            await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+            await stEth.connect(signer1).approve(mockEnderBondAddress, depositPrincipalStEth);
+
+            let mocksig = signatureDigest(signer, mockEnderBondAddress, signer1);
             const userSign = [signer1.address, "0", mocksig];
             const userSignerAddr = await mockEnderBond.verify(userSign);
             const contractSignerAddr = await mockEnderBond.signer();
             expect(userSignerAddr).to.eq(contractSignerAddr);
-    
+
             await enderTreasury.setAddress(mockEnderBondAddress, 2);
             await bondNFT.setBondContract(mockEnderBondAddress);
-    
+
             const sendAmt = await stEth.balanceOf(mockEnderBondAddress);
-    
-            await expect(mockEnderBond.deposit(
-                signer1.address,
-                depositPrincipalStEth,
-                maturity,
-                bondFee,
-                ethers.ZeroAddress,
-                userSign, {value: depositPrincipalStEth}
-            )).to.emit(mockEnderBond, "Deposit")
-            .withArgs(signer1.address, 2, sendAmt, maturity, ethers.ZeroAddress, bondFee );
+
+            await expect(
+                mockEnderBond.deposit(
+                    signer1.address,
+                    depositPrincipalStEth,
+                    maturity,
+                    bondFee,
+                    ethers.ZeroAddress,
+                    userSign,
+                    { value: depositPrincipalStEth },
+                ),
+            )
+                .to.emit(mockEnderBond, "Deposit")
+                .withArgs(signer1.address, 2, sendAmt, maturity, ethers.ZeroAddress, bondFee);
         });
 
         it("deposit with zero token address is reverted with InvalidAmount owing the msg.value", async () => {
             let maturity = 10;
             let bondFee = 1;
             const depositPrincipalStEth = expandTo16Decimals(1) * BigInt(2);
-            await endToken.setFee(20);    
-          
-            expect(await mockEnderBond.rewardShareIndex()).to.be.equal(0);                                                   
-            await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });      
-            await stEth
-                .connect(signer1)
-                .approve(mockEnderBondAddress, depositPrincipalStEth);
-    
-            let mocksig = signatureDigest(signer, mockEnderBondAddress, signer1);        
+            await endToken.setFee(20);
+
+            expect(await mockEnderBond.rewardShareIndex()).to.be.equal(0);
+            await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
+            await stEth.connect(signer1).approve(mockEnderBondAddress, depositPrincipalStEth);
+
+            let mocksig = signatureDigest(signer, mockEnderBondAddress, signer1);
             const userSign = [signer1.address, "0", mocksig];
             const userSignerAddr = await mockEnderBond.verify(userSign);
             const contractSignerAddr = await mockEnderBond.signer();
             expect(userSignerAddr).to.eq(contractSignerAddr);
-    
+
             await enderTreasury.setAddress(mockEnderBondAddress, 2);
             await bondNFT.setBondContract(mockEnderBondAddress);
-    
-            await expect(mockEnderBond.deposit(
-                signer1.address,
-                depositPrincipalStEth,
-                maturity,
-                bondFee,
-                ethers.ZeroAddress,
-                userSign
-            )).to.be.revertedWithCustomError(mockEnderBond, "InvalidAmount");
+
+            await expect(
+                mockEnderBond.deposit(
+                    signer1.address,
+                    depositPrincipalStEth,
+                    maturity,
+                    bondFee,
+                    ethers.ZeroAddress,
+                    userSign,
+                ),
+            ).to.be.revertedWithCustomError(mockEnderBond, "InvalidAmount");
         });
-    
+
         it("Deposit Revert InvalidMaturity() maturity < 5", async () => {
             let maturity = 4;
             let bondFee = 1;
             const depositAmountEnd = expandTo18Decimals(5);
             const depositPrincipalStEth = expandTo18Decimals(1);
             await endToken.setFee(20);
-          
-          
-            expect(await enderBond.rewardShareIndex()).to.be.equal(0);                                                   
+
+            expect(await enderBond.rewardShareIndex()).to.be.equal(0);
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-          
-            await stEth
-            .connect(signer1)
-            .approve(enderBondAddress, depositPrincipalStEth);
-          
+
+            await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
+
             await enderTreasury.setAddress(instadappLiteAddress, 5);
             await sleep(1200);
-            let sig1 = signatureDigest(owner, enderBondAddress, signer1);    
+            let sig1 = signatureDigest(owner, enderBondAddress, signer1);
             await expect(
-              enderBond.connect(signer1).deposit(
-                signer1.address,
-                depositPrincipalStEth,
-                maturity,
-                bondFee,
-                stEthAddress,
-                [signer1.address, "0", sig1]
-              )
+                enderBond
+                    .connect(signer1)
+                    .deposit(
+                        signer1.address,
+                        depositPrincipalStEth,
+                        maturity,
+                        bondFee,
+                        stEthAddress,
+                        [signer1.address, "0", sig1],
+                    ),
             ).to.be.revertedWithCustomError(enderBond, "InvalidMaturity");
         });
-    
+
         it("Deposit Revert NotWhitelisted with wrong signer address", async () => {
             let maturity = 10;
             let bondFee = 1;
             const depositPrincipalStEth = expandTo18Decimals(1);
             await endToken.setFee(20);
-          
-          
-            expect(await mockEnderBond.rewardShareIndex()).to.be.equal(0);                                                   
+
+            expect(await mockEnderBond.rewardShareIndex()).to.be.equal(0);
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-          
-            await stEth
-                .connect(signer1)
-                .approve(mockEnderBondAddress, depositPrincipalStEth);
-          
+
+            await stEth.connect(signer1).approve(mockEnderBondAddress, depositPrincipalStEth);
+
             await enderTreasury.setAddress(instadappLiteAddress, 5);
             await sleep(1200);
             let sig = signatureDigest(owner, enderBondAddress, signer1);
@@ -873,50 +916,51 @@ describe("enderBond setting funtions and missing testing", function () {
             const userSignerAddr = await mockEnderBond.verify(userSign);
             const contractSignerAddr = await mockEnderBond.signer();
             expect(userSignerAddr).to.be.not.equal(contractSignerAddr);
-            
+
             await expect(
-              mockEnderBond.connect(signer1).deposit(
-                signer1.address,
-                depositPrincipalStEth,
-                maturity,
-                bondFee,
-                ethers.ZeroAddress,
-                userSign
-              )
+                mockEnderBond
+                    .connect(signer1)
+                    .deposit(
+                        signer1.address,
+                        depositPrincipalStEth,
+                        maturity,
+                        bondFee,
+                        ethers.ZeroAddress,
+                        userSign,
+                    ),
             ).to.be.revertedWithCustomError(mockEnderBond, "NotWhitelisted");
         });
-    
+
         it("Deposit Revert NotWhitelisted with wrong sender address", async () => {
             let maturity = 10;
             let bondFee = 1;
             const depositPrincipalStEth = expandTo18Decimals(1);
             await endToken.setFee(20);
-          
-          
-            expect(await mockEnderBond.rewardShareIndex()).to.be.equal(0);                                                   
+
+            expect(await mockEnderBond.rewardShareIndex()).to.be.equal(0);
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
-          
-            await stEth
-                .connect(signer1)
-                .approve(mockEnderBondAddress, depositPrincipalStEth);
-          
+
+            await stEth.connect(signer1).approve(mockEnderBondAddress, depositPrincipalStEth);
+
             await enderTreasury.setAddress(instadappLiteAddress, 5);
             await sleep(1200);
-            let mocksig = signatureDigest(signer, mockEnderBondAddress, signer1);        
+            let mocksig = signatureDigest(signer, mockEnderBondAddress, signer1);
             const userSign = [signer1.address, "0", mocksig];
             const userSignerAddr = await mockEnderBond.verify(userSign);
             const contractSignerAddr = await mockEnderBond.signer();
             expect(userSignerAddr).to.eq(contractSignerAddr);
-            
+
             await expect(
-              mockEnderBond.connect(signer2).deposit(
-                signer1.address,
-                depositPrincipalStEth,
-                maturity,
-                bondFee,
-                ethers.ZeroAddress,
-                userSign
-              )
+                mockEnderBond
+                    .connect(signer2)
+                    .deposit(
+                        signer1.address,
+                        depositPrincipalStEth,
+                        maturity,
+                        bondFee,
+                        ethers.ZeroAddress,
+                        userSign,
+                    ),
             ).to.be.revertedWithCustomError(mockEnderBond, "NotWhitelisted");
         });
 
@@ -925,17 +969,16 @@ describe("enderBond setting funtions and missing testing", function () {
             const sig1 = await signatureDigest(owner, enderBondAddress, owner);
             let maturity = 7;
             let bondFee = 5;
-    
+
             await mockEnderBond.whitelist(false);
             await mockEnderBond.setWithdrawPause(true);
             await mockEnderBond.setAddress(enderTreasuryAddress, 1);
             await mockEnderBond.setAddress(owner.address, 10);
-            await stEth.submit({ value: ethers.parseEther("1.0") });      
-            await stEth
-                .approve(mockEnderBondAddress, depositPrincipalStEth);
+            await stEth.submit({ value: ethers.parseEther("1.0") });
+            await stEth.approve(mockEnderBondAddress, depositPrincipalStEth);
             await enderTreasury.setAddress(mockEnderBondAddress, 2);
             await bondNFT.setBondContract(mockEnderBondAddress);
-    
+
             await mockEnderBond.deposit(
                 owner,
                 depositPrincipalStEth,
@@ -943,23 +986,29 @@ describe("enderBond setting funtions and missing testing", function () {
                 bondFee,
                 stEthAddress,
                 [owner.address, "0", sig1],
-                {value: depositPrincipalStEth}
+                { value: depositPrincipalStEth },
             );
             filter = mockEnderBond.filters.Deposit;
             const events = await mockEnderBond.queryFilter(filter, -1);
-        
+
             const event1 = events[0];
-        
+
             const args1 = event1.args;
             const tokenId = args1.tokenId;
-    
-            const reason = mockEnderBond._calculateRefractionData(signer1.address, depositPrincipalStEth, maturity, tokenId, bondFee);
-    
+
+            const reason = mockEnderBond._calculateRefractionData(
+                signer1.address,
+                depositPrincipalStEth,
+                maturity,
+                tokenId,
+                bondFee,
+            );
+
             await expect(reason).to.be.revertedWithCustomError(mockEnderBond, "NotBondUser()");
         });
 
-        describe("calculateReward functions test", function() {
-            const depositPrincipalStEth = expandTo16Decimals(1);                
+        describe("calculateReward functions test", function () {
+            const depositPrincipalStEth = expandTo16Decimals(1);
             let maturity = 7;
             let bondFee = 5;
             const precalUsers = 100;
@@ -968,19 +1017,18 @@ describe("enderBond setting funtions and missing testing", function () {
             let mockV2TokenId;
             let mockV3TokenId;
 
-            beforeEach( async () => {
+            beforeEach(async () => {
                 const sig1 = await signatureDigest(owner, enderBondAddress, owner);
-        
+
                 await enderBond.whitelist(false);
                 await enderBond.setWithdrawPause(true);
                 await enderBond.setAddress(enderTreasuryAddress, 1);
                 await enderBond.setAddress(owner.address, 10);
-                await stEth.submit({ value: ethers.parseEther("1.0") });      
-                await stEth
-                    .approve(enderBondAddress, depositPrincipalStEth);
+                await stEth.submit({ value: ethers.parseEther("1.0") });
+                await stEth.approve(enderBondAddress, depositPrincipalStEth);
                 await enderTreasury.setAddress(enderBondAddress, 2);
                 await bondNFT.setBondContract(enderBondAddress);
-        
+
                 await enderBond.deposit(
                     owner,
                     depositPrincipalStEth,
@@ -988,29 +1036,27 @@ describe("enderBond setting funtions and missing testing", function () {
                     bondFee,
                     stEthAddress,
                     [owner.address, "0", sig1],
-                    {value: depositPrincipalStEth}
+                    { value: depositPrincipalStEth },
                 );
                 filter = enderBond.filters.Deposit;
                 let events = await enderBond.queryFilter(filter, -1);
-            
+
                 let event1 = events[0];
-            
+
                 let args1 = event1.args;
                 tokenId = args1.tokenId;
 
-
                 const mockV1sig1 = await signatureDigest(owner, mockEnderBondV1Address, owner);
-        
+
                 await mockEnderBondV1.whitelist(false);
                 await mockEnderBondV1.setWithdrawPause(true);
                 await mockEnderBondV1.setAddress(enderTreasuryAddress, 1);
                 await mockEnderBondV1.setAddress(owner.address, 10);
-                await stEth.submit({ value: ethers.parseEther("1.0") });      
-                await stEth
-                    .approve(mockEnderBondV1Address, depositPrincipalStEth);
+                await stEth.submit({ value: ethers.parseEther("1.0") });
+                await stEth.approve(mockEnderBondV1Address, depositPrincipalStEth);
                 await enderTreasury.setAddress(mockEnderBondV1Address, 2);
                 await bondNFT.setBondContract(mockEnderBondV1Address);
-        
+
                 await mockEnderBondV1.deposit(
                     owner,
                     depositPrincipalStEth,
@@ -1018,28 +1064,27 @@ describe("enderBond setting funtions and missing testing", function () {
                     bondFee,
                     stEthAddress,
                     [owner.address, "0", mockV1sig1],
-                    {value: depositPrincipalStEth}
+                    { value: depositPrincipalStEth },
                 );
                 filter = mockEnderBondV1.filters.Deposit;
                 events = await mockEnderBondV1.queryFilter(filter, -1);
-            
+
                 event1 = events[0];
-            
+
                 args1 = event1.args;
                 mockV1TokenId = args1.tokenId;
 
                 const mockV2sig1 = await signatureDigest(owner, mockEnderBondV2Address, owner);
-        
+
                 await mockEnderBondV2.whitelist(false);
                 await mockEnderBondV2.setWithdrawPause(true);
                 await mockEnderBondV2.setAddress(enderTreasuryAddress, 1);
                 await mockEnderBondV2.setAddress(owner.address, 10);
-                await stEth.submit({ value: ethers.parseEther("1.0") });      
-                await stEth
-                    .approve(mockEnderBondV2Address, depositPrincipalStEth);
+                await stEth.submit({ value: ethers.parseEther("1.0") });
+                await stEth.approve(mockEnderBondV2Address, depositPrincipalStEth);
                 await enderTreasury.setAddress(mockEnderBondV2Address, 2);
                 await bondNFT.setBondContract(mockEnderBondV2Address);
-        
+
                 await mockEnderBondV2.deposit(
                     owner,
                     depositPrincipalStEth,
@@ -1047,28 +1092,27 @@ describe("enderBond setting funtions and missing testing", function () {
                     bondFee,
                     stEthAddress,
                     [owner.address, "0", mockV2sig1],
-                    {value: depositPrincipalStEth}
+                    { value: depositPrincipalStEth },
                 );
                 filter = mockEnderBondV2.filters.Deposit;
                 events = await mockEnderBondV2.queryFilter(filter, -1);
-            
+
                 event1 = events[0];
-            
+
                 args1 = event1.args;
                 mockV2TokenId = args1.tokenId;
 
                 const mockV3sig1 = await signatureDigest(owner, mockEnderBondV3Address, owner);
-        
+
                 await mockEnderBondV3.whitelist(false);
                 await mockEnderBondV3.setWithdrawPause(true);
                 await mockEnderBondV3.setAddress(enderTreasuryAddress, 1);
                 await mockEnderBondV3.setAddress(owner.address, 10);
-                await stEth.submit({ value: ethers.parseEther("1.0") });      
-                await stEth
-                    .approve(mockEnderBondV3Address, depositPrincipalStEth);
+                await stEth.submit({ value: ethers.parseEther("1.0") });
+                await stEth.approve(mockEnderBondV3Address, depositPrincipalStEth);
                 await enderTreasury.setAddress(mockEnderBondV3Address, 2);
                 await bondNFT.setBondContract(mockEnderBondV3Address);
-        
+
                 await mockEnderBondV3.deposit(
                     owner,
                     depositPrincipalStEth,
@@ -1076,90 +1120,105 @@ describe("enderBond setting funtions and missing testing", function () {
                     bondFee,
                     stEthAddress,
                     [owner.address, "0", mockV3sig1],
-                    {value: depositPrincipalStEth}
+                    { value: depositPrincipalStEth },
                 );
                 filter = mockEnderBondV3.filters.Deposit;
                 events = await mockEnderBondV3.queryFilter(filter, -1);
-            
+
                 event1 = events[0];
-            
+
                 args1 = event1.args;
                 mockV3TokenId = args1.tokenId;
             });
 
-            describe("calculateStakingReward function test", function() {
-                it("reward calculating when precalUsers isn't zero", async () => { 
+            describe("calculateStakingReward function test", function () {
+                it("reward calculating when precalUsers isn't zero", async () => {
                     const bond = await enderBond.bonds(tokenId);
                     const rewardPrincipal = bond.principal;
-                    const rewardSharePerUserIndexSend = await enderBond.rewardSharePerUserIndexSend(tokenId);
-                    const sEndTokenReward = (rewardPrincipal * (BigInt(precalUsers) - rewardSharePerUserIndexSend)) / BigInt(1e18);
+                    const rewardSharePerUserIndexSend =
+                        await enderBond.rewardSharePerUserIndexSend(tokenId);
+                    const sEndTokenReward =
+                        (rewardPrincipal * (BigInt(precalUsers) - rewardSharePerUserIndexSend)) /
+                        BigInt(1e18);
                     let rewardAmt = await enderBond.calculateStakingReward(tokenId, precalUsers);
                     expect(rewardAmt).to.eq(sEndTokenReward);
-    
+
                     rewardAmt = await enderBond.calculateStakingReward(tokenId, 10);
                     expect(rewardAmt).to.eq(0);
                 });
-    
+
                 it("calculateStakingReward is reverted with NotBondUser custom error owing to invalid caller", async () => {
                     await expect(
-                        enderBond.connect(signer1).calculateStakingReward(tokenId, 0)
+                        enderBond.connect(signer1).calculateStakingReward(tokenId, 0),
                     ).to.be.revertedWithCustomError(enderBond, "NotBondUser");
                 });
-    
+
                 it("calculateStakingReward is reverted with NotAllowed custom error when isSet is false", async () => {
                     await enderBond.setBool(false);
                     let isSet = await enderBond.isSet();
                     expect(isSet).to.eq(false);
-    
+
                     await expect(
-                        enderBond.calculateStakingReward(tokenId, 0)
+                        enderBond.calculateStakingReward(tokenId, 0),
                     ).to.be.revertedWithCustomError(enderBond, "NotAllowed");
-    
+
                     await enderBond.setBool(true);
                     isSet = await enderBond.isSet();
                     expect(isSet).to.eq(true);
                 });
-    
+
                 it("calculateStakingReward is tested with dayRewardShareIndexForSend", async () => {
                     const bond = await mockEnderBondV1.bonds(mockV2TokenId);
                     const startTime = bond.startTime;
                     const secondInDay = await mockEnderBondV2.SECONDS_IN_DAY();
-    
+
                     await time.increase(3600);
                     await mockEnderBondV2.setAddress(owner.address, 8);
                     await mockEnderBondV2.epochRewardShareIndexForSend(1);
                     await mockEnderBondV2.setBool(true);
-    
+
                     const blockNumBefore = await ethers.provider.getBlockNumber();
                     const blockBefore = await ethers.provider.getBlock(blockNumBefore);
                     const timestampBefore = blockBefore.timestamp;
-    
-                    await mockEnderBondV2.setDayRewardShareIndexForSend(maturity + Number(startTime/secondInDay), timestampBefore);
-    
-                    const dayRewardShareIndexForSend = await mockEnderBondV2.dayRewardShareIndexForSend(maturity + Number(startTime/secondInDay));
+
+                    await mockEnderBondV2.setDayRewardShareIndexForSend(
+                        maturity + Number(startTime / secondInDay),
+                        timestampBefore,
+                    );
+
+                    const dayRewardShareIndexForSend =
+                        await mockEnderBondV2.dayRewardShareIndexForSend(
+                            maturity + Number(startTime / secondInDay),
+                        );
                     expect(dayRewardShareIndexForSend).to.eq(timestampBefore);
-    
+
                     rewardAmt = await mockEnderBondV2.calculateStakingReward(tokenId, 0);
                     expect(rewardAmt).to.eq(0);
-    
+
                     await mockEnderBondV2.setAddress(enderStakingAddress, 8);
                 });
             });
 
-            describe("calculateRefractionRewards function test", function() {
+            describe("calculateRefractionRewards function test", function () {
                 it("reward calculating when precalUsers isn't zero", async () => {
                     const bond = await enderBond.bonds(tokenId);
                     const refractionPrincipal = bond.refractionPrincipal;
-                    const rewardSharePerUserIndex = await enderBond.rewardSharePerUserIndex(tokenId);
-                    const reward = (refractionPrincipal * (BigInt(precalUsers) - rewardSharePerUserIndex)) / BigInt(1e18);
-                    let rewardAmt = await enderBond.calculateRefractionRewards(tokenId, precalUsers);
+                    const rewardSharePerUserIndex =
+                        await enderBond.rewardSharePerUserIndex(tokenId);
+                    const reward =
+                        (refractionPrincipal * (BigInt(precalUsers) - rewardSharePerUserIndex)) /
+                        BigInt(1e18);
+                    let rewardAmt = await enderBond.calculateRefractionRewards(
+                        tokenId,
+                        precalUsers,
+                    );
                     expect(rewardAmt).to.eq(reward);
                 });
 
                 it("calculateRefractionRewards is reverted with NotBondUser owing to invalid caller", async () => {
                     await enderBond.setBool(true);
                     await expect(
-                        enderBond.connect(signer1).calculateRefractionRewards(tokenId, 0)
+                        enderBond.connect(signer1).calculateRefractionRewards(tokenId, 0),
                     ).to.be.revertedWithCustomError(enderBond, "NotBondUser");
                 });
 
@@ -1167,11 +1226,11 @@ describe("enderBond setting funtions and missing testing", function () {
                     await enderBond.setBool(false);
                     let isSet = await enderBond.isSet();
                     expect(isSet).to.eq(false);
-    
+
                     await expect(
-                        enderBond.calculateRefractionRewards(tokenId, 0)
+                        enderBond.calculateRefractionRewards(tokenId, 0),
                     ).to.be.revertedWithCustomError(enderBond, "NotAllowed");
-    
+
                     await enderBond.setBool(true);
                     isSet = await enderBond.isSet();
                     expect(isSet).to.eq(true);
@@ -1180,43 +1239,55 @@ describe("enderBond setting funtions and missing testing", function () {
                 it("calculateRefractionRewards is reverted with NoRewardCollected custom error", async () => {
                     await enderBond.setBool(true);
                     const rewardShareIndex = await enderBond.rewardShareIndex();
-                    const rewardSharePerUserIndex = await enderBond.rewardSharePerUserIndex(tokenId);
+                    const rewardSharePerUserIndex =
+                        await enderBond.rewardSharePerUserIndex(tokenId);
 
                     expect(rewardShareIndex).to.eq(rewardSharePerUserIndex);
 
                     await expect(
-                        enderBond.calculateRefractionRewards(tokenId, 0)
+                        enderBond.calculateRefractionRewards(tokenId, 0),
                     ).to.be.revertedWithCustomError(enderBond, "NoRewardCollected");
                 });
 
                 it("calculateRefractionRewards returns zero", async () => {
                     await mockEnderBondV3.setBool(true);
                     const rewardShareIndex = await mockEnderBondV3.rewardShareIndex();
-                    const rewardSharePerUserIndex = await mockEnderBondV3.rewardSharePerUserIndex(mockV3TokenId);
+                    const rewardSharePerUserIndex =
+                        await mockEnderBondV3.rewardSharePerUserIndex(mockV3TokenId);
 
                     expect(rewardShareIndex).to.eq(rewardSharePerUserIndex);
 
-                    await mockEnderBondV3.setRewardSharePerUserIndex(mockV3TokenId, Number(rewardShareIndex) + 1);
+                    await mockEnderBondV3.setRewardSharePerUserIndex(
+                        mockV3TokenId,
+                        Number(rewardShareIndex) + 1,
+                    );
 
-                    const rewardAmt = await mockEnderBondV3.calculateRefractionRewards(mockV3TokenId, 0);
+                    const rewardAmt = await mockEnderBondV3.calculateRefractionRewards(
+                        mockV3TokenId,
+                        0,
+                    );
 
                     expect(rewardAmt).to.eq(0);
                 });
             });
 
-            describe("calculateBondRewardAmount function test", function() {
+            describe("calculateBondRewardAmount function test", function () {
                 it("reward calculating when precalUsers isn't zero", async () => {
                     const bond = await enderBond.bonds(tokenId);
                     const depositPrincipal = bond.depositPrincipal;
-                    const userBondYieldShareIndex = await enderBond.userBondYieldShareIndex(tokenId);
+                    const userBondYieldShareIndex =
+                        await enderBond.userBondYieldShareIndex(tokenId);
 
                     let reward = 0;
                     if (precalUsers > Number(userBondYieldShareIndex))
-                        reward = (depositPrincipal * (BigInt(precalUsers) - userBondYieldShareIndex));
+                        reward = depositPrincipal * (BigInt(precalUsers) - userBondYieldShareIndex);
                     let rewardAmt = await enderBond.calculateBondRewardAmount(tokenId, precalUsers);
                     expect(rewardAmt).to.eq(reward);
 
-                    rewardAmt = await enderBond.calculateBondRewardAmount(tokenId, Number(userBondYieldShareIndex)+1);
+                    rewardAmt = await enderBond.calculateBondRewardAmount(
+                        tokenId,
+                        Number(userBondYieldShareIndex) + 1,
+                    );
                     expect(rewardAmt).to.eq(depositPrincipal);
                 });
 
@@ -1224,22 +1295,20 @@ describe("enderBond setting funtions and missing testing", function () {
                     await enderBond.setBool(false);
                     let isSet = await enderBond.isSet();
                     expect(isSet).to.eq(false);
-    
+
                     await expect(
-                        enderBond.calculateBondRewardAmount(tokenId, 0)
+                        enderBond.calculateBondRewardAmount(tokenId, 0),
                     ).to.be.revertedWithCustomError(enderBond, "NotAllowed");
-    
+
                     await enderBond.setBool(true);
                     isSet = await enderBond.isSet();
                     expect(isSet).to.eq(true);
                 });
             });
         });
-
-        
     });
 
-    async function signatureDigest(signature, verifyContractAddress, user) { 
+    async function signatureDigest(signature, verifyContractAddress, user) {
         let sig = await signature.signTypedData(
             {
                 name: "bondContract",
@@ -1250,40 +1319,50 @@ describe("enderBond setting funtions and missing testing", function () {
             {
                 userSign: [
                     {
-                        name: 'user',
-                        type: 'address',
+                        name: "user",
+                        type: "address",
                     },
                     {
-                        name: 'key',
-                        type: 'string',
+                        name: "key",
+                        type: "string",
                     },
                 ],
             },
             {
                 user: user.address,
                 key: "0",
-            }
-        )
+            },
+        );
         return sig;
-    };
+    }
 
-    async function depositAndSetup(signer, depositAmount, maturity, bondFee, tokenAddress, [user, key, signature]) {
+    async function depositAndSetup(
+        signer,
+        depositAmount,
+        maturity,
+        bondFee,
+        tokenAddress,
+        [user, key, signature],
+    ) {
         await enderBond
-        //   .connect(signer)
-          .deposit(signer, depositAmount, maturity, bondFee, tokenAddress, [user, key, signature]);
+            //   .connect(signer)
+            .deposit(signer, depositAmount, maturity, bondFee, tokenAddress, [
+                user,
+                key,
+                signature,
+            ]);
         filter = enderBond.filters.Deposit;
         const events = await enderBond.queryFilter(filter, -1);
-    
+
         const event1 = events[0];
-    
+
         const args1 = event1.args;
         const tokenId = args1.tokenId;
-    
+
         return tokenId;
     }
 
     function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
-
 });

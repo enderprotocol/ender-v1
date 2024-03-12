@@ -3,6 +3,6 @@ module.exports = {
         "/contracts/EnderBondLiquidityDeposit.sol",
         "/contracts/EnderTreasury.sol",
         "/contracts/strategy",
-        "/contracts/OwnedUpgradeabilityProxy.sol"
-    ]
+        "/contracts/OwnedUpgradeabilityProxy.sol",
+    ],
 };

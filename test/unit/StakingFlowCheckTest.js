@@ -155,7 +155,7 @@
 //   });
 
 //   describe("Staking", async () => {
-   
+
 //     it("stake", async () => {
 
 //         await endToken.mint(90);
@@ -164,7 +164,6 @@
 
 //     });
 
- 
 //   });
 
 //   async function depositAndSetup(signer, depositAmount, maturity, bondFee, [user, key, signature]) {

@@ -20,7 +20,7 @@
 
 //     // grant minter role to treasury contract
 //     await endToken.grantRole(minterRole, owner.address);
-  
+
 //     // Deploy EnderBond
 //     const EnderBond = await ethers.getContractFactory("EnderBond");
 //     enderBond = await upgrades.deployProxy(EnderBond, [endTokenAddress, signature], {
