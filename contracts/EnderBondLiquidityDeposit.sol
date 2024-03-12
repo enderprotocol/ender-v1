@@ -91,6 +91,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
         _;
     }
 
+    // not used
     modifier onlyBond() {
         if (msg.sender != enderBond) revert NotAllowed();
         _;
@@ -147,6 +148,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
 
         if (_type == 1) stEth = _addr;
         else if (_type == 2) lido = _addr;
+        // not used
         else if (_type == 3) enderBond = _addr;
     }
 
@@ -168,7 +170,8 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
         if (principal < minDepositAmount) revert InvalidAmount();
         if (maturity < 7 || maturity > 365) revert InvalidMaturity();
         if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
-        if (bondFee < 0 || bondFee > 10000) revert InvalidBondFee();
+        // uint256 cannot be minus number
+        if (bondFee > 10000) revert InvalidBondFee();
         address signAddress = _verify(userSign);
         require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
         // token transfer
@@ -200,16 +203,8 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
      */
     function depositedIntoBond(
         uint256 _index
-    ) external  returns (address user, uint256 principal, uint256 bondFees, uint256 maturity) {
+    ) external returns (address user, uint256 principal, uint256 bondFees, uint256 maturity) {
         principal = IStEth(stEth).getPooledEthByShares(bonds[_index].principalAmount);
-        emit userInfo(
-            bonds[_index].user,
-            index,
-            bonds[_index].principalAmount,
-            principal,
-            bonds[_index].bondFees,
-            bonds[_index].maturity
-        );
         return (bonds[_index].user, principal, bonds[_index].bondFees, bonds[_index].maturity);
     }
 
