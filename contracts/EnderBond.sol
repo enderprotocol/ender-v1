@@ -94,7 +94,7 @@ contract EnderBond is
     uint256 public minDepositAmount;
     uint256 public SECONDS_IN_DAY;
     uint256 public lastDay;
-    uint256 private amountRequired;
+    uint256 internal amountRequired;
     uint256 private depositAmountRequired;
     uint256 private refractionAmountRequired;
     uint256 internal availableBondFee;
@@ -639,9 +639,9 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         if(msg.sender != address(endStaking)) revert NotEnderStaking();
         if (totalDeposit - amountRequired != 0) {
             uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
-           rewardShareIndexSend =
-            rewardShareIndexSend +
-            ((_reward * 10 ** 18) / (totalDeposit - amountRequired));
+            rewardShareIndexSend =
+                rewardShareIndexSend +
+                ((_reward * 10 ** 18) / (totalDeposit - amountRequired));            
             if( lastSecOfSendReward / SECONDS_IN_DAY == timeNow ){
                 if(dayToRefractionShareUpdationSend[timeNow].length == 0) dayToRefractionShareUpdationSend[timeNow].push(lastSecOfSendReward);
                 dayToRefractionShareUpdationSend[timeNow].push(block.timestamp);
@@ -763,41 +763,32 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     function calculateStakingReward(uint256 _tokenId, uint256 precalUsers) public view returns(uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
         uint rewardPrincipal = bond.principal;
+        uint256 idx = bond.maturity + (bond.startTime / SECONDS_IN_DAY);
         if (precalUsers != 0) {
-            uint sEndTokenReward = ((rewardPrincipal * (precalUsers - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
-                    // console.log("HOLAAAAAAAAAA");
-            if (sEndTokenReward > 0) {
-                return sEndTokenReward;
-            }
+            if (precalUsers > rewardSharePerUserIndexSend[_tokenId]) {
+                _reward = ((rewardPrincipal * (precalUsers - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
+            } 
         } else {
             if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
             if (isSet) {
-
-                if (dayRewardShareIndexForSend[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)] == 0) {
-                    console.log("d->>>",dayRewardShareIndexForSend[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)]);
-                    uint sEndTokenReward = ((rewardPrincipal *
-                        (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
-
-                    if (sEndTokenReward > 0) {
-                        return sEndTokenReward;
+                if (dayRewardShareIndexForSend[idx] == 0) {
+                    if (rewardShareIndexSend > rewardSharePerUserIndexSend[_tokenId]) {
+                        _reward = ((rewardPrincipal * (rewardShareIndexSend - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
                     }
                 } else {
-                    uint256 sTime;
-                    console.log("dd->>>",dayRewardShareIndexForSend[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)]);
-                    if(dayToRefractionShareUpdationSend[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)].length == 1){
-                        sTime = dayToRefractionShareUpdationSend[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)][0];
+                    uint256 sTime;                    
+                    if(dayToRefractionShareUpdationSend[idx].length == 1){
+                        sTime = dayToRefractionShareUpdationSend[idx][0];
                     }else{
                         // console.log("hello");
                         sTime = findClosestS(
-                            dayToRefractionShareUpdationSend[bonds[_tokenId].maturity],
+                            dayToRefractionShareUpdationSend[idx],
                             ((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)
                         );
                     }
                     uint256 userS = secondsRefractionShareIndexSend[sTime];
-                    uint sEndTokenReward = ((rewardPrincipal * (userS - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
-
-                    if (sEndTokenReward > 0) {
-                        return sEndTokenReward;
+                    if (userS > rewardSharePerUserIndexSend[_tokenId]) {
+                        _reward = ((rewardPrincipal * (userS - rewardSharePerUserIndexSend[_tokenId])) / 1e18);
                     }
                 }
             } else {
@@ -811,37 +802,36 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @param _tokenId The unique identifier of the bond.
      */
 
-    function calculateRefractionRewards(uint256 _tokenId, uint256 precalUsers) public view returns (uint256) {
+    function calculateRefractionRewards(uint256 _tokenId, uint256 precalUsers) public view returns (uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
         uint rewardPrincipal = bond.refractionPrincipal;
-        uint256 reward;
+        uint256 idx = (bond.startTime / SECONDS_IN_DAY) + bond.maturity;
         if (precalUsers != 0) {
-            reward = ((rewardPrincipal * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18);
-            return reward;
+            if (precalUsers > rewardSharePerUserIndex[_tokenId]) {
+                _reward = ((rewardPrincipal * (precalUsers - rewardSharePerUserIndex[_tokenId])) / 1e18);
+            }
         } else {
             if (isSet) {
                 if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
                 if (rewardShareIndex == rewardSharePerUserIndex[_tokenId]) revert NoRewardCollected();
-                if (dayToRewardShareIndex[((bonds[_tokenId].startTime/SECONDS_IN_DAY)+bonds[_tokenId].maturity)] == 0){ 
+                if (dayToRewardShareIndex[idx] == 0){ 
                     if(rewardShareIndex > rewardSharePerUserIndex[_tokenId]) {
-                        reward = ((rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
-                    } else {
-                        reward = 0;
+                        _reward = ((rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
                     }
-                    return reward;
                 } else {
                     uint256 sTime;
-                    if(dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)].length == 1){
-                        sTime = dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)][0];
+                    if(dayToRefractionShareUpdation[idx].length == 1){
+                        sTime = dayToRefractionShareUpdation[idx][0];
                     }else{
                         sTime = findClosestS(
-                            dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)],
+                            dayToRefractionShareUpdation[idx],
                             ((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)
                         );
                     }
                     uint256 userS = secondsRefractionShareIndex[sTime];
-                    reward = ((rewardPrincipal * (userS - rewardSharePerUserIndex[_tokenId])) / 1e18);
-                    return reward;
+                    if (userS > rewardSharePerUserIndex[_tokenId]) {
+                        _reward = ((rewardPrincipal * (userS - rewardSharePerUserIndex[_tokenId])) / 1e18);
+                    }
                 }
             } else {
                 revert NotAllowed();
@@ -856,17 +846,17 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      */
     function calculateBondRewardAmount(uint256 _tokenId, uint256 precalUsers) public view returns (uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
+        uint256 idx = (bond.startTime / SECONDS_IN_DAY) + bond.maturity;
         if (precalUsers != 0) {
             if (precalUsers > userBondYieldShareIndex[_tokenId]) {
                 _reward = (bond.depositPrincipal * (precalUsers - userBondYieldShareIndex[_tokenId]));
-            } else {
-                _reward = 0;   
-            }            
+            }
         } else {
             if (isSet) {
-                if (dayBondYieldShareIndex[((bonds[_tokenId].startTime/SECONDS_IN_DAY)+bonds[_tokenId].maturity)] == 0) {
-                    _reward = (bond.depositPrincipal *
-                        (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
+                if (dayBondYieldShareIndex[idx] == 0) {
+                    if (bondYieldShareIndex > userBondYieldShareIndex[_tokenId]) {
+                        _reward = (bond.depositPrincipal * (bondYieldShareIndex - userBondYieldShareIndex[_tokenId]));
+                    }
                 } else {
                         // console.log("-------maturity second---------",((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime));
                         // uint256 userS = secondsBondYieldShareIndex[((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)] == 0 ?
@@ -875,18 +865,19 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                         // // console.log("calculateBondRewardAmount:- ", userBondYieldShareIndex[_tokenId], userS);
                         // _reward = (bond.depositPrincipal * (userS - userBondYieldShareIndex[_tokenId]));
 
-                        uint256 sTime;
-                        if(dayToYeildShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)].length == 1){
-                        sTime = dayToYeildShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)][0];
-                        }else{
-                        // // console.log("Hello Hi there", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
+                    uint256 sTime;
+                    if(dayToYeildShareUpdation[idx].length == 1){
+                        sTime = dayToYeildShareUpdation[idx][0];
+                    }else{                        
                         sTime = findClosestS(
-                            dayToYeildShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)],
+                            dayToYeildShareUpdation[idx],
                             ((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)
                         );
                     }
                     uint256 userS = secondsBondYieldShareIndex[sTime];
-                    _reward = (bond.depositPrincipal * (userS - userBondYieldShareIndex[_tokenId]));
+                    if (userS > userBondYieldShareIndex[_tokenId]) {
+                        _reward = (bond.depositPrincipal * (userS - userBondYieldShareIndex[_tokenId]));
+                    }
                 }
             } else {
                 revert NotAllowed();

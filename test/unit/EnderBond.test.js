@@ -6,6 +6,7 @@ const { EigenLayerStrategyManagerAddress } = require("../utils/common");
 const exp = require("constants");
 const { sign } = require("crypto");
 const { log, assert } = require("console");
+const ether = require("@openzeppelin/test-helpers/src/ether");
 const signatureAddr = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
 const baseURI = "https://endworld-backend-git-dev-metagaming.vercel.app/nft/metadata/";
 const MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -32,9 +33,7 @@ describe("enderBond setting funtions and missing testing", function () {
         stEthAddress,
         enderBondAddress,
         mockEnderBondAddress,
-        mockEnderBondV1Address,
-        mockEnderBondV2Address,
-        mockEnderBondV3Address,
+        mockLidoAddress,
         enderBondLiquidityDepositAddress,
         endTokenAddress,
         sEndTokenAddress,
@@ -46,9 +45,7 @@ describe("enderBond setting funtions and missing testing", function () {
         stEth,
         enderBond,
         mockEnderBond,
-        mockEnderBondV1,
-        mockEnderBondV2,
-        mockEnderBondV3,
+        mockLido,
         enderBondLiquidityDeposit,
         endToken,
         sEndToken,
@@ -57,9 +54,10 @@ describe("enderBond setting funtions and missing testing", function () {
         instadappLitelidoStaking,
         enderStaking,
         signature,
-        signature1;
+        signature1,
+        secondInDay;
 
-    before(async function () {
+    beforeEach(async function () {
         const wEthFactory = await ethers.getContractFactory("mockWETH");
         const stEthFactory = await ethers.getContractFactory("StETH");
         const instadappLiteFactory = await ethers.getContractFactory("StinstaToken");
@@ -73,10 +71,7 @@ describe("enderBond setting funtions and missing testing", function () {
         const sEndTokenFactory = await ethers.getContractFactory("SEndToken");
         const bondNftFactory = await ethers.getContractFactory("BondNFT");
         const MockEnderBond = await ethers.getContractFactory("MockEnderBond");
-        const MockEnderBondV1 = await ethers.getContractFactory("MockEnderBondV1");
-        const MockEnderBondV2 = await ethers.getContractFactory("MockEnderBondV2");
-        const MockEnderBondV3 = await ethers.getContractFactory("MockEnderBondV3");
-
+        const MockLido = await ethers.getContractFactory("MockLido");
         //Owner and signers addresses
         [owner, signer, wallet, signer1, signer2, signer3, signer4] = await ethers.getSigners();
 
@@ -145,44 +140,8 @@ describe("enderBond setting funtions and missing testing", function () {
         //set mockEnderBond address in endToken
         await endToken.setBond(mockEnderBondAddress);
 
-        // deploy mock EnderBondV1
-        mockEnderBondV1 = await upgrades.deployProxy(
-            MockEnderBondV1,
-            [endTokenAddress, ethers.ZeroAddress, signer.address],
-            {
-                initializer: "initialize",
-            },
-        );
-        mockEnderBondV1Address = await mockEnderBondV1.getAddress();
-
-        //set mockEnderBondV1 address in endToken
-        await endToken.setBond(mockEnderBondV1Address);
-
-        // deploy mock EnderBondV2
-        mockEnderBondV2 = await upgrades.deployProxy(
-            MockEnderBondV2,
-            [endTokenAddress, ethers.ZeroAddress, signer.address],
-            {
-                initializer: "initialize",
-            },
-        );
-        mockEnderBondV2Address = await mockEnderBondV2.getAddress();
-
-        //set mockEnderBondV2 address in endToken
-        await endToken.setBond(mockEnderBondV2Address);
-
-        // deploy mock EnderBondV3
-        mockEnderBondV3 = await upgrades.deployProxy(
-            MockEnderBondV3,
-            [endTokenAddress, ethers.ZeroAddress, signer.address],
-            {
-                initializer: "initialize",
-            },
-        );
-        mockEnderBondV3Address = await mockEnderBondV3.getAddress();
-
-        //set mockEnderBondV3 address in endToken
-        await endToken.setBond(mockEnderBondV3Address);
+        mockLido = await MockLido.deploy();
+        mockLidoAddress = await mockLido.getAddress();
 
         //deploy ender Staking contract
         enderStaking = await upgrades.deployProxy(
@@ -262,32 +221,13 @@ describe("enderBond setting funtions and missing testing", function () {
         await mockEnderBond.setAddress(enderTreasuryAddress, 1);
         await mockEnderBond.setAddress(bondNFTAddress, 3);
         await mockEnderBond.setAddress(sEndTokenAddress, 9);
-        await mockEnderBond.setAddress(stEthAddress, 6);
-
-        // mockEnderBondV1 setting
-        await mockEnderBondV1.setBondableTokens([stEthAddress], true);
-        await mockEnderBondV1.setAddress(enderTreasuryAddress, 1);
-        await mockEnderBondV1.setAddress(bondNFTAddress, 3);
-        await mockEnderBondV1.setAddress(sEndTokenAddress, 9);
-        await mockEnderBondV1.setAddress(stEthAddress, 6);
-
-        // mockEnderBondV2 setting
-        await mockEnderBondV2.setBondableTokens([stEthAddress], true);
-        await mockEnderBondV2.setAddress(enderTreasuryAddress, 1);
-        await mockEnderBondV2.setAddress(bondNFTAddress, 3);
-        await mockEnderBondV2.setAddress(sEndTokenAddress, 9);
-        await mockEnderBondV2.setAddress(stEthAddress, 6);
-
-        // mockEnderBondV3 setting
-        await mockEnderBondV3.setBondableTokens([stEthAddress], true);
-        await mockEnderBondV3.setAddress(enderTreasuryAddress, 1);
-        await mockEnderBondV3.setAddress(bondNFTAddress, 3);
-        await mockEnderBondV3.setAddress(sEndTokenAddress, 9);
-        await mockEnderBondV3.setAddress(stEthAddress, 6);
+        await mockEnderBond.setAddress(stEthAddress, 6);       
 
         //signature
         signature = await signatureDigest(owner, enderBondAddress, signer1);
         signature1 = await signatureDigest(owner, enderBondAddress, signer2);
+
+        secondInDay = await enderBond.SECONDS_IN_DAY();
     });
 
     it("should fail on second initialization attempt", async function () {
@@ -298,10 +238,9 @@ describe("enderBond setting funtions and missing testing", function () {
     });
 
     it("epochRewardShareIndexByPass function test", async () => {
-        const beforelastSecOfRefraction = await mockEnderBondV1.lastSecOfRefraction();
-        await mockEnderBondV1.epochRewardShareIndexByPass();
-        const lastSecOfRefraction = await mockEnderBondV1.lastSecOfRefraction();
-        const secondInDay = await mockEnderBondV1.SECONDS_IN_DAY();
+        const beforelastSecOfRefraction = await mockEnderBond.lastSecOfRefraction();
+        await mockEnderBond.epochRewardShareIndexByPass();
+        const lastSecOfRefraction = await mockEnderBond.lastSecOfRefraction();
 
         const blockNumBefore = await ethers.provider.getBlockNumber();
         const blockBefore = await ethers.provider.getBlock(blockNumBefore);
@@ -313,15 +252,14 @@ describe("enderBond setting funtions and missing testing", function () {
         expect(timeNow).to.eq(lastTimeNow);
 
         const afterDayToRefractionShareUpdation =
-            await mockEnderBondV1.getDayToRefractionShareUpdation(Number(timeNow));
+            await mockEnderBond.getDayToRefractionShareUpdation(Number(timeNow));
         expect(afterDayToRefractionShareUpdation[0]).to.eq(beforelastSecOfRefraction);
     });
 
     it("epochRewardShareIndexSendByPass function test", async () => {
-        const beforelastSecOfSendReward = await mockEnderBondV1.lastSecOfSendReward();
-        await mockEnderBondV1.epochRewardShareIndexSendByPass();
-        const lastSecOfSendReward = await mockEnderBondV1.lastSecOfSendReward();
-        const secondInDay = await mockEnderBondV1.SECONDS_IN_DAY();
+        const beforelastSecOfSendReward = await mockEnderBond.lastSecOfSendReward();
+        await mockEnderBond.epochRewardShareIndexSendByPass();
+        const lastSecOfSendReward = await mockEnderBond.lastSecOfSendReward();
 
         const blockNumBefore = await ethers.provider.getBlockNumber();
         const blockBefore = await ethers.provider.getBlock(blockNumBefore);
@@ -330,18 +268,16 @@ describe("enderBond setting funtions and missing testing", function () {
         const timeNow = BigInt(timestampBefore) / secondInDay;
         const lastTimeNow = lastSecOfSendReward / secondInDay;
 
-        console.log("d ->", beforelastSecOfSendReward, lastSecOfSendReward, timeNow);
-
         expect(timeNow).to.eq(lastTimeNow);
 
         let afterDayToRefractionShareUpdationSend =
-            await mockEnderBondV1.getDayToRefractionShareUpdationSend(Number(timeNow));
+            await mockEnderBond.getDayToRefractionShareUpdationSend(Number(timeNow));
         expect(afterDayToRefractionShareUpdationSend[0]).to.eq(beforelastSecOfSendReward);
 
-        await mockEnderBondV1.epochRewardShareIndexSendByPass();
+        await mockEnderBond.epochRewardShareIndexSendByPass();
 
         afterDayToRefractionShareUpdationSend =
-            await mockEnderBondV1.getDayToRefractionShareUpdationSend(Number(timeNow));
+            await mockEnderBond.getDayToRefractionShareUpdationSend(Number(timeNow));
         expect(afterDayToRefractionShareUpdationSend[0]).to.eq(beforelastSecOfSendReward);
     });
 
@@ -449,19 +385,19 @@ describe("enderBond setting funtions and missing testing", function () {
     });
 
     it("setting available bond fee", async () => {
-        await mockEnderBondV2.setAddress(signer1, 1);
-        const treasuryAddr = await mockEnderBondV2.getPrivateAddress(1);
+        await mockEnderBond.setAddress(signer1, 1);
+        const treasuryAddr = await mockEnderBond.getPrivateAddress(1);
         expect(treasuryAddr).to.equal(signer1.address);
-        await mockEnderBondV2.initAvailableBondFee(20);
+        await mockEnderBond.initAvailableBondFee(20);
 
         const bondFeeAmt = 5;
-        const originalAvailableBondFee = await mockEnderBondV2.getAvailableBondFee();
-        await mockEnderBondV2.connect(signer1).setAvailableBondFee(bondFeeAmt);
-        const availableBondFee = await mockEnderBondV2.getAvailableBondFee();
+        const originalAvailableBondFee = await mockEnderBond.getAvailableBondFee();
+        await mockEnderBond.connect(signer1).setAvailableBondFee(bondFeeAmt);
+        const availableBondFee = await mockEnderBond.getAvailableBondFee();
 
         await expect(
-            mockEnderBondV2.connect(signer2).setAvailableBondFee(bondFeeAmt),
-        ).to.be.revertedWithCustomError(mockEnderBondV2, "NoTreasury()");
+            mockEnderBond.connect(signer2).setAvailableBondFee(bondFeeAmt),
+        ).to.be.revertedWithCustomError(mockEnderBond, "NoTreasury()");
 
         expect(availableBondFee).to.equal(originalAvailableBondFee - BigInt(bondFeeAmt));
     });
@@ -780,14 +716,6 @@ describe("enderBond setting funtions and missing testing", function () {
         ).to.be.revertedWithCustomError(enderBond, "NotEndToken()");
     });
 
-    describe("epochRewardShareIndexForSend function test", function () {
-        it("epochRewardShareIndexForSend is reverted with invalid sender", async () => {
-            await expect(
-                enderBond.connect(signer1).epochRewardShareIndexForSend(1),
-            ).to.be.revertedWithCustomError(enderBond, "NotEnderStaking()");
-        });
-    });
-
     describe("resetEndMint function test", function () {
         it("resetEndMint is reverted with invalid sender", async () => {
             await expect(enderBond.connect(signer1).resetEndMint()).to.be.revertedWithCustomError(
@@ -835,7 +763,20 @@ describe("enderBond setting funtions and missing testing", function () {
                 ),
             )
                 .to.emit(mockEnderBond, "Deposit")
-                .withArgs(signer1.address, 2, sendAmt, maturity, ethers.ZeroAddress, bondFee);
+                .withArgs(signer1.address, 1, sendAmt, maturity, ethers.ZeroAddress, bondFee);
+
+            await mockEnderBond.setAddress(mockLidoAddress, 5);
+            await expect(
+                mockEnderBond.deposit(
+                    signer1.address,
+                    depositPrincipalStEth,
+                    maturity,
+                    bondFee,
+                    ethers.ZeroAddress,
+                    userSign,
+                    { value: depositPrincipalStEth },
+                ),
+            ).to.be.revertedWith("lido eth deposit failed");
         });
 
         it("deposit with zero token address is reverted with InvalidAmount owing the msg.value", async () => {
@@ -1013,9 +954,7 @@ describe("enderBond setting funtions and missing testing", function () {
             let bondFee = 5;
             const precalUsers = 100;
             let tokenId;
-            let mockV1TokenId;
-            let mockV2TokenId;
-            let mockV3TokenId;
+            let mockTokenId;
 
             beforeEach(async () => {
                 const sig1 = await signatureDigest(owner, enderBondAddress, owner);
@@ -1046,104 +985,50 @@ describe("enderBond setting funtions and missing testing", function () {
                 let args1 = event1.args;
                 tokenId = args1.tokenId;
 
-                const mockV1sig1 = await signatureDigest(owner, mockEnderBondV1Address, owner);
+                const mocksig1 = await signatureDigest(owner, mockEnderBondAddress, owner);
 
-                await mockEnderBondV1.whitelist(false);
-                await mockEnderBondV1.setWithdrawPause(true);
-                await mockEnderBondV1.setAddress(enderTreasuryAddress, 1);
-                await mockEnderBondV1.setAddress(owner.address, 10);
+                await mockEnderBond.whitelist(false);
+                await mockEnderBond.setWithdrawPause(true);
+                await mockEnderBond.setAddress(enderTreasuryAddress, 1);
+                await mockEnderBond.setAddress(owner.address, 10);
                 await stEth.submit({ value: ethers.parseEther("1.0") });
-                await stEth.approve(mockEnderBondV1Address, depositPrincipalStEth);
-                await enderTreasury.setAddress(mockEnderBondV1Address, 2);
-                await bondNFT.setBondContract(mockEnderBondV1Address);
+                await stEth.approve(mockEnderBondAddress, depositPrincipalStEth);
+                await enderTreasury.setAddress(mockEnderBondAddress, 2);
+                await bondNFT.setBondContract(mockEnderBondAddress);
 
-                await mockEnderBondV1.deposit(
+                await mockEnderBond.deposit(
                     owner,
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
                     stEthAddress,
-                    [owner.address, "0", mockV1sig1],
+                    [owner.address, "0", mocksig1],
                     { value: depositPrincipalStEth },
                 );
-                filter = mockEnderBondV1.filters.Deposit;
-                events = await mockEnderBondV1.queryFilter(filter, -1);
+                filter = mockEnderBond.filters.Deposit;
+                events = await mockEnderBond.queryFilter(filter, -1);
 
                 event1 = events[0];
 
                 args1 = event1.args;
-                mockV1TokenId = args1.tokenId;
-
-                const mockV2sig1 = await signatureDigest(owner, mockEnderBondV2Address, owner);
-
-                await mockEnderBondV2.whitelist(false);
-                await mockEnderBondV2.setWithdrawPause(true);
-                await mockEnderBondV2.setAddress(enderTreasuryAddress, 1);
-                await mockEnderBondV2.setAddress(owner.address, 10);
-                await stEth.submit({ value: ethers.parseEther("1.0") });
-                await stEth.approve(mockEnderBondV2Address, depositPrincipalStEth);
-                await enderTreasury.setAddress(mockEnderBondV2Address, 2);
-                await bondNFT.setBondContract(mockEnderBondV2Address);
-
-                await mockEnderBondV2.deposit(
-                    owner,
-                    depositPrincipalStEth,
-                    maturity,
-                    bondFee,
-                    stEthAddress,
-                    [owner.address, "0", mockV2sig1],
-                    { value: depositPrincipalStEth },
-                );
-                filter = mockEnderBondV2.filters.Deposit;
-                events = await mockEnderBondV2.queryFilter(filter, -1);
-
-                event1 = events[0];
-
-                args1 = event1.args;
-                mockV2TokenId = args1.tokenId;
-
-                const mockV3sig1 = await signatureDigest(owner, mockEnderBondV3Address, owner);
-
-                await mockEnderBondV3.whitelist(false);
-                await mockEnderBondV3.setWithdrawPause(true);
-                await mockEnderBondV3.setAddress(enderTreasuryAddress, 1);
-                await mockEnderBondV3.setAddress(owner.address, 10);
-                await stEth.submit({ value: ethers.parseEther("1.0") });
-                await stEth.approve(mockEnderBondV3Address, depositPrincipalStEth);
-                await enderTreasury.setAddress(mockEnderBondV3Address, 2);
-                await bondNFT.setBondContract(mockEnderBondV3Address);
-
-                await mockEnderBondV3.deposit(
-                    owner,
-                    depositPrincipalStEth,
-                    maturity,
-                    bondFee,
-                    stEthAddress,
-                    [owner.address, "0", mockV3sig1],
-                    { value: depositPrincipalStEth },
-                );
-                filter = mockEnderBondV3.filters.Deposit;
-                events = await mockEnderBondV3.queryFilter(filter, -1);
-
-                event1 = events[0];
-
-                args1 = event1.args;
-                mockV3TokenId = args1.tokenId;
+                mockTokenId = args1.tokenId;
             });
 
             describe("calculateStakingReward function test", function () {
                 it("reward calculating when precalUsers isn't zero", async () => {
-                    const bond = await enderBond.bonds(tokenId);
+                    const bond = await mockEnderBond.bonds(mockTokenId);
                     const rewardPrincipal = bond.principal;
                     const rewardSharePerUserIndexSend =
-                        await enderBond.rewardSharePerUserIndexSend(tokenId);
-                    const sEndTokenReward =
-                        (rewardPrincipal * (BigInt(precalUsers) - rewardSharePerUserIndexSend)) /
+                        await mockEnderBond.rewardSharePerUserIndexSend(mockTokenId);
+                    let sEndTokenReward = 0
+                    if (precalUsers > Number(rewardSharePerUserIndexSend))
+                        sEndTokenReward = (rewardPrincipal * (BigInt(precalUsers) - rewardSharePerUserIndexSend)) /
                         BigInt(1e18);
-                    let rewardAmt = await enderBond.calculateStakingReward(tokenId, precalUsers);
+                    let rewardAmt = await mockEnderBond.calculateStakingReward(mockTokenId, precalUsers);
                     expect(rewardAmt).to.eq(sEndTokenReward);
 
-                    rewardAmt = await enderBond.calculateStakingReward(tokenId, 10);
+                    await mockEnderBond.setRewardSharePerUserIndexSend(mockTokenId, precalUsers + 10);
+                    rewardAmt = await mockEnderBond.calculateStakingReward(mockTokenId, precalUsers);
                     expect(rewardAmt).to.eq(0);
                 });
 
@@ -1168,51 +1053,116 @@ describe("enderBond setting funtions and missing testing", function () {
                 });
 
                 it("calculateStakingReward is tested with dayRewardShareIndexForSend", async () => {
-                    const bond = await mockEnderBondV1.bonds(mockV2TokenId);
+                    const bond = await mockEnderBond.bonds(mockTokenId);
                     const startTime = bond.startTime;
-                    const secondInDay = await mockEnderBondV2.SECONDS_IN_DAY();
 
                     await time.increase(3600);
-                    await mockEnderBondV2.setAddress(owner.address, 8);
-                    await mockEnderBondV2.epochRewardShareIndexForSend(1);
-                    await mockEnderBondV2.setBool(true);
+                    await mockEnderBond.setAddress(owner.address, 8);
+                    await mockEnderBond.epochRewardShareIndexForSend(1);
+                    await mockEnderBond.setBool(true);
 
                     const blockNumBefore = await ethers.provider.getBlockNumber();
                     const blockBefore = await ethers.provider.getBlock(blockNumBefore);
                     const timestampBefore = blockBefore.timestamp;
 
-                    await mockEnderBondV2.setDayRewardShareIndexForSend(
+                    await mockEnderBond.setDayRewardShareIndexForSend(
                         maturity + Number(startTime / secondInDay),
                         timestampBefore,
                     );
 
                     const dayRewardShareIndexForSend =
-                        await mockEnderBondV2.dayRewardShareIndexForSend(
+                        await mockEnderBond.dayRewardShareIndexForSend(
                             maturity + Number(startTime / secondInDay),
                         );
                     expect(dayRewardShareIndexForSend).to.eq(timestampBefore);
 
-                    rewardAmt = await mockEnderBondV2.calculateStakingReward(tokenId, 0);
+                    rewardAmt = await mockEnderBond.calculateStakingReward(tokenId, 0);
                     expect(rewardAmt).to.eq(0);
 
-                    await mockEnderBondV2.setAddress(enderStakingAddress, 8);
+                    await mockEnderBond.setAddress(enderStakingAddress, 8);
+                });
+
+                it("calculateStakingReward is returned the reward when dayRewardShareIndexForSend is not zero", async () => {
+                    const bond = await mockEnderBond.bonds(mockTokenId);
+                    const idx = bond.startTime / secondInDay + bond.maturity;
+
+                    const dayRewardShareIndexForSend = await mockEnderBond.dayRewardShareIndexForSend(idx);
+
+                    expect(dayRewardShareIndexForSend).to.eq(0);
+
+                    await mockEnderBond.setDayRewardShareIndexForSend(idx, 1);
+                    await mockEnderBond.setBool(true);
+                    await mockEnderBond.setRewardShareIndexSend(1);
+
+                    const rewardPrincipal = bond.principal;
+
+                    let dayToRefractionShareUpdationSend = await mockEnderBond.getDayToRefractionShareUpdationSend(idx);
+
+                    let sTime;
+
+                    if (dayToRefractionShareUpdationSend.length === 1) {
+                        sTime = dayToRefractionShareUpdationSend[0];
+                    } else {
+                        sTime = await mockEnderBond._findClosestS(dayToRefractionShareUpdationSend, bond.maturity * secondInDay + bond.startTime);
+                    }
+
+                    let userS = await mockEnderBond.secondsRefractionShareIndexSend(sTime);
+                    let rewardSharePerUserIndexSend = await mockEnderBond.rewardSharePerUserIndexSend(mockTokenId);
+
+                    let calcReward = 0;
+                    if (userS > rewardSharePerUserIndexSend) calcReward = (rewardPrincipal * (userS - rewardSharePerUserIndexSend)) / BigInt(1e18);
+                    let reward = await mockEnderBond.calculateStakingReward(mockTokenId, 0);
+                    expect(reward).to.eq(calcReward);
+
+                    await mockEnderBond.setSecondsRefractionShareIndexSend(sTime, rewardSharePerUserIndexSend + BigInt(200));
+                    userS = await mockEnderBond.secondsRefractionShareIndexSend(sTime);
+
+                    calcReward = (rewardPrincipal * (userS - rewardSharePerUserIndexSend)) / BigInt(1e18);
+                    reward = await mockEnderBond.calculateStakingReward(mockTokenId, 0);
+                    expect(reward).to.eq(calcReward);
+
+                    await mockEnderBond.setRewardSharePerUserIndexSend(mockTokenId, userS + BigInt(100));
+                    reward = await mockEnderBond.calculateStakingReward(mockTokenId, 0);
+                    expect(reward).to.eq(BigInt(0));
+
+                    await mockEnderBond.setDayToRefractionShareUpdationSend(idx, bond.startTime);
+                    dayToRefractionShareUpdationSend = await mockEnderBond.getDayToRefractionShareUpdationSend(idx);
+                    sTime = dayToRefractionShareUpdationSend[0];
+
+                    userS = await mockEnderBond.secondsRefractionShareIndexSend(sTime);
+                    rewardSharePerUserIndexSend = await mockEnderBond.rewardSharePerUserIndexSend(mockTokenId);
+
+                    if (userS > rewardSharePerUserIndexSend) {
+                        calcReward = (rewardPrincipal * (userS - rewardSharePerUserIndexSend)) / BigInt(1e18);
+                    } else {
+                        calcReward = 0;
+                    }                    
+                    reward = await mockEnderBond.calculateStakingReward(mockTokenId, 0);
+                    expect(reward).to.eq(calcReward);
                 });
             });
 
             describe("calculateRefractionRewards function test", function () {
                 it("reward calculating when precalUsers isn't zero", async () => {
-                    const bond = await enderBond.bonds(tokenId);
+                    const bond = await mockEnderBond.bonds(mockTokenId);
                     const refractionPrincipal = bond.refractionPrincipal;
                     const rewardSharePerUserIndex =
-                        await enderBond.rewardSharePerUserIndex(tokenId);
+                        await mockEnderBond.rewardSharePerUserIndex(mockTokenId);
                     const reward =
                         (refractionPrincipal * (BigInt(precalUsers) - rewardSharePerUserIndex)) /
                         BigInt(1e18);
-                    let rewardAmt = await enderBond.calculateRefractionRewards(
-                        tokenId,
+                    let rewardAmt = await mockEnderBond.calculateRefractionRewards(
+                        mockTokenId,
                         precalUsers,
                     );
                     expect(rewardAmt).to.eq(reward);
+
+                    await mockEnderBond.setRewardSharePerUserIndex(mockTokenId, precalUsers + 1);
+                    rewardAmt = await mockEnderBond.calculateRefractionRewards(
+                        mockTokenId,
+                        precalUsers,
+                    );
+                    expect(rewardAmt).to.eq(0);
                 });
 
                 it("calculateRefractionRewards is reverted with NotBondUser owing to invalid caller", async () => {
@@ -1250,45 +1200,110 @@ describe("enderBond setting funtions and missing testing", function () {
                 });
 
                 it("calculateRefractionRewards returns zero", async () => {
-                    await mockEnderBondV3.setBool(true);
-                    const rewardShareIndex = await mockEnderBondV3.rewardShareIndex();
+                    await mockEnderBond.setBool(true);
+                    const rewardShareIndex = await mockEnderBond.rewardShareIndex();
                     const rewardSharePerUserIndex =
-                        await mockEnderBondV3.rewardSharePerUserIndex(mockV3TokenId);
+                        await mockEnderBond.rewardSharePerUserIndex(mockTokenId);
 
                     expect(rewardShareIndex).to.eq(rewardSharePerUserIndex);
 
-                    await mockEnderBondV3.setRewardSharePerUserIndex(
-                        mockV3TokenId,
+                    await mockEnderBond.setRewardSharePerUserIndex(
+                        mockTokenId,
                         Number(rewardShareIndex) + 1,
                     );
 
-                    const rewardAmt = await mockEnderBondV3.calculateRefractionRewards(
-                        mockV3TokenId,
+                    const rewardAmt = await mockEnderBond.calculateRefractionRewards(
+                        mockTokenId,
                         0,
                     );
 
                     expect(rewardAmt).to.eq(0);
                 });
+
+                it("calculateRefractionRewards is returned the reward when dayToRewardShareIndex is not zero", async () => {
+                    const bond = await mockEnderBond.bonds(mockTokenId);
+                    const idx = bond.startTime / secondInDay + bond.maturity;
+
+                    const dayToRewardShareIndex = await mockEnderBond.dayToRewardShareIndex(idx);
+
+                    expect(dayToRewardShareIndex).to.eq(0);
+
+                    await mockEnderBond.setDayToRewardShareIndex(idx, 1);
+                    await mockEnderBond.setBool(true);
+                    await mockEnderBond.setRewardShareIndex(1);
+
+                    const rewardPrincipal = bond.refractionPrincipal;
+
+                    let dayToRefractionShareUpdation = await mockEnderBond.getDayToRefractionShareUpdation(idx);
+
+                    let sTime;
+
+                    if (dayToRefractionShareUpdation.length === 1) {
+                        sTime = dayToRefractionShareUpdation[0];
+                    } else {
+                        sTime = await mockEnderBond._findClosestS(dayToRefractionShareUpdation, bond.maturity * secondInDay + bond.startTime);
+                    }
+
+                    let userS = await mockEnderBond.secondsRefractionShareIndex(sTime);
+                    let rewardSharePerUserIndex = await mockEnderBond.rewardSharePerUserIndex(mockTokenId);
+
+                    let calcReward = (rewardPrincipal * (userS - rewardSharePerUserIndex)) / BigInt(1e18);
+                    let reward = await mockEnderBond.calculateRefractionRewards(mockTokenId, 0);
+                    expect(reward).to.eq(calcReward);
+
+                    await mockEnderBond.setSecondsRefractionShareIndex(sTime, Number(rewardSharePerUserIndex) + 200);
+                    userS = await mockEnderBond.secondsRefractionShareIndex(sTime);
+
+                    calcReward = (rewardPrincipal * (userS - rewardSharePerUserIndex)) / BigInt(1e18);
+                    reward = await mockEnderBond.calculateRefractionRewards(mockTokenId, 0);
+                    expect(reward).to.eq(calcReward);
+
+                    await mockEnderBond.setRewardSharePerUserIndex(mockTokenId, Number(userS) + 100);
+                    reward = await mockEnderBond.calculateRefractionRewards(mockTokenId, 0);
+                    expect(reward).to.eq(BigInt(0));
+
+                    await mockEnderBond.setDayToRefractionShareUpdation(idx, bond.startTime);
+                    dayToRefractionShareUpdation = await mockEnderBond.getDayToRefractionShareUpdation(idx);
+                    sTime = dayToRefractionShareUpdation[0];
+
+                    userS = await mockEnderBond.secondsRefractionShareIndex(sTime);
+                    rewardSharePerUserIndex = await mockEnderBond.rewardSharePerUserIndex(mockTokenId);
+
+                    if (userS > rewardSharePerUserIndex) {
+                        calcReward = (rewardPrincipal * (userS - rewardSharePerUserIndex)) / BigInt(1e18);
+                    } else {
+                        calcReward = 0;
+                    }                    
+                    reward = await mockEnderBond.calculateRefractionRewards(mockTokenId, 0);
+                    expect(reward).to.eq(calcReward);
+                });
             });
 
             describe("calculateBondRewardAmount function test", function () {
                 it("reward calculating when precalUsers isn't zero", async () => {
-                    const bond = await enderBond.bonds(tokenId);
+                    const bond = await mockEnderBond.bonds(mockTokenId);
                     const depositPrincipal = bond.depositPrincipal;
                     const userBondYieldShareIndex =
-                        await enderBond.userBondYieldShareIndex(tokenId);
+                        await mockEnderBond.userBondYieldShareIndex(mockTokenId);
 
                     let reward = 0;
                     if (precalUsers > Number(userBondYieldShareIndex))
                         reward = depositPrincipal * (BigInt(precalUsers) - userBondYieldShareIndex);
-                    let rewardAmt = await enderBond.calculateBondRewardAmount(tokenId, precalUsers);
+                    let rewardAmt = await mockEnderBond.calculateBondRewardAmount(mockTokenId, precalUsers);
                     expect(rewardAmt).to.eq(reward);
 
-                    rewardAmt = await enderBond.calculateBondRewardAmount(
-                        tokenId,
+                    rewardAmt = await mockEnderBond.calculateBondRewardAmount(
+                        mockTokenId,
                         Number(userBondYieldShareIndex) + 1,
                     );
                     expect(rewardAmt).to.eq(depositPrincipal);
+
+                    await mockEnderBond.setUserBondYieldShareIndex(mockTokenId, precalUsers + 1);
+                    rewardAmt = await mockEnderBond.calculateBondRewardAmount(
+                        mockTokenId,
+                        precalUsers,
+                    );
+                    expect(rewardAmt).to.eq(0);
                 });
 
                 it("calculateBondRewardAmount is reverted with NotAllowed custom error when isSet is false", async () => {
@@ -1304,7 +1319,111 @@ describe("enderBond setting funtions and missing testing", function () {
                     isSet = await enderBond.isSet();
                     expect(isSet).to.eq(true);
                 });
+
+                it("calculateBondRewardAmount is returned the reward when dayBondYieldShareIndex is not zero", async () => {
+                    const bond = await mockEnderBond.bonds(mockTokenId);
+                    const idx = bond.startTime / secondInDay + bond.maturity;
+
+                    const dayBondYieldShareIndex = await mockEnderBond.dayBondYieldShareIndex(idx);
+
+                    expect(dayBondYieldShareIndex).to.eq(0);
+
+                    await mockEnderBond.setDayBondYieldShareIndex(idx, 1);
+                    await mockEnderBond.setBool(true);
+
+                    const rewardPrincipal = bond.depositPrincipal;
+
+                    let dayToYeildShareUpdation = await mockEnderBond.getDayToYeildShareUpdation(idx);
+
+                    let sTime;
+
+                    if (dayToYeildShareUpdation.length === 1) {
+                        sTime = dayToYeildShareUpdation[0];
+                    } else {
+                        sTime = await mockEnderBond._findClosestS(dayToYeildShareUpdation, bond.maturity * secondInDay + bond.startTime);
+                    }
+
+                    let userS = await mockEnderBond.secondsBondYieldShareIndex(sTime);
+                    let userBondYieldShareIndex = await mockEnderBond.userBondYieldShareIndex(mockTokenId);
+                    let calcReward = 0;
+                    if (userS > userBondYieldShareIndex)
+                        calcReward = (rewardPrincipal * (userS - userBondYieldShareIndex));
+                    let reward = await mockEnderBond.calculateBondRewardAmount(mockTokenId, 0);
+                    expect(reward).to.eq(calcReward);
+
+                    await mockEnderBond.setSecondsBondYieldShareIndex(sTime, Number(userBondYieldShareIndex) + 200);
+                    userS = await mockEnderBond.secondsBondYieldShareIndex(sTime);
+
+                    calcReward = (rewardPrincipal * (userS - userBondYieldShareIndex));
+                    reward = await mockEnderBond.calculateBondRewardAmount(mockTokenId, 0);
+                    expect(reward).to.eq(calcReward);
+
+                    await mockEnderBond.setUserBondYieldShareIndex(mockTokenId, Number(userS) + 100);
+                    reward = await mockEnderBond.calculateBondRewardAmount(mockTokenId, 0);
+                    expect(reward).to.eq(BigInt(0));
+
+                    await mockEnderBond.setDayToYeildShareUpdation(idx, bond.startTime);
+                    dayToYeildShareUpdation = await mockEnderBond.getDayToYeildShareUpdation(idx);
+                    sTime = dayToYeildShareUpdation[0];
+
+                    userS = await mockEnderBond.secondsBondYieldShareIndex(sTime);
+                    userBondYieldShareIndex = await mockEnderBond.userBondYieldShareIndex(mockTokenId);
+
+                    if (userS > userBondYieldShareIndex) {
+                        calcReward = (rewardPrincipal * (userS - userBondYieldShareIndex));
+                    } else {
+                        calcReward = 0;
+                    }                    
+                    reward = await mockEnderBond.calculateBondRewardAmount(mockTokenId, 0);
+                    expect(reward).to.eq(calcReward);
+                });
             });
+        });
+
+        describe("epochRewardShareIndexForSend function test", function () {
+            it("epochRewardShareIndexForSend is reverted with invalid sender", async () => {
+                await expect(
+                    enderBond.connect(signer1).epochRewardShareIndexForSend(1),
+                ).to.be.revertedWithCustomError(enderBond, "NotEnderStaking()");
+            });
+    
+            it("epochRewardShareIndexForSend calculate the reward when dayToRefractionShareUpdationSend length is zero", async () => {
+                let lastSecOfSendReward = await mockEnderBond.lastSecOfSendReward();
+
+                await time.increase(3600);
+    
+                const blockNumBefore = await ethers.provider.getBlockNumber();
+                const blockBefore = await ethers.provider.getBlock(blockNumBefore);
+                const timestampBefore = blockBefore.timestamp;
+                const timeNow = BigInt(timestampBefore) / secondInDay;
+    
+                let dayToRefractionShareUpdationSend = await mockEnderBond.getDayToRefractionShareUpdationSend(timeNow);
+    
+                const totalDeposit = await mockEnderBond.totalDeposit();
+                const amountRequired = await mockEnderBond.getAmountRequired();
+    
+                await mockEnderBond.setTotalDeposit(amountRequired + BigInt(100));
+    
+                await mockEnderBond.setAddress(owner.address, 8);
+                await mockEnderBond.epochRewardShareIndexForSend(1);
+    
+                dayToRefractionShareUpdationSend = await mockEnderBond.getDayToRefractionShareUpdationSend(timeNow);
+                expect(dayToRefractionShareUpdationSend[0]).to.eq(lastSecOfSendReward);
+            });
+        });
+
+        it("checkUpkeep", async () => {
+            const lastTimeStamp = await enderBond.lastTimeStamp();
+
+            const blockNumBefore = await ethers.provider.getBlockNumber();
+            const blockBefore = await ethers.provider.getBlock(blockNumBefore);
+            const timestampBefore = blockBefore.timestamp;
+
+            const interval = await enderBond.interval();
+
+            const isCheck = (BigInt(timestampBefore) - lastTimeStamp) > interval;
+            const {upkeepNeeded, _} = await enderBond.checkUpkeep("0x0011");
+            expect(upkeepNeeded).to.eq(isCheck);
         });
     });
 
