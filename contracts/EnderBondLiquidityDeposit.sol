@@ -203,7 +203,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
      */
     function depositedIntoBond(
         uint256 _index
-    ) external view returns (address user, uint256 principal, uint256 bondFees, uint256 maturity) {
+    ) external returns (address user, uint256 principal, uint256 bondFees, uint256 maturity) {
         principal = IStEth(stEth).getPooledEthByShares(bonds[_index].principalAmount);
         return (bonds[_index].user, principal, bonds[_index].bondFees, bonds[_index].maturity);
     }
