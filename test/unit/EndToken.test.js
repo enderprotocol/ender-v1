@@ -38,7 +38,7 @@
 
 //     // grant minter role to treasury contract
 //     await endToken.grantRole(minterRole, enderTreasuryAddress);
-    
+
 //     [owner, wallet1] = await ethers.getSigners();
 //     await endToken.grantRole(minterRole, owner.address);
 //   });

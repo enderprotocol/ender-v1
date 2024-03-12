@@ -23,13 +23,12 @@
 //     await endToken.waitForDeployment();
 //     endTokenAddress = await endToken.getAddress();
 
-   
 //     // get minter role
 //     // const minterRole = await endToken.MINTER_ROLE()
 
 //     // grant minter role to treasury contract
 //     // await endToken.grantRole(minterRole, enderTreasuryAddress);
-    
+
 //     [owner, wallet1] = await ethers.getSigners();
 //     // await endToken.grantRole(minterRole, owner.address);
 //   });
@@ -53,14 +52,14 @@
 //       const totalSupply = await endToken.totalSupply();
 //       console.log("totalSupplyOfContract",totalSupply);
 
-//       // 15552000 - 6 months 
+//       // 15552000 - 6 months
 //       // 7776000 - 3 months
-//       //23328000 - 9 months 
-//       //31536000 - 1 Year 
+//       //23328000 - 9 months
+//       //31536000 - 1 Year
 //       await increaseTime(31536000);
 //       await endToken.getMintedEnd();
 //       await increaseTime(7776000);
-      
+
 //       await endToken.getMintedEnd();
 //       await increaseTime(7776000);
 
@@ -76,11 +75,10 @@
 
 //       await increaseTime(7776000);
 //       await endToken.getMintedEnd();
-
 
 //       const balanceOfContractAfter = await endToken.balanceOf(endToken.target);
 //       console.log("balance Of Contract After",balanceOfContractAfter);
-      
+
 //       const balanceOfOwner = await endToken.balanceOf(owner.address);
 //       console.log(balanceOfOwner);
 

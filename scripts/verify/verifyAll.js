@@ -1,23 +1,23 @@
-const EndToken =  "0xaDb1dAa108bBB67EAD6D2ce0Dfca766551D21136" //
-const EnderBond =   "0x8fc9740707FaC3C327ef8AC60f10613e9Ee35468"// 
-const SEndToken ="0x7cC9546b5C8a0b898b8c8A571BAe8B1061A6f7A7" //
-const BondNFT =   "0xf15a811a70fDaE327547C5C66da39483c8470E13"//
-const EnderTreasury =   "0x68C4c3E919584Db95779e3437d6421B9dEda90fD"//  
-const EnderStaking =   "0xe1F63899584D5d09DC483CA9Cce963eCa2D9404b"// 
-const Weth =   "0x94D818e0B85F7b1D3D38871C0D58758A23FF9CcB"
-const MockStEth = "0x3C3a738EdA4bB5E2003e128f174CF0d0A7653a2D"// 
-const EnderLidoStrategy =   "0x9F306B7119F24e78A286265905E80af7a318f3AD"
-const EnderOracle = "0x4CE5090196f000C6C486af65af8b55A98bBC728a"
-const depositContract = "0xCcb2374039fB1937A65a2233a130391A1643EbE5"
-const InstaDapp = "0x4407422216Be505770be35b6e108dD9AbDA80f1B" //
- 
+const EndToken = "0xaDb1dAa108bBB67EAD6D2ce0Dfca766551D21136"; //
+const EnderBond = "0x8fc9740707FaC3C327ef8AC60f10613e9Ee35468"; //
+const SEndToken = "0x7cC9546b5C8a0b898b8c8A571BAe8B1061A6f7A7"; //
+const BondNFT = "0xf15a811a70fDaE327547C5C66da39483c8470E13"; //
+const EnderTreasury = "0x68C4c3E919584Db95779e3437d6421B9dEda90fD"; //
+const EnderStaking = "0xe1F63899584D5d09DC483CA9Cce963eCa2D9404b"; //
+const Weth = "0x94D818e0B85F7b1D3D38871C0D58758A23FF9CcB";
+const MockStEth = "0x3C3a738EdA4bB5E2003e128f174CF0d0A7653a2D"; //
+const EnderLidoStrategy = "0x9F306B7119F24e78A286265905E80af7a318f3AD";
+const EnderOracle = "0x4CE5090196f000C6C486af65af8b55A98bBC728a";
+const depositContract = "0xCcb2374039fB1937A65a2233a130391A1643EbE5";
+const InstaDapp = "0x4407422216Be505770be35b6e108dD9AbDA80f1B"; //
+
 async function main() {
     try {
         // await hre.run("verify:verify", {
         // address: Weth,
         // constructorArguments: ["wrappedEth", "weth", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9"],
         // contract: "contracts/ERC20/StEth.sol:mockWETH",
-        // });  
+        // });
         // await hre.run("verify:verify", {
         //     address: MockStEth,
         //     constructorArguments: [],
