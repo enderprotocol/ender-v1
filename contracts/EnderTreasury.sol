@@ -54,16 +54,16 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     uint256 public instaDappDepositValuations;
     uint256 public totalDepositInStrategy;
 
-event StrategyUpdated(address indexed strategy, bool isActive);
-event PriorityStrategyUpdated(address indexed priorityStrategy);
-event NominalYieldUpdated(int256 nominalYield);
-event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
-event TreasuryDeposit(address indexed asset, uint256 amount);
-event TreasuryWithdraw(address indexed asset, uint256 amount);
-event StrategyDeposit(address indexed asset, address indexed strategy, uint256 amount);
-event StrategyWithdraw(address indexed asset, address indexed strategy, uint256 amount);
-event Collect(address indexed account, uint256 amount);
-event MintEndToUser(address indexed to, uint256 amount);
+    event StrategyUpdated(address indexed strategy, bool isActive);
+    event PriorityStrategyUpdated(address indexed priorityStrategy);
+    event NominalYieldUpdated(int256 nominalYield);
+    event BondYieldBaseRateUpdated(uint256 bondYieldBaseRate);
+    event TreasuryDeposit(address indexed asset, uint256 amount);
+    event TreasuryWithdraw(address indexed asset, uint256 amount);
+    event StrategyDeposit(address indexed asset, address indexed strategy, uint256 amount);
+    event StrategyWithdraw(address indexed asset, address indexed strategy, uint256 amount);
+    event Collect(address indexed account, uint256 amount);
+    event MintEndToUser(address indexed to, uint256 amount);
 
     /**
      * @notice Initialize the contract and set the END token address
@@ -126,9 +126,8 @@ event MintEndToUser(address indexed to, uint256 amount);
         else if (_type == 3) enderDepositor = _addr;
         else if (_type == 4) strategyToReceiptToken[instadapp] = _addr;
         else if (_type == 5) strategyToReceiptToken[lybraFinance] = _addr;
-        else if (_type == 6) strategyToReceiptToken[eigenLayer] = _addr;     
+        else if (_type == 6) strategyToReceiptToken[eigenLayer] = _addr;
     }
-
 
     /**
      * @notice Update bond yield base rate (by default, 3%)
@@ -138,12 +137,11 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (_newBaseRate == 0) revert InvalidBaseRate();
 
         bondYieldBaseRate = _newBaseRate;
-         emit BondYieldBaseRateUpdated(_newBaseRate);
-
-     
+        emit BondYieldBaseRateUpdated(_newBaseRate);
     }
 
-    function getAddress(uint256 _type) external view returns (address addr) {
+    // cannot use getAddress as for testing purpose
+    function getAddressByType(uint256 _type) external view returns (address addr) {
         if (_type == 0) revert ZeroAddress();
 
         if (_type == 1) addr = endToken;
@@ -151,7 +149,7 @@ event MintEndToUser(address indexed to, uint256 amount);
         else if (_type == 3) addr = enderDepositor;
         else if (_type == 4) addr = strategyToReceiptToken[instadapp];
         else if (_type == 5) addr = strategyToReceiptToken[lybraFinance];
-        else if (_type == 6) addr = strategyToReceiptToken[eigenLayer];     
+        else if (_type == 6) addr = strategyToReceiptToken[eigenLayer];
     }
 
     /**
@@ -164,19 +162,19 @@ event MintEndToUser(address indexed to, uint256 amount);
         unchecked {
             for (uint8 i; i < _strs.length; ++i) {
                 strategies[_strs[i]] = _flag;
-                 emit StrategyUpdated(_strs[i], _flag);
+                emit StrategyUpdated(_strs[i], _flag);
             }
         }
     }
 
     function setPriorityStrategy(address _priorityStrategy) public onlyOwner {
         priorityStrategy = _priorityStrategy;
-         emit PriorityStrategyUpdated(_priorityStrategy);
+        emit PriorityStrategyUpdated(_priorityStrategy);
     }
 
     function setNominalYield(int256 _nominalYield) public onlyOwner {
         nominalYield = _nominalYield;
-         emit NominalYieldUpdated(_nominalYield);
+        emit NominalYieldUpdated(_nominalYield);
     }
 
     function depositTreasury(EndRequest memory param, uint256 amountRequired) external onlyBond {
@@ -198,35 +196,43 @@ event MintEndToUser(address indexed to, uint256 amount);
     }
 
     function stakeRebasingReward(address _tokenAddress) public onlyStaking returns (uint256 rebaseReward) {
-        int256 bondReturn = int256(IEnderBond(enderBond).endMint()/1000);
+        int256 bondReturn = int256(IEnderBond(enderBond).endMint() / 1000);
         int256 depositReturn = int256(calculateDepositReturn(_tokenAddress));
         balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
-        // console.log("EndMint", uint(bondReturn));
+        console.log("depositReturn", uint(depositReturn));
         if (depositReturn == 0) {
             epochWithdrawl = 0;
             epochDeposit = 0;
             rebaseReward = 0;
             address receiptToken = instadapp;
-            if(IInstadappLite(receiptToken).balanceOf(address(this)) > 0 ){ 
-            instaDappLastValuation = IInstadappLite(instadapp).viewStinstaTokens(IERC20(receiptToken).balanceOf(address(this)));
+            if (IInstadappLite(receiptToken).balanceOf(address(this)) > 0) {
+                instaDappLastValuation = IInstadappLite(instadapp).viewStinstaTokens(
+                    IERC20(receiptToken).balanceOf(address(this))
+                );
             }
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
-        } else {     
+        } else {
             (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);
             // console.log("End supply",ENDSupply);
             depositReturn = (depositReturn * int256(stETHPool) * 1000) / int256(ENDSupply);
-            rebaseReward = uint256((depositReturn + ((depositReturn * nominalYield )/10000) - bondReturn));
-            console.log(uint256(depositReturn), uint256((depositReturn * nominalYield )/10000), "----", uint256(bondReturn));
+            rebaseReward = uint256((depositReturn + ((depositReturn * nominalYield) / 10000) - bondReturn));
+            console.log(
+                uint256(depositReturn),
+                uint256((depositReturn * nominalYield) / 10000),
+                "----",
+                uint256(bondReturn)
+            );
             epochWithdrawl = 0;
             epochDeposit = 0;
             IEnderBond(enderBond).resetEndMint();
             address receiptToken = instadapp;
-            instaDappLastValuation = IInstadappLite(instadapp).viewStinstaTokens(IERC20(receiptToken).balanceOf(address(this)));
+            instaDappLastValuation = IInstadappLite(instadapp).viewStinstaTokens(
+                IERC20(receiptToken).balanceOf(address(this))
+            );
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
         }
-        
     }
 
     /**
@@ -235,25 +241,26 @@ event MintEndToUser(address indexed to, uint256 amount);
      * @param _strategy address of the strategy in which admin wish to deposit,
      * @param _depositAmt amount of stETH admin wants to deposit to the strategy.
      */
-
-    function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(strategy) {
+    // validStrategy param is wrong, should be validStrategy(_strategy)
+    function depositInStrategy(address _asset, address _strategy, uint256 _depositAmt) public validStrategy(_strategy) {
         if (_depositAmt == 0) revert ZeroAmount();
+        //  ym: _strategy == address(0) can be removed as we are already checking in validStrategy
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
         if (_strategy == instadapp) {
             IERC20(_asset).approve(_strategy, _depositAmt);
-            IInstadappLite(instadapp).deposit(_depositAmt);  // note for testing we changed the function sig.                         
+            IInstadappLite(instadapp).deposit(_depositAmt); // note for testing we changed the function sig.
             instaDappDepositValuations += _depositAmt;
-        } else if (_strategy == lybraFinance) {                                                   
-            IERC20(_asset).approve(lybraFinance, _depositAmt);                                          
-            ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);  
-        } else if (_strategy == eigenLayer) {                                                                 
-            //Todo will add the instance while going on mainnet.                                                 
-        }                                                                                 
-        totalAssetStakedInStrategy[_asset] += _depositAmt;   
-        totalAssetStakedPerStrategy[_strategy] += _depositAmt;  
-        totalDepositInStrategy += _depositAmt;                                               
-         emit StrategyDeposit(_asset, _strategy, _depositAmt);                                            
-    }                                                                                                       
+        } else if (_strategy == lybraFinance) {
+            IERC20(_asset).approve(lybraFinance, _depositAmt);
+            ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);
+        } else if (_strategy == eigenLayer) {
+            //Todo will add the instance while going on mainnet.
+        }
+        totalAssetStakedInStrategy[_asset] += _depositAmt;
+        totalAssetStakedPerStrategy[_strategy] += _depositAmt;
+        totalDepositInStrategy += _depositAmt;
+        emit StrategyDeposit(_asset, _strategy, _depositAmt);
+    }
 
     /**
      * @notice function to deposit available funds to strategies.
@@ -261,15 +268,17 @@ event MintEndToUser(address indexed to, uint256 amount);
      * @param _strategy address of the strategy from which admin wish to withdraw,
      * @param _withdrawAmt amount of stETH admin wants to withdraw from the strategy.
      */
-    function withdrawFromStrategy(                                                                     
-        address _asset,                                                                        
-        address _strategy,                                                         
+    function withdrawFromStrategy(
+        address _asset,
+        address _strategy,
         uint256 _withdrawAmt
     ) public validStrategy(_strategy) returns (uint256 _returnAmount) {
         if (_withdrawAmt == 0) revert ZeroAmount();
+        // ym: _strategy == address(0) can be removed as we are already checking in validStrategy
         if (_asset == address(0) || _strategy == address(0)) revert ZeroAddress();
-        address receiptToken = _strategy;
-        if (_strategy == instadapp) { 
+        // ym: receiptToken should be asset token, otherwise there is no approve function
+        address receiptToken = _asset;
+        if (_strategy == instadapp) {
             //Todo set the asset as recipt tokens and need to check the assets ratio while depolying on mainnet
             _withdrawAmt = IInstadappLite(instadapp).viewStinstaTokensValue(_withdrawAmt);
             IERC20(receiptToken).approve(instadapp, _withdrawAmt);
@@ -282,10 +291,12 @@ event MintEndToUser(address indexed to, uint256 amount);
         totalAssetStakedInStrategy[_asset] -= _withdrawAmt;
         totalAssetStakedPerStrategy[_strategy] -= _withdrawAmt;
         totalDepositInStrategy -= _withdrawAmt;
+
+        // ym: why this value could be zero?
         if (_returnAmount > 0) {
             totalRewardsFromStrategy[_asset] += _returnAmount;
         }
-         emit StrategyWithdraw(_asset, _strategy, _returnAmount);
+        emit StrategyWithdraw(_asset, _strategy, _returnAmount);
     }
 
     /**
@@ -293,11 +304,13 @@ event MintEndToUser(address indexed to, uint256 amount);
      * @param param Withdraw parameter
      */
     function withdraw(EndRequest memory param, uint256 amountRequired) external onlyBond {
-        if (amountRequired > IERC20(param.stakingToken).balanceOf(address(this))) {
+        if (param.stakingToken != address(0) && amountRequired > IERC20(param.stakingToken).balanceOf(address(this))) {
             withdrawFromStrategy(param.stakingToken, priorityStrategy, amountRequired);
-        }   
+        }
         epochWithdrawl += param.tokenAmt;
-        fundsInfo[param.stakingToken] -= param.tokenAmt;
+        // ym: fundsInfo has no zero address token
+        if(param.stakingToken != address(0))
+            fundsInfo[param.stakingToken] -= param.tokenAmt;
 
         // bond token transfer
         _transferFunds(param.account, param.stakingToken, param.tokenAmt);
@@ -318,7 +331,7 @@ event MintEndToUser(address indexed to, uint256 amount);
     function mintEndToUser(address _to, uint256 _amount) external onlyBond {
         ///just return for temp  should changethe
         IEndToken(endToken).mint(_to, _amount);
-         emit MintEndToUser(_to, _amount);
+        emit MintEndToUser(_to, _amount);
     }
 
     /**
@@ -327,15 +340,24 @@ event MintEndToUser(address indexed to, uint256 amount);
      * @return totalReturn The total return, which is the change in asset balance.
      */
     function calculateTotalReturn(address _stEthAddress) internal view returns (uint256 totalReturn) {
-        uint256  stReturn;
+        uint256 stReturn;
         address receiptToken = instadapp;
         uint256 receiptTokenAmount = IInstadappLite(receiptToken).balanceOf(address(this));
-        if(IInstadappLite(receiptToken).balanceOf(address(this)) > 0 ){ 
-            stReturn = IInstadappLite(receiptToken).viewStinstaTokens(receiptTokenAmount) +  instaDappWithdrawlValuations
-                - instaDappDepositValuations - instaDappLastValuation;
+        if (IInstadappLite(receiptToken).balanceOf(address(this)) > 0) {
+            stReturn =
+                IInstadappLite(receiptToken).viewStinstaTokens(receiptTokenAmount) +
+                instaDappWithdrawlValuations -
+                instaDappDepositValuations -
+                instaDappLastValuation;
         }
-        totalReturn = IERC20(_stEthAddress).balanceOf(address(this)) + epochWithdrawl + instaDappDepositValuations + stReturn - epochDeposit - balanceLastEpoch; 
-        // console.log("totalReturn", totalReturn); 
+        totalReturn =
+            IERC20(_stEthAddress).balanceOf(address(this)) +
+            epochWithdrawl +
+            instaDappDepositValuations +
+            stReturn -
+            epochDeposit -
+            balanceLastEpoch;
+        
     }
 
     /**
@@ -349,29 +371,30 @@ event MintEndToUser(address indexed to, uint256 amount);
         if (totalReturn == 0) {
             depositReturn = 0;
         } else {
-            
             //here we have to multiply 100000and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
-            depositReturn = (totalReturn * fundsInfo[_stEthAddress]) / (fundsInfo[_stEthAddress] + IERC20(_stEthAddress).balanceOf(address(this)));
+            depositReturn =
+                (totalReturn * fundsInfo[_stEthAddress]) /
+                (fundsInfo[_stEthAddress] + IERC20(_stEthAddress).balanceOf(address(this)));
         }
     }
 
-    function ETHDenomination(address _stEthAddress) public view returns (uint stETHPoolAmount, uint ENDSupply){
-        uint stETHBalance = IERC20(_stEthAddress).balanceOf(address(this)); 
+    function ETHDenomination(address _stEthAddress) public view returns (uint stETHPoolAmount, uint ENDSupply) {
+        uint stETHBalance = IERC20(_stEthAddress).balanceOf(address(this));
         // console.log("stETHBalance", stETHBalance);
         address receiptToken = instadapp;
         uint256 receiptTokenAmount = IInstadappLite(receiptToken).balanceOf(address(this));
         uint stRewards;
-        if(IInstadappLite(receiptToken).balanceOf(address(this)) > 0 )
+        if (IInstadappLite(receiptToken).balanceOf(address(this)) > 0)
             stRewards = IInstadappLite(receiptToken).viewStinstaTokens(receiptTokenAmount);
 
         stETHPoolAmount = stETHBalance + stRewards + totalDepositInStrategy;
         ENDSupply = IERC20(endToken).totalSupply();
+    }
 
-    } 
-
-    function withdrawBondFee(address stETH, uint amount)external onlyOwner{
+    function withdrawBondFee(address stETH, uint amount) external onlyOwner {
         (uint stETHPoolAmount, uint ENDSupply) = ETHDenomination(stETH);
-        if(((stETHPoolAmount * 1000) - ENDSupply) > amount && IEnderBond(enderBond).availableBondFee() >= amount){
+        // ym: IEnderBond(enderBond).availableBondFee() cannot return correct data
+        if (((stETHPoolAmount * 1000) - ENDSupply) > amount && IEnderBond(enderBond).availableBondFee() >= amount) {
             IEnderBond(enderBond).setAvailableBondFee(amount);
             IERC20(stETH).transfer(owner(), amount);
         }
