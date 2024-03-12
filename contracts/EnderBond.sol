@@ -823,14 +823,17 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
                 if (rewardShareIndex == rewardSharePerUserIndex[_tokenId]) revert NoRewardCollected();
                 if (dayToRewardShareIndex[((bonds[_tokenId].startTime/SECONDS_IN_DAY)+bonds[_tokenId].maturity)] == 0){ 
-                    reward = ((rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
+                    if(rewardShareIndex > rewardSharePerUserIndex[_tokenId]) {
+                        reward = ((rewardPrincipal * (rewardShareIndex - rewardSharePerUserIndex[_tokenId])) / 1e18);
+                    } else {
+                        reward = 0;
+                    }
                     return reward;
                 } else {
                     uint256 sTime;
                     if(dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)].length == 1){
                         sTime = dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)][0];
                     }else{
-                        // // console.log("Hello Hi there", bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY));
                         sTime = findClosestS(
                             dayToRefractionShareUpdation[bonds[_tokenId].maturity + (bonds[_tokenId].startTime/SECONDS_IN_DAY)],
                             ((bonds[_tokenId].maturity * SECONDS_IN_DAY) + bonds[_tokenId].startTime)
@@ -854,7 +857,11 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     function calculateBondRewardAmount(uint256 _tokenId, uint256 precalUsers) public view returns (uint256 _reward) {
         Bond memory bond = bonds[_tokenId];
         if (precalUsers != 0) {
-            _reward = (bond.depositPrincipal * (precalUsers - userBondYieldShareIndex[_tokenId]));
+            if (precalUsers > userBondYieldShareIndex[_tokenId]) {
+                _reward = (bond.depositPrincipal * (precalUsers - userBondYieldShareIndex[_tokenId]));
+            } else {
+                _reward = 0;   
+            }            
         } else {
             if (isSet) {
                 if (dayBondYieldShareIndex[((bonds[_tokenId].startTime/SECONDS_IN_DAY)+bonds[_tokenId].maturity)] == 0) {

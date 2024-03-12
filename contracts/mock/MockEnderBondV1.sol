@@ -11,8 +11,4 @@ contract MockEnderBondV1 is EnderBond {
     function getDayToRefractionShareUpdationSend(uint256 idx) public view returns (uint256[] memory) {
         return dayToRefractionShareUpdationSend[idx];
     }
-
-    function setDayRewardShareIndexForSend(uint256 idx, uint256 timestamp) public {
-        dayRewardShareIndexForSend[idx] = timestamp;
-    }
 }
