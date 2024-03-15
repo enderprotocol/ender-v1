@@ -110,7 +110,7 @@ async function main() {
     await endToken.waitForDeployment();
     await sleep(9000);
     endTokenAddress = await endToken.getAddress();
-    console.log("endeToken-->", endTokenAddress);
+    console.log("endToken-->", endTokenAddress);
 
     //     enderOracle = await upgrades.deployProxy(oracle, [], {
     //         initializer: "initialize",
@@ -218,6 +218,12 @@ async function main() {
     await endToken.grantRole(
         "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
         "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+    );
+
+    await sleep(9000);
+    await endToken.grantRole(
+        "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
+        "0x460Cd374442319686EC6391933B1B666CEbC34d2",
     );
 
     await sleep(9000);

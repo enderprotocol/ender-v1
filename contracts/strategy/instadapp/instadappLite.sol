@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  *Submitted for verification at mumbai.polygonscan.com on 2023-12-04
 */
@@ -735,8 +736,9 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata, IERC20Errors {
 contract StinstaToken is ERC20, Ownable {
     // Event emitted when Ether is deposited and Stinsta tokens are minted
     event Deposit(address indexed depositor, uint256 amount);
+    event WithdrawStinstaTokens(address indexed to, uint256 amount);
     address public mstEth;
- mapping(address => uint256) public deposits;
+    mapping(address => uint256) public deposits;
     // Constructor function to set the name, symbol, and decimal of the token
     constructor(string memory name_, string memory symbol_,address owner,address _mstEth)
         ERC20(name_, symbol_) Ownable(owner)
@@ -769,13 +771,13 @@ contract StinstaToken is ERC20, Ownable {
         require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
 
         // Burn the specified amount of Stinsta tokens from the user's balance
-        uint256 mstValue = (stinstaAmount * IERC20(mstEth).balanceOf(address(this)) / totalSupply());
+        _amount = (stinstaAmount * IERC20(mstEth).balanceOf(address(this)) / totalSupply());
 
         // Transfer MST to the user
         _burn(msg.sender, stinstaAmount);
-        IERC20(mstEth).transfer(msg.sender, mstValue);
-        return mstValue;
+        IERC20(mstEth).transfer(msg.sender, _amount);
 
+        emit WithdrawStinstaTokens(msg.sender, _amount);
     }
     function viewStinstaTokens(uint256 stinstaAmount) public view returns (uint256){
         // Ensure that the withdrawal amount is not greater than the user's balance
