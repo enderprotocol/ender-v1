@@ -32,7 +32,7 @@ contract EnderOracle is IEnderOracle, Initializable, OwnableUpgradeable {
         emit UpdateFeed(_tokens, _feeds);
     }
 
-    function getPrice(address token) external view returns (uint256 price, uint8 priceDecimal) {
+    function getPrice(address token) external pure returns (uint256 price, uint8 priceDecimal) {
         // if (priceFeed[token] == address(0)) return (0, 0);
 
         // unchecked {

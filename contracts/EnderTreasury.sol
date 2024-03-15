@@ -23,6 +23,8 @@ error InvalidBaseRate();
 error ZeroAmount();
 error InvalidRatio();
 error NotEnoughAvailableFunds();
+error InvalidAddress();
+error InvalidType();
 
 contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     mapping(address => bool) public strategies;
@@ -127,6 +129,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         else if (_type == 4) strategyToReceiptToken[instadapp] = _addr;
         else if (_type == 5) strategyToReceiptToken[lybraFinance] = _addr;
         else if (_type == 6) strategyToReceiptToken[eigenLayer] = _addr;
+        else revert InvalidAddress();
     }
 
     /**
@@ -150,6 +153,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         else if (_type == 4) addr = strategyToReceiptToken[instadapp];
         else if (_type == 5) addr = strategyToReceiptToken[lybraFinance];
         else if (_type == 6) addr = strategyToReceiptToken[eigenLayer];
+        else revert InvalidType();
     }
 
     /**
@@ -213,8 +217,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
         } else {
-            (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);
-            // console.log("End supply",ENDSupply);
+            (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);            
             depositReturn = (depositReturn * int256(stETHPool) * 1000) / int256(ENDSupply);
             rebaseReward = uint256((depositReturn + ((depositReturn * nominalYield) / 10000) - bondReturn));
             console.log(
@@ -379,8 +382,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     }
 
     function ETHDenomination(address _stEthAddress) public view returns (uint stETHPoolAmount, uint ENDSupply) {
-        uint stETHBalance = IERC20(_stEthAddress).balanceOf(address(this));
-        // console.log("stETHBalance", stETHBalance);
+        uint stETHBalance = IERC20(_stEthAddress).balanceOf(address(this));        
         address receiptToken = instadapp;
         uint256 receiptTokenAmount = IInstadappLite(receiptToken).balanceOf(address(this));
         uint stRewards;
