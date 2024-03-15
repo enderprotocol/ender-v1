@@ -761,4 +761,51 @@ describe("EnderTreasury", function () {
             await enderTreasury.setAddress(enderBondAddress, 2);
         });
     });
+
+    describe("withdraw and _transferFunds function test", function () {
+        it("Should be reverted with ZeroAddress custom error when account is zero", async () => {
+            const amount = ethers.parseEther("1.0");
+            await enderTreasury.setAddress(owner.address, 2);
+
+            await expect(
+                enderTreasury.withdraw(
+                    {
+                        account: ethers.ZeroAddress,
+                        stakingToken: stEthAddress,
+                        tokenAmt: amount,
+                    },
+                    amount,
+                ),
+            ).to.be.revertedWithCustomError(enderTreasury, "ZeroAddress");
+
+            await enderTreasury.setAddress(enderBondAddress, 2);
+        });
+
+        it("Should be reverted with ZeroAddress custom error when account is zero", async () => {
+            const amount = ethers.parseEther("1.0");
+            const MockEnderTreasury = await ethers.getContractFactory("MockEnderTreasury");
+            const mockEnderTreasury = await upgrades.deployProxy(
+                MockEnderTreasury,
+                [
+                    endTokenAddress,
+                    enderStakingAddress,
+                    enderBondAddress, // type 2
+                    instadappLiteAddress,
+                    libraAddress,
+                    eigenLayerAddress,
+                    70,
+                    30,
+                ],
+                {
+                    initializer: "initializeTreasury",
+                },
+            );
+
+            await expect(mockEnderTreasury.transferFunds(
+                ethers.ZeroAddress,
+                stEthAddress,
+                amount
+            )).to.be.revertedWithCustomError(mockEnderTreasury, "ZeroAddress");
+        });
+    })
 });

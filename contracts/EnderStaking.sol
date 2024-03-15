@@ -8,7 +8,7 @@ import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEnderBond.sol";
-import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 error ZeroAddress();
 error InvalidAmount();
@@ -16,6 +16,8 @@ error NotAllowed();
 error NotWhitelisted();
 
 contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
+    using SafeERC20 for IERC20;
+    using SafeERC20 for ISEndToken;
     string private constant SIGNING_DOMAIN = "stakingContract";
     string private constant SIGNATURE_VERSION = "1";
     uint256 public bondRewardPercentage;
@@ -142,11 +144,11 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         if(ISEndToken(endToken).balanceOf(address(this)) == 0){
             uint256 sEndAmount = calculateSEndTokens(amount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
-            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);
+            ISEndToken(endToken).safeTransferFrom(msg.sender, address(this), amount);
             calculateRebaseIndex();
         } else {
             // epochStakingReward(stEth);
-            ISEndToken(endToken).transferFrom(msg.sender, address(this), amount);          
+            ISEndToken(endToken).safeTransferFrom(msg.sender, address(this), amount);          
             uint256 sEndAmount = calculateSEndTokens(amount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
         }
@@ -165,7 +167,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         uint256 reward = claimRebaseValue(amount);
 
         // transfer token
-        ISEndToken(endToken).transfer(msg.sender, reward);
+        ISEndToken(endToken).safeTransfer(msg.sender, reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
         emit unStake(msg.sender, amount);
      

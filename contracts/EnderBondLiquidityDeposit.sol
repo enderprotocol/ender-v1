@@ -7,9 +7,10 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import "contracts/interfaces/ISTETH.sol";
-import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
+    using SafeERC20 for IERC20;
     string private constant SIGNING_DOMAIN = "depositContract";
     string private constant SIGNATURE_VERSION = "1";
 
@@ -183,7 +184,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
             require(suc, "lido eth deposit failed");
         } else {
             // send directly to the deposit contract
-            IERC20(token).transferFrom(msg.sender, address(this), principal);
+            IERC20(token).safeTransferFrom(msg.sender, address(this), principal);
         }
         index++;
         bonds[index] = Bond(
