@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@chainlink/contracts/src/v0.8/automation/KeeperCompatible.sol";
-import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Interfaces
 import "./interfaces/IBondNFT.sol";
@@ -53,6 +53,8 @@ contract EnderBond is
     EIP712Upgradeable,
     KeeperCompatibleInterface
 {
+    using SafeERC20 for IERC20;
+    using SafeERC20 for ISEndToken;
     string private constant SIGNING_DOMAIN = "bondContract";
     string private constant SIGNATURE_VERSION = "1";
     /// @notice A mapping that indicates whether a token is bondable.
@@ -410,13 +412,13 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 abi.encodeWithSignature("submit(address)", address(this))
             );             
             require(suc, "lido eth deposit failed");                                                                
-            IERC20(stEth).transfer(address(endTreasury), IERC20(stEth).balanceOf(address(this)));                  
+            IERC20(stEth).safeTransfer(address(endTreasury), IERC20(stEth).balanceOf(address(this)));                  
         } else {                                                                                                   
             // send directly to the ender treasury
 
             //When the deposit is made via deposit contract, needs to be reviewed
-            if(msg.sender == _owner)IERC20(token).transferFrom(address(depositContract), address(endTreasury), principal);   
-            else IERC20(token).transferFrom(user, address(endTreasury), principal);                                
+            if(msg.sender == _owner)IERC20(token).safeTransferFrom(address(depositContract), address(endTreasury), principal);   
+            else IERC20(token).safeTransferFrom(user, address(endTreasury), principal);                                
         }
         uint256 afterBalance = IERC20(stEth).balanceOf(address(endTreasury)); 
         principal = afterBalance - beforeBalance;                                                                                
@@ -510,24 +512,21 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         IEndToken(endToken).distributeRefractionFees();
         uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
-        console.log("BondReward------------- ", reward);
         endTreasury.mintEndToUser(msg.sender, reward);
         userBondYieldShareIndex[_tokenId] = bondYieldShareIndex;
         if(rewardShareIndex != rewardSharePerUserIndex[_tokenId]) {
             uint256 refractionReward = calculateRefractionRewards(_tokenId, bond.refractionSIndex);
-            IERC20(endToken).transfer(
+            IERC20(endToken).safeTransfer(
                 msg.sender, refractionReward
             );
             rewardSharePerUserIndex[_tokenId] = rewardShareIndex;
-            console.log("RefractionReward--------------", refractionReward);
             emit RefractionRewardsClaimed(msg.sender, _tokenId, refractionReward);
 
         }
         if(rewardShareIndexSend != rewardSharePerUserIndexSend[_tokenId]){             
             uint256 sEndTokenReward = calculateStakingReward(_tokenId, bond.stakingSendIndex);
-            ISEndToken(sEndToken).transfer(msg.sender, sEndTokenReward);
+            ISEndToken(sEndToken).safeTransfer(msg.sender, sEndTokenReward);
             rewardSharePerUserIndexSend[_tokenId] = rewardShareIndexSend;
-            console.log("StakingReward sEnd--------------", sEndTokenReward);
             emit StakingRewardsClaimed(msg.sender, _tokenId, reward);
 
         }
@@ -588,7 +587,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         if(msg.sender != endToken) revert NotEndToken();
 
         if (totalRefractionPrincipal - refractionAmountRequired != 0) {
-            IERC20(endToken).transferFrom(endToken, address(this), _reward);
+            IERC20(endToken).safeTransferFrom(endToken, address(this), _reward);
             uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
             
             rewardShareIndex =

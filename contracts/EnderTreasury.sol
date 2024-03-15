@@ -5,6 +5,7 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./strategy/eigenlayer/EnderELStrategy.sol";
 
@@ -13,7 +14,6 @@ import "./interfaces/IEndToken.sol";
 import "./interfaces/IInstadappLite.sol";
 import "./interfaces/ILybraFinance.sol";
 import "./interfaces/IEnderBond.sol";
-import "hardhat/console.sol";
 
 error NotAllowed();
 error TransferFailed();
@@ -27,6 +27,7 @@ error InvalidAddress();
 error InvalidType();
 
 contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
+    using SafeERC20 for IERC20;
     mapping(address => bool) public strategies;
     mapping(address => uint256) public fundsInfo;
     mapping(address => uint256) public totalAssetStakedInStrategy;
@@ -192,18 +193,18 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         emit TreasuryDeposit(param.stakingToken, param.tokenAmt);
     }
 
-    function _transferFunds(address _account, address _token, uint256 _amount) private {
+    function _transferFunds(address _account, address _token, uint256 _amount) internal {
+        if (_account == address(0)) revert ZeroAddress();
         if (_token == address(0)) {
             (bool success, ) = payable(_account).call{value: _amount}("");
             if (!success) revert TransferFailed();
-        } else IERC20(_token).transfer(_account, _amount);
+        } else IERC20(_token).safeTransfer(_account, _amount);
     }
 
     function stakeRebasingReward(address _tokenAddress) public onlyStaking returns (uint256 rebaseReward) {
         int256 bondReturn = int256(IEnderBond(enderBond).endMint() / 1000);
         int256 depositReturn = int256(calculateDepositReturn(_tokenAddress));
         balanceLastEpoch = IERC20(_tokenAddress).balanceOf(address(this));
-        console.log("depositReturn", uint(depositReturn));
         if (depositReturn == 0) {
             epochWithdrawl = 0;
             epochDeposit = 0;
@@ -220,12 +221,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);            
             depositReturn = (depositReturn * int256(stETHPool) * 1000) / int256(ENDSupply);
             rebaseReward = uint256((depositReturn + ((depositReturn * nominalYield) / 10000) - bondReturn));
-            console.log(
-                uint256(depositReturn),
-                uint256((depositReturn * nominalYield) / 10000),
-                "----",
-                uint256(bondReturn)
-            );
             epochWithdrawl = 0;
             epochDeposit = 0;
             IEnderBond(enderBond).resetEndMint();
@@ -307,6 +302,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      * @param param Withdraw parameter
      */
     function withdraw(EndRequest memory param, uint256 amountRequired) external onlyBond {
+        if (param.account == address(0)) revert ZeroAddress();
         if (param.stakingToken != address(0) && amountRequired > IERC20(param.stakingToken).balanceOf(address(this))) {
             withdrawFromStrategy(param.stakingToken, priorityStrategy, amountRequired);
         }
@@ -327,7 +323,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
      */
 
     function collect(address account, uint256 amount) external onlyBond {
-        IERC20(endToken).transfer(account, amount);
+        IERC20(endToken).safeTransfer(account, amount);
         emit Collect(account, amount);
     }
 
@@ -398,7 +394,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         // ym: IEnderBond(enderBond).availableBondFee() cannot return correct data
         if (((stETHPoolAmount * 1000) - ENDSupply) > amount && IEnderBond(enderBond).availableBondFee() >= amount) {
             IEnderBond(enderBond).setAvailableBondFee(amount);
-            IERC20(stETH).transfer(owner(), amount);
+            IERC20(stETH).safeTransfer(owner(), amount);
         }
     }
 

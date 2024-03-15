@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../BaseStrategy.sol";
 
 interface IStrategy {
@@ -41,6 +42,7 @@ interface IStrategyManager {
 }
 
 contract EnderELStrategy is BaseStrategy {
+    using SafeERC20 for IERC20;
     uint256 private constant strategyIndex = 0;
 
     IStrategy public tokenStrategy;
@@ -143,7 +145,7 @@ contract EnderELStrategy is BaseStrategy {
         }
 
         // transfer token to treasury
-        IERC20(param.stakingToken).transfer(treasury, tokenAmt);
+        IERC20(param.stakingToken).safeTransfer(treasury, tokenAmt);
 
         return tokenAmt;
     }
