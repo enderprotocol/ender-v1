@@ -2,7 +2,6 @@ const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 const { BigNumber } = require("ethers");
 const { EigenLayerStrategyManagerAddress } = require("../utils/common");
-const exp = require("constants");
 const { sign } = require("crypto");
 const { log } = require("console");
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
@@ -32,6 +31,7 @@ describe("enderBondLiquidityDeposit testing", function () {
         enderBondAddress,
         enderBondLiquidityDepositAddress,
         endTokenAddress,
+        endETHAddress,
         sEndTokenAddress,
         enderTreasuryAddress,
         bondNFTAddress,
@@ -42,6 +42,7 @@ describe("enderBondLiquidityDeposit testing", function () {
         enderBond,
         enderBondLiquidityDeposit,
         endToken,
+        endETHToken,
         sEndToken,
         enderTreasury,
         bondNFT,
@@ -63,6 +64,7 @@ describe("enderBondLiquidityDeposit testing", function () {
         const enderStakingFactory = await ethers.getContractFactory("EnderStaking");
         const sEndTokenFactory = await ethers.getContractFactory("SEndToken");
         const bondNftFactory = await ethers.getContractFactory("BondNFT");
+        const EndETHFactory = await ethers.getContractFactory("EnderStakeEth");
 
         //Owner and signers addresses
         [owner, signer, wallet, signer1, signer2, signer3, signer4] = await ethers.getSigners();
@@ -106,10 +108,16 @@ describe("enderBondLiquidityDeposit testing", function () {
         });
         endTokenAddress = await endToken.getAddress();
 
+        // deploy endETH token
+        endETHToken = await upgrades.deployProxy(EndETHFactory, [], {
+            initializer: "initialize"
+        });
+        endETHAddress = await endETHToken.getAddress();
+
         //deploy enderBond
         enderBond = await upgrades.deployProxy(
             enderBondFactory,
-            [endTokenAddress, ethers.ZeroAddress, signer.address],
+            [endTokenAddress, endETHAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
             },
@@ -191,6 +199,9 @@ describe("enderBondLiquidityDeposit testing", function () {
         );
 
         await enderBond.setBool(true);
+
+        await endETHToken.setTreasury(enderTreasuryAddress);
+        await endETHToken.grantRole(MINTER_ROLE, enderBondAddress);
 
         //signature
         signature = await signatureDigest1();

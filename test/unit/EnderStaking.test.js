@@ -12,6 +12,7 @@ describe("Ender Bond deposit and withdraw", async () => {
         stEthAddress,
         enderBondAddress,
         endTokenAddress,
+        endETHAddress,
         sEndTokenAddress,
         enderTreasuryAddress,
         bondNFTAddress,
@@ -22,6 +23,7 @@ describe("Ender Bond deposit and withdraw", async () => {
         enderBond,
         enderBondLiquidityDeposit,
         endToken,
+        endETHToken,
         sEndToken,
         enderTreasury,
         bondNFT,
@@ -43,6 +45,7 @@ describe("Ender Bond deposit and withdraw", async () => {
         const sEndTokenFactory = await ethers.getContractFactory("SEndToken");
         const bondNftFactory = await ethers.getContractFactory("BondNFT");
         const mockEnderStakingFactory = await ethers.getContractFactory("MockEnderStaking");
+        const EndETHToken = await ethers.getContractFactory("EnderStakeEth");
 
         //Owner and signers addresses
         [owner, signer, wallet, signer1, signer2] = await ethers.getSigners();
@@ -82,10 +85,16 @@ describe("Ender Bond deposit and withdraw", async () => {
         });
         endTokenAddress = await endToken.getAddress();
 
+        // deploy endETH token
+        endETHToken = await upgrades.deployProxy(EndETHToken, [], {
+            initializer: "initialize",
+        });
+        endETHAddress = await endETHToken.getAddress();
+
         //deploy enderBond
         enderBond = await upgrades.deployProxy(
             enderBondFactory,
-            [endTokenAddress, ethers.ZeroAddress, signer.address],
+            [endTokenAddress, endETHAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
             },
@@ -177,6 +186,9 @@ describe("Ender Bond deposit and withdraw", async () => {
         );
 
         await enderBond.setBool(true);
+
+        await endETHToken.setTreasury(enderTreasuryAddress);
+        await endETHToken.grantRole(MINTER_ROLE, enderBondAddress);
 
         await enderTreasury.setAddress(instadappLitelidoStaking, 5);
         await enderTreasury.setStrategy([instadappLitelidoStaking], true);

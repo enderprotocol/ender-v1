@@ -3,6 +3,7 @@ const { ethers, upgrades } = require("hardhat");
 
 // const { EigenLayerStrategyManagerAddress, LidoAgentAddress } = require("../utils/common")
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
+const MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
 
 describe("EnderTreasury", function () {
     const EigenLayerStrategyManagerAddress = "0x858646372CC42E1A627fcE94aa7A7033e7CF075A";
@@ -13,6 +14,7 @@ describe("EnderTreasury", function () {
 
     let owner, wallet1, signer1;
     let endTokenAddress,
+        endETHAddress,
         enderStakingAddress,
         enderBondAddress,
         mockEnderBondAddress,
@@ -24,6 +26,7 @@ describe("EnderTreasury", function () {
         sEndTokenAddress,
         libraAddress;
     let endToken,
+        endETHToken,
         enderStaking,
         enderBond,
         mockEnderBond,
@@ -42,6 +45,7 @@ describe("EnderTreasury", function () {
         const EnderStaking = await ethers.getContractFactory("EnderStaking");
         const SEnd = await ethers.getContractFactory("SEndToken");
         const Lybra = await ethers.getContractFactory("mockLybra");
+        const EndETHToken = await ethers.getContractFactory("EnderStakeEth");
 
         stEth = await StEth.deploy();
         stEthAddress = await stEth.getAddress();
@@ -81,11 +85,17 @@ describe("EnderTreasury", function () {
         libra = await Lybra.deploy(stEthAddress);
         libraAddress = await libra.getAddress();
 
+        // deploy endETH token
+        endETHToken = await upgrades.deployProxy(EndETHToken, [], {
+            initializer: "initialize"
+        });
+        endETHAddress = await endETHToken.getAddress();
+
         // Deploy EnderBond
         const EnderBond = await ethers.getContractFactory("EnderBond");
         enderBond = await upgrades.deployProxy(
             EnderBond,
-            [endTokenAddress, ethers.ZeroAddress, wallet1.address],
+            [endTokenAddress, endETHAddress, ethers.ZeroAddress, wallet1.address],
             {
                 initializer: "initialize",
             },
@@ -97,7 +107,7 @@ describe("EnderTreasury", function () {
         const MockEnderBond = await ethers.getContractFactory("MockEnderBond");
         mockEnderBond = await upgrades.deployProxy(
             MockEnderBond,
-            [endTokenAddress, ethers.ZeroAddress, wallet1.address],
+            [endTokenAddress, endETHAddress, ethers.ZeroAddress, wallet1.address],
             {
                 initializer: "initialize",
             },
@@ -145,6 +155,10 @@ describe("EnderTreasury", function () {
         );
         await enderELStrategy.waitForDeployment();
         enderELStrategyAddress = await enderELStrategy.getAddress();
+
+         await endETHToken.setTreasury(enderTreasuryAddress);
+         await endETHToken.grantRole(MINTER_ROLE, enderBondAddress);
+         await endETHToken.grantRole(MINTER_ROLE, mockEnderBondAddress);
     });
 
     describe("initialize", function () {

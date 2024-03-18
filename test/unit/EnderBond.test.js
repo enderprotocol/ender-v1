@@ -36,6 +36,7 @@ describe("enderBond setting funtions and missing testing", function () {
         mockLidoAddress,
         enderBondLiquidityDepositAddress,
         endTokenAddress,
+        endETHAddress,
         sEndTokenAddress,
         enderTreasuryAddress,
         bondNFTAddress,
@@ -48,6 +49,7 @@ describe("enderBond setting funtions and missing testing", function () {
         mockLido,
         enderBondLiquidityDeposit,
         endToken,
+        endETHToken,
         sEndToken,
         enderTreasury,
         bondNFT,
@@ -72,6 +74,8 @@ describe("enderBond setting funtions and missing testing", function () {
         const bondNftFactory = await ethers.getContractFactory("BondNFT");
         const MockEnderBond = await ethers.getContractFactory("MockEnderBond");
         const MockLido = await ethers.getContractFactory("MockLido");
+        const EndETHToken = await ethers.getContractFactory("EnderStakeEth");
+
         //Owner and signers addresses
         [owner, signer, wallet, signer1, signer2, signer3, signer4] = await ethers.getSigners();
 
@@ -114,10 +118,16 @@ describe("enderBond setting funtions and missing testing", function () {
         });
         endTokenAddress = await endToken.getAddress();
 
+        // deploy endETH token
+        endETHToken = await upgrades.deployProxy(EndETHToken, [], {
+            initializer: "initialize"
+        });
+        endETHAddress = await endETHToken.getAddress();
+
         //deploy enderBond
         enderBond = await upgrades.deployProxy(
             enderBondFactory,
-            [endTokenAddress, ethers.ZeroAddress, signer.address],
+            [endTokenAddress, endETHAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
             },
@@ -130,7 +140,7 @@ describe("enderBond setting funtions and missing testing", function () {
         // deploy mock EnderBond
         mockEnderBond = await upgrades.deployProxy(
             MockEnderBond,
-            [endTokenAddress, ethers.ZeroAddress, signer.address],
+            [endTokenAddress, endETHAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
             },
@@ -216,6 +226,10 @@ describe("enderBond setting funtions and missing testing", function () {
 
         await enderBond.setBool(true);
 
+        await endETHToken.setTreasury(enderTreasuryAddress);
+        await endETHToken.grantRole(MINTER_ROLE, enderBondAddress);
+        await endETHToken.grantRole(MINTER_ROLE, mockEnderBondAddress);
+
         // mockEnderBond setting
         await mockEnderBond.setBondableTokens([stEthAddress], true);
         await mockEnderBond.setAddress(enderTreasuryAddress, 1);
@@ -233,7 +247,7 @@ describe("enderBond setting funtions and missing testing", function () {
     it("should fail on second initialization attempt", async function () {
         // Attempt to re-initialize
         await expect(
-            enderBond.initialize(endTokenAddress, ethers.ZeroAddress, signer.address),
+            enderBond.initialize(endTokenAddress, endETHAddress, ethers.ZeroAddress, signer.address),
         ).to.be.revertedWith("Initializable: contract is already initialized");
     });
 
@@ -378,7 +392,10 @@ describe("enderBond setting funtions and missing testing", function () {
         const addr10 = await enderBond.getPrivateAddress(10);
         expect(addr10).to.equal(enderBondLiquidityDepositAddress);
 
-        await expect(enderBond.getPrivateAddress(11)).to.be.revertedWithCustomError(
+        const addr11 = await enderBond.getPrivateAddress(11);
+        expect(addr11).to.eq(endETHAddress);
+
+        await expect(enderBond.getPrivateAddress(12)).to.be.revertedWithCustomError(
             enderBond,
             "InvalidAddress()",
         );

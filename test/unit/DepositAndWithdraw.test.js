@@ -33,6 +33,7 @@ describe("Ender Bond deposit and withdraw", async () => {
         enderBondAddress,
         enderBondLiquidityDepositAddress,
         endTokenAddress,
+        endETHAddress,
         sEndTokenAddress,
         enderTreasuryAddress,
         bondNFTAddress,
@@ -42,6 +43,7 @@ describe("Ender Bond deposit and withdraw", async () => {
         enderBond,
         enderBondLiquidityDeposit,
         endToken,
+        endETHToken,
         sEndToken,
         enderTreasury,
         bondNFT,
@@ -76,6 +78,7 @@ describe("Ender Bond deposit and withdraw", async () => {
         const enderStakingFactory = await ethers.getContractFactory("EnderStaking");
         const sEndTokenFactory = await ethers.getContractFactory("SEndToken");
         const bondNftFactory = await ethers.getContractFactory("BondNFT");
+        const EndETHToken = await ethers.getContractFactory("EnderStakeEth");
 
         //Owner and signers addresses
         [owner, signer, wallet, signer1, signer2, signer3, signer4, signer5] =
@@ -116,10 +119,16 @@ describe("Ender Bond deposit and withdraw", async () => {
         });
         endTokenAddress = await endToken.getAddress();
 
+        // deploy endETH token
+        endETHToken = await upgrades.deployProxy(EndETHToken, [], {
+            initializer: "initialize"
+        });
+        endETHAddress = await endETHToken.getAddress();
+
         //deploy enderBond
         enderBond = await upgrades.deployProxy(
             enderBondFactory,
-            [endTokenAddress, ethers.ZeroAddress, signer.address],
+            [endTokenAddress, endETHAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
             },
@@ -200,6 +209,9 @@ describe("Ender Bond deposit and withdraw", async () => {
         );
 
         await enderBond.setBool(true);
+
+        await endETHToken.setTreasury(enderTreasuryAddress);
+        await endETHToken.grantRole(MINTER_ROLE, enderBondAddress);
 
         await enderTreasury.setAddress(instadappLitelidoStaking, 5);
         await enderTreasury.setStrategy([instadappLitelidoStaking], true);
@@ -432,7 +444,7 @@ describe("Ender Bond deposit and withdraw", async () => {
 
             //withdraw
             // await withdrawAndSetup(signer1, tokenId1)
-            await expect(enderBond.withdraw(tokenId1)).to.be.revertedWithCustomError(
+            await expect(enderBond.connect(signer1).withdraw(tokenId1)).to.be.revertedWithCustomError(
                 enderBond,
                 "BondNotMatured",
             );

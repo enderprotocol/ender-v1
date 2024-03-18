@@ -17,6 +17,7 @@ import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEndToken.sol";
 import "./interfaces/IEnderStaking.sol";
+import "./interfaces/IEnderStakeEth.sol";
 
 error BondAlreadyWithdrawn();
 error NotWhitelisted();
@@ -41,6 +42,8 @@ error NotEndToken();
 error NoTreasury();
 error ZeroValue();
 error InvalidAddress();
+error NotBondNFTOwner();
+error InsufficientEndETH();
 
 /**
  * @title EnderBond contract
@@ -115,6 +118,7 @@ contract EnderBond is
     address public signer;
     address private endSignature;
     address private endToken;
+    address private enderStakeEth;
     address private sEndToken;
     address public lido;
     address public stEth;
@@ -178,12 +182,13 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @dev Initializes the contract
      * @param endToken_ The address of the END token
      */
-    function initialize(address endToken_, address _lido, address _signer) public initializer {
+    function initialize(address endToken_, address enderStakeEth_, address _lido, address _signer) public initializer {
         __Ownable_init();
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         rateOfChange = 100;
         lido = _lido;
         setAddress(endToken_, 2);
+        setAddress(enderStakeEth_, 11);
         // todo set the value according to doc
         minDepositAmount = 1000000000000000;
         txFees = 200;
@@ -247,6 +252,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         else if (_type == 8) endStaking = IEnderStaking(_addr);
         else if (_type == 9) sEndToken = _addr;
         else if (_type == 10) depositContract = IEnderBondLiquidityDeposit(_addr);
+        else if (_type == 11) enderStakeEth = _addr;
         else revert InvalidAddress();
 
         emit AddressSet(_type, _addr);
@@ -286,6 +292,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         else if (_type == 8) addr = address(endStaking);
         else if (_type == 9) addr = sEndToken;
         else if (_type == 10) addr = address(depositContract);
+        else if (_type == 11) addr = enderStakeEth;
         else revert InvalidAddress();
     }
 
@@ -393,7 +400,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         address _owner = owner();
         if(msg.sender != _owner){               //When the deposit is made via deposit contract, needs to be reviewed
             if (principal < minDepositAmount) revert InvalidAmount();
-            if (maturity < 5 || maturity > 90) revert InvalidMaturity();
+            if (maturity < 7) revert InvalidMaturity();
             if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
             if (bondFee > 10000) revert InvalidBondFee();
             if(isWhitelisted){
@@ -437,7 +444,8 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     ) private returns (uint256 tokenId) {
         endTreasury.depositTreasury(IEnderBase.EndRequest(user, token, principal), getLoopCount());        
         // mint bond nft                                                                      
-        tokenId = bondNFT.mint(user);                                                                          
+        tokenId = bondNFT.mint(user);
+        IEnderStakeEth(enderStakeEth).mint(user, principal, bondFee);
         bondIdAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY].push(tokenId);
         uint256 refractionPrincipal = calculateRefractionData(user, principal, maturity, tokenId, bondFee);          
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;                                         
@@ -474,6 +482,8 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @param tokenId The ID of the token to be withdrawn.
      */
     function withdraw(uint256 tokenId) external nonReentrant withdrawEnabled bondPaused{
+        address nftOwner = bondNFT.ownerOf(tokenId);
+        if (msg.sender != nftOwner) revert NotBondNFTOwner();
         _withdraw(tokenId);
         emit Withdrawal(msg.sender, tokenId);
     }
@@ -487,8 +497,17 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         Bond memory bond = bonds[_tokenId];
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (block.timestamp <= bond.startTime + (bond.maturity * SECONDS_IN_DAY)) revert BondNotMatured();
+
+        uint256 feeEndEthAmount = bond.principal * bond.bondFee / 10000;
+        uint256 requireEndEth = bond.principal - feeEndEthAmount;
+        address nftOwner = bondNFT.ownerOf(_tokenId);
+        uint256 endEthBalance = IEnderStakeEth(enderStakeEth).balanceOf(nftOwner);
+        if (endEthBalance < requireEndEth) revert InsufficientEndETH();
+        IEnderStakeEth(enderStakeEth).burn(nftOwner, requireEndEth);
+
         claimRewards(_tokenId);
         bonds[_tokenId].withdrawn = true;
+
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, (bond.principal * (10000 - bond.bondFee)) / 10000 ), getLoopCount());
         //todo need to check this
         dayBondYieldShareIndex[(bonds[_tokenId].startTime/SECONDS_IN_DAY) + bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId]; 
@@ -740,7 +759,6 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
         rewardPrinciple = (_principal * avgRefractionIndex) / 100;
         secondsRefractionShareIndex[block.timestamp] = rewardShareIndex;
-
     }
 
     /**
