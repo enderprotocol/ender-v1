@@ -120,9 +120,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         if (percent == 0) revert InvalidAmount();
 
         bondRewardPercentage = percent;
-          emit PercentUpdated(bondRewardPercentage);
-
-        
+        emit PercentUpdated(bondRewardPercentage);
     }
 
     function whitelist(bool _action) external onlyOwner{

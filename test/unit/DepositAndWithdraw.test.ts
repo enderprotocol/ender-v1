@@ -1,70 +1,65 @@
-const { expect } = require("chai");
-const { ethers, upgrades } = require("hardhat");
-const { BigNumber } = require("ethers");
-
-const { EigenLayerStrategyManagerAddress } = require("../utils/common");
-const exp = require("constants");
-const { sign } = require("crypto");
-const { log } = require("console");
-const { increase } = require("@openzeppelin/test-helpers/src/time");
+import { expect } from "chai";
+import { Wallet } from "ethers";
+import { ethers, upgrades } from "hardhat";
+import { StETH } from "../../typechain-types/contracts/ERC20/mockStEth.sol/StETH";
+import { EnderBond } from "../../typechain-types/contracts/EnderBond";
+import { EndToken } from "../../typechain-types/contracts/ERC20/EndToken";
+import { SEndToken } from "../../typechain-types/contracts/ERC20/SEndToken";
+import { EnderTreasury } from "../../typechain-types/contracts/EnderTreasury";
+import { StinstaToken } from "../../typechain-types/contracts/strategy/instadapp/instadappLite.sol";
+import { EnderStaking } from "../../typechain-types/contracts/EnderStaking";
 
 const baseURI = "https://endworld-backend-git-dev-metagaming.vercel.app/nft/metadata/";
 const MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
 const ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-function expandTo18Decimals(n) {
+function expandTo18Decimals(n: number) {
     return ethers.parseUnits(n.toString(), 18);
 }
 
-function expandTo15Decimals(n) {
+function expandTo15Decimals(n: number) {
     return ethers.parseUnits(n.toString(), 15);
 }
 
 describe("Ender Bond deposit and withdraw", async () => {
-    let owner,
-        signer,
-        wallet,
-        signer1,
-        signer2,
-        signer3,
-        signer4,
-        signer5,
-        stEthAddress,
-        enderBondAddress,
-        enderBondLiquidityDepositAddress,
+    let owner: Wallet,
+        signer: Wallet,
+        signer1: Wallet,
+        signer2: Wallet,
+        signer3: Wallet,
+        signer4: Wallet,
+        signer5: Wallet,
+        stEthAddress: string,
+        enderBondAddress: string,
+        enderBondLiquidityDepositAddress: string,
         endTokenAddress,
         endETHAddress,
         sEndTokenAddress,
-        enderTreasuryAddress,
+        enderTreasuryAddress: string,
         bondNFTAddress,
-        instadappLiteAddress,
-        enderStakingAddress,
-        stEth,
-        enderBond,
+        instadappLiteAddress: string,
+        enderStakingAddress: string,
+        stEth: StETH,
+        enderBond: EnderBond,
         enderBondLiquidityDeposit,
-        endToken,
+        endToken: EndToken,
         endETHToken,
-        sEndToken,
-        enderTreasury,
+        sEndToken: SEndToken,
+        enderTreasury: EnderTreasury,
         bondNFT,
-        instadappLitelidoStaking,
-        enderStaking,
-        signature1,
-        signature2,
-        signature3,
-        stakingSignature1,
+        instadappLitelidoStaking: StinstaToken,
+        enderStaking: EnderStaking,
+        signature1: string,
+        signature2: string,
+        signature3: string,
+        stakingSignature1: string,
         tokenId_1_1,
         tokenId_1_2,
-        tokenId_1_3,
         tokenId_2_1,
-        tokenId_2_2,
-        tokenId_2_3,
-        tokenId_3_1,
-        tokenId_3_2,
-        tokenId_3_3,
         tokenId1,
         tokenId2,
-        tokenId3;
+        tokenId3,
+        userSign: EnderBond.SignDataStruct;
 
     before(async function () {
         const stEthFactory = await ethers.getContractFactory("StETH");
@@ -81,17 +76,17 @@ describe("Ender Bond deposit and withdraw", async () => {
         const EndETHToken = await ethers.getContractFactory("EnderStakeEth");
 
         //Owner and signers addresses
-        [owner, signer, wallet, signer1, signer2, signer3, signer4, signer5] =
-            await ethers.getSigners();
+        [owner, signer, signer1, signer2, signer3, signer4, signer5] =
+            (await ethers.getSigners()) as unknown as Wallet[];
 
         //delpoy stEth
-        stEth = await stEthFactory.deploy();
+        stEth = (await stEthFactory.deploy()) as unknown as StETH;
         stEthAddress = await stEth.getAddress();
 
         //deploy sEnd
-        sEndToken = await upgrades.deployProxy(sEndTokenFactory, [], {
+        sEndToken = (await upgrades.deployProxy(sEndTokenFactory, [], {
             initializer: "initialize",
-        });
+        })) as unknown as SEndToken;
         sEndTokenAddress = await sEndToken.connect(owner).getAddress();
 
         //deploy enderBondLiquidityDeposit
@@ -105,18 +100,18 @@ describe("Ender Bond deposit and withdraw", async () => {
         enderBondLiquidityDepositAddress = await enderBondLiquidityDeposit.getAddress();
 
         //deploy insta app Lido Staking
-        instadappLitelidoStaking = await instadappLiteFactory.deploy(
+        instadappLitelidoStaking = (await instadappLiteFactory.deploy(
             "InstaToken",
             "Inst",
             owner.address,
             stEthAddress,
-        );
+        )) as unknown as StinstaToken;
         instadappLiteAddress = await instadappLitelidoStaking.getAddress();
 
         //deploy endToken
-        endToken = await upgrades.deployProxy(endTokenFactory, [], {
+        endToken = (await upgrades.deployProxy(endTokenFactory, [], {
             initializer: "initialize",
-        });
+        })) as unknown as EndToken;
         endTokenAddress = await endToken.getAddress();
 
         // deploy endETH token
@@ -126,30 +121,30 @@ describe("Ender Bond deposit and withdraw", async () => {
         endETHAddress = await endETHToken.getAddress();
 
         //deploy enderBond
-        enderBond = await upgrades.deployProxy(
+        enderBond = (await upgrades.deployProxy(
             enderBondFactory,
             [endTokenAddress, endETHAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
             },
-        );
+        )) as unknown as EnderBond;
         enderBondAddress = await enderBond.getAddress();
 
         //set enderBond address in endToken
         await endToken.setBond(enderBondAddress);
 
         //deploy ender Staking contract
-        enderStaking = await upgrades.deployProxy(
+        enderStaking = (await upgrades.deployProxy(
             enderStakingFactory,
             [endTokenAddress, sEndTokenAddress, stEthAddress, signer.address],
             {
                 initializer: "initialize",
             },
-        );
+        )) as unknown as EnderStaking;
         enderStakingAddress = await enderStaking.getAddress();
 
         //deploy ender Treasury contract
-        enderTreasury = await upgrades.deployProxy(
+        enderTreasury = (await upgrades.deployProxy(
             enderTreasuryFactory,
             [
                 endTokenAddress,
@@ -164,7 +159,7 @@ describe("Ender Bond deposit and withdraw", async () => {
             {
                 initializer: "initializeTreasury",
             },
-        );
+        )) as unknown as EnderTreasury;
         enderTreasuryAddress = await enderTreasury.getAddress();
 
         //deploy bond NFT contract
@@ -234,6 +229,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             //deposit by signer1
             expect(
                 (tokenId1 = await depositAndSetup(
@@ -241,7 +242,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -270,6 +271,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             //deposit by signer1
             expect(
                 (tokenId1 = await depositAndSetup(
@@ -277,7 +284,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -307,6 +314,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             //deposit by signer1
             expect(
                 (tokenId1 = await depositAndSetup(
@@ -314,7 +327,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -352,6 +365,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             //deposit by signer1
             expect(
                 (tokenId1 = await depositAndSetup(
@@ -359,7 +378,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -392,6 +411,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             //deposit by signer1
             expect(
                 (tokenId1 = await depositAndSetup(
@@ -399,7 +424,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -421,6 +446,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             //deposit by signer1
             expect(
                 (tokenId1 = await depositAndSetup(
@@ -428,7 +459,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -465,6 +496,12 @@ describe("Ender Bond deposit and withdraw", async () => {
 
             console.log("----------------Deposit1--------------------");
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             //deposit by signer1
             expect(
                 (tokenId1 = await depositAndSetup(
@@ -472,7 +509,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -485,6 +522,12 @@ describe("Ender Bond deposit and withdraw", async () => {
 
             console.log("----------------Deposit2-------------------");
 
+            userSign = {
+                user: signer2.address,
+                key: "0",
+                signature: signature2
+            };
+
             //deposit by signer2
             expect(
                 (tokenId2 = await depositAndSetup(
@@ -492,7 +535,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity / 2,
                     bondFee / 2,
-                    [signer2.address, "0", signature2],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -505,6 +548,12 @@ describe("Ender Bond deposit and withdraw", async () => {
 
             console.log("----------------Deposit3-------------------");
 
+            userSign = {
+                user: signer3.address,
+                key: "0",
+                signature: signature3
+            };
+
             //deposit by signer3
             expect(
                 (tokenId3 = await depositAndSetup(
@@ -512,7 +561,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity / 3,
                     bondFee * 2,
-                    [signer3.address, "0", signature3],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -548,6 +597,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             //deposit by signer1
             expect(
                 (tokenId1 = await depositAndSetup(
@@ -555,7 +610,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -573,6 +628,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer2).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer2.address,
+                key: "0",
+                signature: signature2
+            };
+
             //deposit by signer2
             expect(
                 (tokenId2 = await depositAndSetup(
@@ -580,7 +641,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer2.address, "0", signature2],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -619,6 +680,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             //deposit by signer1
             expect(
                 (tokenId1 = await depositAndSetup(
@@ -626,7 +693,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -646,10 +713,16 @@ describe("Ender Bond deposit and withdraw", async () => {
             //allowing staking contract
             endToken.connect(signer1).approve(enderStakingAddress, stakeAmount);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: stakingSignature1
+            };
+
             //stake
             await enderStaking
                 .connect(signer1)
-                .stake(stakeAmount, [signer1.address, "0", stakingSignature1]);
+                .stake(stakeAmount, userSign);
 
             //deposit in statergy from treasury
             await enderTreasury.depositInStrategy(
@@ -698,6 +771,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer1).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             /*<-------------------------deposit by signer1(1.1)------------------->*/
             expect(
                 (tokenId_1_1 = await depositAndSetup(
@@ -705,7 +784,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -746,6 +825,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer1).submit({ value: ethers.parseEther("2.0") });
             await stEth.connect(signer1).approve(enderBondAddress, 2n * depositPrincipalStEth);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             /*<-------------------------deposit by signer1(1.2)------------------->*/
             expect(
                 (tokenId_1_2 = await depositAndSetup(
@@ -753,7 +838,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     2n * depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer1.address, "0", signature1],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -812,6 +897,12 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer2).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer2.address,
+                key: "0",
+                signature: signature2
+            };
+
             /*<-------------------------deposit by signer1(1.2)------------------->*/
             expect(
                 (tokenId_2_1 = await depositAndSetup(
@@ -819,7 +910,7 @@ describe("Ender Bond deposit and withdraw", async () => {
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer2.address, "0", signature2],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -833,10 +924,16 @@ describe("Ender Bond deposit and withdraw", async () => {
             //allowing staking contract
             endToken.connect(signer1).approve(enderStakingAddress, stakeAmount);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                 signature: stakingSignature1
+            };
+
             //stake
             await enderStaking
                 .connect(signer1)
-                .stake(stakeAmount, [signer1.address, "0", stakingSignature1]);
+                .stake(stakeAmount, userSign);
 
             //signer2 collects refraction + bondYeild + rewards from statergy returns
             console.log("--------------Token(2.1)--Claim:1-----------------------");
@@ -850,10 +947,16 @@ describe("Ender Bond deposit and withdraw", async () => {
             //allowing staking contract
             endToken.connect(signer2).approve(enderStakingAddress, stakeAmount2);
 
+            userSign = {
+                user: signer2.address,
+                key: "0",
+                signature: stakingSignature1
+            };
+
             //stake
             await enderStaking
                 .connect(signer2)
-                .stake(stakeAmount2, [signer2.address, "0", stakingSignature1]);
+                .stake(stakeAmount2, userSign);
 
             /*<-----------------Unstake by signer 1------------------>*/
             await enderStaking.connect(signer1).unstake(await sEndToken.balanceOf(signer1.address));
@@ -944,14 +1047,20 @@ describe("Ender Bond deposit and withdraw", async () => {
             await stEth.connect(signer2).submit({ value: ethers.parseEther("1.0") });
             await stEth.connect(signer2).approve(enderBondAddress, depositPrincipalStEth);
 
+            userSign = {
+                user: signer2.address,
+                key: "0",
+                signature: signature2
+            };
+
             /*<-------------------------deposit by signer1(1.2)------------------->*/
             expect(
-                (tokenId_2_2 = await depositAndSetup(
+                (await depositAndSetup(
                     signer2,
                     depositPrincipalStEth,
                     maturity,
                     bondFee,
-                    [signer2.address, "0", signature2],
+                    userSign,
                 )),
             ).to.changeTokenBalance(
                 stEth,
@@ -969,20 +1078,16 @@ describe("Ender Bond deposit and withdraw", async () => {
     });
 
     async function depositAndSetup(
-        signer,
-        depositAmount,
-        maturity,
-        bondFee,
-        [user, key, signature],
+        signer: Wallet,
+        depositAmount: bigint,
+        maturity: number,
+        bondFee: number,
+        signData: EnderBond.SignDataStruct,
     ) {
         await enderBond
             .connect(signer)
-            .deposit(signer, depositAmount, maturity, bondFee, stEthAddress, [
-                user,
-                key,
-                signature,
-            ]);
-        filter = enderBond.filters.Deposit;
+            .deposit(signer, depositAmount, maturity, bondFee, stEthAddress, signData);
+        const filter = enderBond.filters.Deposit;
         const events = await enderBond.queryFilter(filter, -1);
 
         const event1 = events[0];
@@ -993,65 +1098,9 @@ describe("Ender Bond deposit and withdraw", async () => {
         return tokenId;
     }
 
-    async function withdrawAndSetup(signer, tokenId) {
+    async function withdrawAndSetup(signer:  Wallet, tokenId: bigint) {
         await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
         await enderBond.connect(signer).withdraw(tokenId);
-    }
-
-    async function signatureDigestOfEarlyBond() {
-        let sig = await signer.signTypedData(
-            {
-                name: "depositContract",
-                version: "1",
-                chainId: 31337,
-                verifyingContract: enderBondLiquidityDepositAddress,
-            },
-            {
-                userSign: [
-                    {
-                        name: "user",
-                        type: "address",
-                    },
-                    {
-                        name: "key",
-                        type: "string",
-                    },
-                ],
-            },
-            {
-                user: signer1.address,
-                key: "0",
-            },
-        );
-        return sig;
-    }
-
-    async function signatureDigestOfEarlyBond1() {
-        let sig = await signer.signTypedData(
-            {
-                name: "depositContract",
-                version: "1",
-                chainId: 31337,
-                verifyingContract: enderBondLiquidityDepositAddress,
-            },
-            {
-                userSign: [
-                    {
-                        name: "user",
-                        type: "address",
-                    },
-                    {
-                        name: "key",
-                        type: "string",
-                    },
-                ],
-            },
-            {
-                user: signer2.address,
-                key: "0",
-            },
-        );
-        return sig;
     }
 
     async function signatureDigest() {
@@ -1166,7 +1215,7 @@ describe("Ender Bond deposit and withdraw", async () => {
         return sig;
     }
 
-    async function passEpoch(epoch) {
+    async function passEpoch(epoch: number) {
         while (epoch--) {
             await enderBond.epochBondYieldShareIndex();
             await enderBond.epochRewardShareIndexByPass();
@@ -1177,7 +1226,7 @@ describe("Ender Bond deposit and withdraw", async () => {
         }
     }
 
-    async function increaseTime(days) {
+    async function increaseTime(days: number) {
         await ethers.provider.send("evm_increaseTime", [days * 600]);
         await ethers.provider.send("evm_mine");
     }

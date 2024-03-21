@@ -966,7 +966,7 @@ describe("enderBond setting funtions and missing testing", function () {
             ).to.be.revertedWithCustomError(mockEnderBond, "InvalidAmount");
         });
 
-        it("Deposit Revert InvalidMaturity() maturity < 5", async () => {
+        it("Deposit Revert InvalidMaturity() maturity < 7 or maturity > 365", async () => {
             let maturity = 4;
             let bondFee = 1;
             const depositAmountEnd = expandTo18Decimals(5);
@@ -999,6 +999,21 @@ describe("enderBond setting funtions and missing testing", function () {
                         userSign,
                     ),
             ).to.be.revertedWithCustomError(enderBond, "InvalidMaturity");
+
+            maturity = 366;
+            await expect(
+                enderBond
+                    .connect(signer1)
+                    .deposit(
+                        signer1.address,
+                        depositPrincipalStEth,
+                        maturity,
+                        bondFee,
+                        stEthAddress,
+                        userSign,
+                    ),
+            ).to.be.revertedWithCustomError(enderBond, "InvalidMaturity");
+
         });
 
         it("Deposit Revert NotWhitelisted with wrong signer address", async () => {

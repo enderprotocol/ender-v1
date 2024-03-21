@@ -160,30 +160,28 @@ contract EnderBond is
         bytes signature;
     }
 
-event IntervalSet(uint256 indexed newInterval);
-event BoolSet(bool indexed newValue);
-event AddressSet(uint256 indexed addrType, address indexed newAddress);
-event MinDepAmountSet(uint256 indexed newAmount);
-event TxFeesSet(uint256 indexed newTxFees);
-event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
-event BondFeeEnabledSet(bool indexed isEnabled);
-event DepositEnableSet(bool indexed isEnabled);
-event WithdrawPauseSet(bool indexed isEnabled);
-event BondPauseSet(bool indexed isEnabled);
-event BondableTokensSet(address indexed token, bool indexed isEnabled);
-event Deposit(address indexed sender, uint256 indexed tokenId, uint256 principal, uint256 maturity, address token,uint256 bondFee);
-event Withdrawal(address indexed sender, uint256 indexed tokenId);
-event RefractionRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
-event StakingRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
-event RewardShareIndexUpdated(uint256 indexed newRewardShareIndex);
-event BondYieldShareIndexUpdated(uint256 indexed newBondYieldShareIndex);
-event EndMintReset();
-event NewSigner(address _signer);
-event WhitelistChanged(bool indexed action);
-event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRewardSharePerUserIndex);
-event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
+    event IntervalSet(uint256 indexed newInterval);
+    event BoolSet(bool indexed newValue);
+    event AddressSet(uint256 indexed addrType, address indexed newAddress);
+    event MinDepAmountSet(uint256 indexed newAmount);
+    event TxFeesSet(uint256 indexed newTxFees);
+    event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
+    event DepositEnableSet(bool indexed isEnabled);
+    event WithdrawPauseSet(bool indexed isEnabled);
+    event BondPauseSet(bool indexed isEnabled);
+    event BondableTokensSet(address indexed token, bool indexed isEnabled);
+    event Deposit(address indexed sender, uint256 indexed tokenId, uint256 principal, uint256 maturity, address token,uint256 bondFee);
+    event Withdrawal(address indexed sender, uint256 indexed tokenId);
+    event RefractionRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
+    event StakingRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
+    event RewardShareIndexUpdated(uint256 indexed newRewardShareIndex);
+    event BondYieldShareIndexUpdated(uint256 indexed newBondYieldShareIndex);
+    event EndMintReset();
+    event NewSigner(address _signer);
+    event WhitelistChanged(bool indexed action);
+    event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRewardSharePerUserIndex);
+    event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     
-
     /**
      * @dev Initializes the contract
      * @param endToken_ The address of the END token
@@ -211,8 +209,6 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         isWithdrawPause = true; // for testing purpose
         bondPause = true; // for testing purpose
         isWhitelisted = true; // for testing purpose
-        //this function is not used
-        setBondFeeEnabled(true);
     }
 
     modifier depositEnabled() {
@@ -300,15 +296,6 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         else if (_type == 10) addr = address(depositContract);
         else if (_type == 11) addr = enderStakeEth;
         else revert InvalidAddress();
-    }
-
-    /**
-     * @notice Update the bond-fee status
-     * @param _enabled status
-     */
-    function setBondFeeEnabled(bool _enabled) public onlyOwner {
-        bondFeeEnabled = _enabled;
-        emit BondFeeEnabledSet(_enabled);
     }
 
     /**
@@ -606,7 +593,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         if (msg.sender != address(bondNFT)) {
             revert NotBondNFT();
         }
-        if(bonds[_tokenId].bondFee != 10000){
+        if (bonds[_tokenId].bondFee >= 10000) {
             uint deductAmount = (bonds[_tokenId].principal * txFees) / 10000;
             bonds[_tokenId].principal -= deductAmount;
             bonds[_tokenId].bondFee += txFees;
