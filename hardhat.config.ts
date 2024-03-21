@@ -1,10 +1,10 @@
 require("@nomicfoundation/hardhat-toolbox");
 // require("@nomiclabs/hardhat-web3");
+import "@nomicfoundation/hardhat-ethers";
+import "@openzeppelin/hardhat-upgrades";
+import "@nomicfoundation/hardhat-chai-matchers";
 require("solidity-coverage");
-require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
-
-// dotenv.config();
 
 module.exports = {
     // defaultNetwork: "matic",
@@ -39,7 +39,7 @@ module.exports = {
         },
         compilers: [
             {
-                version: "0.8.18",
+                version: "0.8.20",
                 settings: {
                     optimizer: {
                         enabled: true,

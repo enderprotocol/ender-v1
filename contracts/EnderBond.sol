@@ -17,6 +17,7 @@ import "./interfaces/IEnderTreasury.sol";
 import "./interfaces/ISEndToken.sol";
 import "./interfaces/IEndToken.sol";
 import "./interfaces/IEnderStaking.sol";
+import "./interfaces/IEnderStakeEth.sol";
 
 error BondAlreadyWithdrawn();
 error NotWhitelisted();
@@ -41,6 +42,8 @@ error NotEndToken();
 error NoTreasury();
 error ZeroValue();
 error InvalidAddress();
+error NotBondNFTOwner();
+error InsufficientEndETH();
 
 /**
  * @title EnderBond contract
@@ -67,6 +70,11 @@ contract EnderBond is
 
     mapping(uint256 => uint256) public userBondYieldShareIndex; //s0
     mapping(uint256 => uint256[]) public bondIdAtMaturity;
+
+    mapping(uint256 => uint256) public bondIdAtMaturityDepositPrincipal;
+    mapping(uint256 => uint256) public bondIdAtMaturityRefractionPrincipal;
+    mapping(uint256 => uint256) public bondIdAtMaturityAvailableBondFee;
+    mapping(uint256 => uint256) public bondIdAtMaturityPrincipal;    
 
     mapping(uint256 => uint256) public dayToRewardShareIndex;
 
@@ -108,13 +116,15 @@ contract EnderBond is
     uint public lastSecOfSendReward;
     bool public isWhitelisted;
     bool public isSet;
+    uint256 public rewardIndex;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
 
-    address public signer;
+    address public contractSigner;
     address private endSignature;
     address private endToken;
+    address private enderStakeEth;
     address private sEndToken;
     address public lido;
     address public stEth;
@@ -150,44 +160,43 @@ contract EnderBond is
         bytes signature;
     }
 
-event IntervalSet(uint256 indexed newInterval);
-event BoolSet(bool indexed newValue);
-event AddressSet(uint256 indexed addrType, address indexed newAddress);
-event MinDepAmountSet(uint256 indexed newAmount);
-event TxFeesSet(uint256 indexed newTxFees);
-event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
-event BondFeeEnabledSet(bool indexed isEnabled);
-event DepositEnableSet(bool indexed isEnabled);
-event WithdrawPauseSet(bool indexed isEnabled);
-event BondPauseSet(bool indexed isEnabled);
-event BondableTokensSet(address indexed token, bool indexed isEnabled);
-event Deposit(address indexed sender, uint256 indexed tokenId, uint256 principal, uint256 maturity, address token,uint256 bondFee);
-event Withdrawal(address indexed sender, uint256 indexed tokenId);
-event RefractionRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
-event StakingRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
-event RewardShareIndexUpdated(uint256 indexed newRewardShareIndex);
-event BondYieldShareIndexUpdated(uint256 indexed newBondYieldShareIndex);
-event EndMintReset();
-event NewSigner(address _signer);
-event WhitelistChanged(bool indexed action);
-event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRewardSharePerUserIndex);
-event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
+    event IntervalSet(uint256 indexed newInterval);
+    event BoolSet(bool indexed newValue);
+    event AddressSet(uint256 indexed addrType, address indexed newAddress);
+    event MinDepAmountSet(uint256 indexed newAmount);
+    event TxFeesSet(uint256 indexed newTxFees);
+    event BondYieldBaseRateSet(uint256 indexed newBondYieldBaseRate);
+    event DepositEnableSet(bool indexed isEnabled);
+    event WithdrawPauseSet(bool indexed isEnabled);
+    event BondPauseSet(bool indexed isEnabled);
+    event BondableTokensSet(address indexed token, bool indexed isEnabled);
+    event Deposit(address indexed sender, uint256 indexed tokenId, uint256 principal, uint256 maturity, address token,uint256 bondFee);
+    event Withdrawal(address indexed sender, uint256 indexed tokenId);
+    event RefractionRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
+    event StakingRewardsClaimed(address indexed sender, uint256 indexed tokenId, uint256 rewardAmount);
+    event RewardShareIndexUpdated(uint256 indexed newRewardShareIndex);
+    event BondYieldShareIndexUpdated(uint256 indexed newBondYieldShareIndex);
+    event EndMintReset();
+    event NewSigner(address _signer);
+    event WhitelistChanged(bool indexed action);
+    event RewardSharePerUserIndexSet(uint256 indexed tokenId, uint256 indexed newRewardSharePerUserIndex);
+    event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     
-
     /**
      * @dev Initializes the contract
      * @param endToken_ The address of the END token
      */
-    function initialize(address endToken_, address _lido, address _signer) public initializer {
+    function initialize(address endToken_, address enderStakeEth_, address _lido, address _signer) public initializer {
         __Ownable_init();
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         rateOfChange = 100;
         lido = _lido;
         setAddress(endToken_, 2);
+        setAddress(enderStakeEth_, 11);
         // todo set the value according to doc
         minDepositAmount = 1000000000000000;
         txFees = 200;
-        signer = _signer;
+        contractSigner = _signer;
         bondYieldBaseRate = 100;
         SECONDS_IN_DAY = 600; // note for testing purpose we have set it to 10 mint
         interval = 10 * 60; // note for testing purpose we have set it to 10 mint
@@ -200,8 +209,6 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         isWithdrawPause = true; // for testing purpose
         bondPause = true; // for testing purpose
         isWhitelisted = true; // for testing purpose
-        //this function is not used
-        setBondFeeEnabled(true);
     }
 
     modifier depositEnabled() {
@@ -247,6 +254,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         else if (_type == 8) endStaking = IEnderStaking(_addr);
         else if (_type == 9) sEndToken = _addr;
         else if (_type == 10) depositContract = IEnderBondLiquidityDeposit(_addr);
+        else if (_type == 11) enderStakeEth = _addr;
         else revert InvalidAddress();
 
         emit AddressSet(_type, _addr);
@@ -254,8 +262,8 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
     function setsigner(address _signer) external onlyOwner {
         if (_signer == address(0)) revert ZeroAddress();
-        signer = _signer;
-        emit NewSigner(signer);
+        contractSigner = _signer;
+        emit NewSigner(contractSigner);
     }
 
     function setMinDepAmount(uint256 _amt) public onlyOwner {
@@ -286,16 +294,8 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         else if (_type == 8) addr = address(endStaking);
         else if (_type == 9) addr = sEndToken;
         else if (_type == 10) addr = address(depositContract);
+        else if (_type == 11) addr = enderStakeEth;
         else revert InvalidAddress();
-    }
-
-    /**
-     * @notice Update the bond-fee status
-     * @param _enabled status
-     */
-    function setBondFeeEnabled(bool _enabled) public onlyOwner {
-        bondFeeEnabled = _enabled;
-        emit BondFeeEnabledSet(_enabled);
     }
 
     /**
@@ -380,7 +380,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @param maturity The maturity date of the bond (lock time)
      * @param bondFee Self-set bond fee
      * @param token The address of the token (if token is zero address, then depositing ETH)
-     * @notice @Todo for testing purpose maturity is set to 5-90 days from 7-365
+     * @notice @Todo for testing purpose maturity is set to 7-365 days
      */
     function deposit(
         address user,
@@ -393,12 +393,12 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         address _owner = owner();
         if(msg.sender != _owner){               //When the deposit is made via deposit contract, needs to be reviewed
             if (principal < minDepositAmount) revert InvalidAmount();
-            if (maturity < 5 || maturity > 90) revert InvalidMaturity();
+            if (maturity < 7 || maturity > 365) revert InvalidMaturity();
             if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
             if (bondFee > 10000) revert InvalidBondFee();
             if(isWhitelisted){
                 address signAddress = _verify(userSign);
-                if(signAddress != signer || userSign.user != msg.sender) revert NotWhitelisted();
+                if(signAddress != contractSigner || userSign.user != msg.sender) revert NotWhitelisted();
             }
         }
         
@@ -437,8 +437,10 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
     ) private returns (uint256 tokenId) {
         endTreasury.depositTreasury(IEnderBase.EndRequest(user, token, principal), getLoopCount());        
         // mint bond nft                                                                      
-        tokenId = bondNFT.mint(user);                                                                          
-        bondIdAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY].push(tokenId);
+        tokenId = bondNFT.mint(user);
+        IEnderStakeEth(enderStakeEth).mint(user, principal, bondFee);
+        uint256 timeNow = (block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY;
+        bondIdAtMaturity[timeNow].push(tokenId);
         uint256 refractionPrincipal = calculateRefractionData(user, principal, maturity, tokenId, bondFee);          
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;                                         
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;                                                                                      
@@ -449,6 +451,10 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         totalRewardPrincipal += depositPrincipal;
         totalRefractionPrincipal += refractionPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
+        bondIdAtMaturityDepositPrincipal[timeNow] += depositPrincipal;
+        bondIdAtMaturityRefractionPrincipal[timeNow] += refractionPrincipal;
+        bondIdAtMaturityAvailableBondFee[timeNow] += (principal * bondFee) / 10000;
+        bondIdAtMaturityPrincipal[timeNow] += principal;
         // save bond info
         bonds[tokenId] = Bond(
             false,
@@ -474,6 +480,8 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @param tokenId The ID of the token to be withdrawn.
      */
     function withdraw(uint256 tokenId) external nonReentrant withdrawEnabled bondPaused{
+        address nftOwner = bondNFT.ownerOf(tokenId);
+        if (msg.sender != nftOwner) revert NotBondNFTOwner();
         _withdraw(tokenId);
         emit Withdrawal(msg.sender, tokenId);
     }
@@ -487,8 +495,17 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         Bond memory bond = bonds[_tokenId];
         if (bond.withdrawn) revert BondAlreadyWithdrawn();
         if (block.timestamp <= bond.startTime + (bond.maturity * SECONDS_IN_DAY)) revert BondNotMatured();
+
+        uint256 feeEndEthAmount = bond.principal * bond.bondFee / 10000;
+        uint256 requireEndEth = bond.principal - feeEndEthAmount;
+        address nftOwner = bondNFT.ownerOf(_tokenId);
+        uint256 endEthBalance = IEnderStakeEth(enderStakeEth).balanceOf(nftOwner);
+        if (endEthBalance < requireEndEth) revert InsufficientEndETH();
+        IEnderStakeEth(enderStakeEth).burn(nftOwner, requireEndEth);
+
         claimRewards(_tokenId);
         bonds[_tokenId].withdrawn = true;
+
         endTreasury.withdraw(IEnderBase.EndRequest(msg.sender, bond.token, (bond.principal * (10000 - bond.bondFee)) / 10000 ), getLoopCount());
         //todo need to check this
         dayBondYieldShareIndex[(bonds[_tokenId].startTime/SECONDS_IN_DAY) + bonds[_tokenId].maturity] = userBondYieldShareIndex[_tokenId]; 
@@ -541,18 +558,22 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 ///@dev loop will start from the first day of the deployment.
                 /// minimum deposit is for 7 days. So it will cover the 4 days gaps in below condition. 
                 if(bondIdAtMaturity[i].length > 0){
-                    for(uint256 j = 0; j < bondIdAtMaturity[i].length; j++){
-                        Bond memory bond = bonds[bondIdAtMaturity[i][j]];
-                        depositAmountRequired += bond.depositPrincipal;
-                        refractionAmountRequired += bond.refractionPrincipal;
-                        availableBondFee += (bond.principal * bond.bondFee) / 10000;
-                    }
+                    depositAmountRequired += bondIdAtMaturityDepositPrincipal[i];
+                    refractionAmountRequired += bondIdAtMaturityRefractionPrincipal[i];
+                    availableBondFee += bondIdAtMaturityAvailableBondFee[i];
+                    // for(uint256 j = 0; j < bondIdAtMaturity[i].length; j++){
+                    //     Bond memory bond = bonds[bondIdAtMaturity[i][j]];
+                    //     depositAmountRequired += bond.depositPrincipal;
+                    //     refractionAmountRequired += bond.refractionPrincipal;
+                    //     availableBondFee += (bond.principal * bond.bondFee) / 10000;
+                    // }
                 }
                 if(bondIdAtMaturity[i+4].length > 0){
-                    for(uint256 j = 0; j < bondIdAtMaturity[i+4].length; j++){
-                        Bond memory bond = bonds[bondIdAtMaturity[i+4][j]];
-                        amountRequired += bond.principal;
-                    }
+                    amountRequired += bondIdAtMaturityPrincipal[i+4];
+                    // for(uint256 j = 0; j < bondIdAtMaturity[i+4].length; j++){
+                    //     Bond memory bond = bonds[bondIdAtMaturity[i+4][j]];
+                    //     amountRequired += bond.principal;
+                    // }
                 }
 
             }
@@ -572,7 +593,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         if (msg.sender != address(bondNFT)) {
             revert NotBondNFT();
         }
-        if(bonds[_tokenId].bondFee != 10000){
+        if (bonds[_tokenId].bondFee >= 10000) {
             uint deductAmount = (bonds[_tokenId].principal * txFees) / 10000;
             bonds[_tokenId].principal -= deductAmount;
             bonds[_tokenId].bondFee += txFees;
@@ -740,7 +761,6 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
             100 + ((rateOfChange * (_maturity - 1)) / (2 * 100));
         rewardPrinciple = (_principal * avgRefractionIndex) / 100;
         secondsRefractionShareIndex[block.timestamp] = rewardShareIndex;
-
     }
 
     /**

@@ -1,16 +1,12 @@
 const { ethers, upgrades } = require("hardhat");
-const { BigNumber } = require("ethers");
 
-// const { EigenLayerStrategyManagerAddress } = require("../utils/common");
-const exp = require("constants");
-const { sign } = require("crypto");
-const { log } = require("console");
 const baseURI = "https://endworld-backend.vercel.app/nft/metadata/";
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 async function main() {
     const weth = await ethers.getContractFactory("mockWETH");
+    const EndETH = await ethers.getContractFactory("EnderStakeEth");
     const StEth = await ethers.getContractFactory("StETH");
     const InstaDapp = await ethers.getContractFactory("StinstaToken");
     const SEndToken = await ethers.getContractFactory("SEndToken");
@@ -26,6 +22,7 @@ async function main() {
     let endTokenAddress,
         wEthAddress,
         stEthAddress,
+        endEthAddress,
         depositContractAddress,
         InstaDappAddress,
         enderBondAddress,
@@ -44,7 +41,11 @@ async function main() {
         enderOracle,
         sEnd,
         stEth,
+        endEth,
         bondNFT;
+
+    stEthAddress = process.env.STETH_ADDR;
+    InstaDappAddress = process.env.INSTA_ADDR;
 
     //     await sleep(9000);
     // wEth = await weth.deploy("wrappedEth", "weth", "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9");
@@ -52,10 +53,10 @@ async function main() {
     // console.log("wEthAddress--> ", wEthAddress);
     // await sleep(9000);
 
-    stEth = await StEth.deploy();
-    stEthAddress = await stEth.getAddress();
-    console.log("stEthAddress-->", stEthAddress);
-    await sleep(9000);
+    // stEth = await StEth.deploy();
+    // stEthAddress = await stEth.getAddress();
+    // console.log("stEthAddress-->", stEthAddress);
+    // await sleep(9000);
 
     // depositContract = await upgrades.deployProxy(DepositContract, ["0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", "0x8feF51D82E188B4cB41dcF6b23DA22284E28c835", "0x6965C9b015AfC8FbF088936614d40877E3f058Ae"], {
     //     initializer: "initialize",
@@ -84,15 +85,28 @@ async function main() {
     // await sleep(9000);
     // await Proxy.transferProxyOwnership("0x6965C9b015AfC8FbF088936614d40877E3f058Ae");
 
-    instaDappLite = await InstaDapp.deploy(
-        "InstaToken",
-        "Inst",
-        "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9",
-        stEthAddress,
-    );
-    InstaDappAddress = await instaDappLite.getAddress();
-    console.log("InstadappAddress-->", InstaDappAddress);
+    // instaDappLite = await InstaDapp.deploy(
+    //     "InstaToken",
+    //     "Inst",
+    //     "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9",
+    //     stEthAddress,
+    // );
+    // InstaDappAddress = await instaDappLite.getAddress();
+    // console.log("InstadappAddress-->", InstaDappAddress);
+    // await sleep(9000);
+
+    /**
+     * endETH token deploy
+     */
+
+    endEth = await EndETH.deploy();
+    endEthAddress = await endEth.getAddress();
+    console.log("endETHAddress-->", endEthAddress);
     await sleep(9000);
+
+    /**
+     * sEndToken deploy
+     */
 
     sEnd = await upgrades.deployProxy(SEndToken, [], {
         initializer: "initialize",
@@ -101,16 +115,30 @@ async function main() {
     sEndTokenAddress = await sEnd.getAddress();
     console.log("sEndTokenAddress-->", sEndTokenAddress);
 
+    await sleep(9000);
+
+    await hre.run("verify:verify", {
+        address: sEndTokenAddress,
+        contract: "contracts/ERC20/SEndToken.sol:SEndToken",
+    });
+
+    /**
+     * endToken deploy
+     */
+
     endToken = await upgrades.deployProxy(EndToken, [], {
         initializer: "initialize",
     });
-
     await sleep(10000);
-
     await endToken.waitForDeployment();
     await sleep(9000);
     endTokenAddress = await endToken.getAddress();
     console.log("endToken-->", endTokenAddress);
+
+    await hre.run("verify:verify", {
+        address: endTokenAddress,
+        contract: "contracts/ERC20/EndToken.sol:EndToken",
+    });
 
     //     enderOracle = await upgrades.deployProxy(oracle, [], {
     //         initializer: "initialize",
@@ -119,10 +147,15 @@ async function main() {
     //     enderOracleAddress = await enderOracle.getAddress();
     //     console.log("enderOracleAddress-->", enderOracleAddress);
 
+    /**
+     * enderBond deploy
+     */
+
     enderBond = await upgrades.deployProxy(
         EnderBond,
         [
             endTokenAddress,
+            endEthAddress,
             "0x0000000000000000000000000000000000000000",
             "0xEe7CA89760a3425Bc06d8aFA201e80C22E5B94E9",
         ],
@@ -131,15 +164,37 @@ async function main() {
         },
     );
     await sleep(9000);
+    await enderBond.waitForDeployment();
+    await sleep(9000);
     enderBondAddress = await enderBond.getAddress();
     console.log("enderBondAddress-->", enderBondAddress);
+
+    await hre.run("verify:verify", {
+        address: enderBondAddress,
+        contract: "contracts/EnderBond.sol:EnderBond",
+    });
+
+    /**
+     * BondNFT deploy
+     */
 
     bondNFT = await upgrades.deployProxy(BondNFT, [enderBondAddress, baseURI], {
         initializer: "initialize",
     });
     await sleep(9000);
+    await bondNFT.waitForDeployment();
+    await sleep(9000);
     bondNFTAddress = await bondNFT.getAddress();
     console.log("bondNFTAddress-->", bondNFTAddress);
+
+    await hre.run("verify:verify", {
+        address: bondNFTAddress,
+        contract: "contracts/NFT/BondNFT.sol:BondNFT",
+    });
+
+    /**
+     * enderStaking deploy
+     */
 
     enderStaking = await upgrades.deployProxy(
         EnderStaking,
@@ -154,12 +209,23 @@ async function main() {
         },
     );
     await sleep(9000);
+    await enderStaking.waitForDeployment();
+    await sleep(9000);
     enderStakingAddress = await enderStaking.getAddress();
     console.log("enderStakingAddress-->", enderStakingAddress);
+
+    await hre.run("verify:verify", {
+        address: enderStakingAddress,
+        contract: "contracts/EnderStaking.sol:EnderStaking",
+    });
 
     // const EndTokenProxy = "0x5968b7eCdA2b9D912Caf4645aA046556644661A7";
     // await upgrades.upgradeProxy(EndTokenProxy,EndToken);
     // console.log("Ender Upgraded");
+
+    /**
+     * enderTreasury deploy
+     */
 
     enderTreasury = await upgrades.deployProxy(
         EnderTreasury,
@@ -178,8 +244,15 @@ async function main() {
         },
     );
     await sleep(9000);
+    await enderTreasury.waitForDeployment();
+    await sleep(9000);
     enderTreasuryAddress = await enderTreasury.getAddress();
     console.log("enderTreasuryAddress-->", enderTreasuryAddress);
+
+    await hre.run("verify:verify", {
+        address: enderTreasuryAddress,
+        contract: "contracts/EnderTreasury.sol:EnderTreasury",
+    });
 
     await sleep(9000);
     await enderStaking.setAddress(enderBondAddress, 1);
@@ -208,22 +281,22 @@ async function main() {
         enderBondAddress,
     );
 
-    await sleep(9000);
-    await endToken.grantRole(
-        "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
-        "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
-    );
+    // await sleep(9000);
+    // await endToken.grantRole(
+    //     "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
+    //     "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+    // );
+
+    // await sleep(9000);
+    // await endToken.grantRole(
+    //     "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
+    //     "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+    // );
 
     await sleep(9000);
     await endToken.grantRole(
         "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
-        "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
-    );
-
-    await sleep(9000);
-    await endToken.grantRole(
-        "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
-        "0x460Cd374442319686EC6391933B1B666CEbC34d2",
+        process.env.MINTER_ADDR,
     );
 
     await sleep(9000);

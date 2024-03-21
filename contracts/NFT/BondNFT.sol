@@ -32,9 +32,9 @@ contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
     /**
      * @dev Emitted when the Bond contract address is changed.
      */
- event BondContractChanged(address indexed newBond);
-event NFTMinted(address indexed to, uint256 tokenId);
-event BaseURIChanged(string newURI);
+    event BondContractChanged(address indexed newBond);
+    event NFTMinted(address indexed to, uint256 tokenId);
+    event BaseURIChanged(string newURI);
 
     modifier onlyBond() {
         if (msg.sender != bond) {
@@ -72,16 +72,15 @@ event BaseURIChanged(string newURI);
     }
 
     function _transfer(address from, address to, uint256 tokenId) internal override {
-        if (from != address(0) && to != address(0)) {
-            IEnderBond(bond).deductFeesFromTransfer(tokenId);
-        }
+        // if (from != address(0) && to != address(0)) {
+        //     IEnderBond(bond).deductFeesFromTransfer(tokenId);
+        // }
         super._transfer(from, to, tokenId);
     }
 
-    //  function burn(uint256 _tokenId) external onlyBond  {
-
-    //     _burn(_tokenId);
-    // }
+    function burn(uint256 _tokenId) external onlyBond  {
+        _burn(_tokenId);
+    }
 
     /**
      * @notice Sets the base URI.
@@ -90,7 +89,7 @@ event BaseURIChanged(string newURI);
      */
     function setBaseURI(string memory newURI_) public onlyOwner {
         uri = newURI_;
-         emit BaseURIChanged(newURI_);
+        emit BaseURIChanged(newURI_);
     }
 
     /**
@@ -100,9 +99,7 @@ event BaseURIChanged(string newURI);
      */
     function setBondContract(address bond_) public onlyOwner {
         if (bond_ == address(0)) revert ZeroAddress();
-
         bond = bond_;
-
         emit BondContractChanged(bond_);
     }
 
