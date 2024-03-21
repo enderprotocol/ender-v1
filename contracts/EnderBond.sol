@@ -71,6 +71,11 @@ contract EnderBond is
     mapping(uint256 => uint256) public userBondYieldShareIndex; //s0
     mapping(uint256 => uint256[]) public bondIdAtMaturity;
 
+    mapping(uint256 => uint256) public bondIdAtMaturityDepositPrincipal;
+    mapping(uint256 => uint256) public bondIdAtMaturityRefractionPrincipal;
+    mapping(uint256 => uint256) public bondIdAtMaturityAvailableBondFee;
+    mapping(uint256 => uint256) public bondIdAtMaturityPrincipal;    
+
     mapping(uint256 => uint256) public dayToRewardShareIndex;
 
     mapping(uint256 => uint256) public dayRewardShareIndexForSend;
@@ -111,11 +116,12 @@ contract EnderBond is
     uint public lastSecOfSendReward;
     bool public isWhitelisted;
     bool public isSet;
+    uint256 public rewardIndex;
 
     /// @notice An array containing all maturities.
     uint256[] public maturities;
 
-    address public signer;
+    address public contractSigner;
     address private endSignature;
     address private endToken;
     address private enderStakeEth;
@@ -192,7 +198,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         // todo set the value according to doc
         minDepositAmount = 1000000000000000;
         txFees = 200;
-        signer = _signer;
+        contractSigner = _signer;
         bondYieldBaseRate = 100;
         SECONDS_IN_DAY = 600; // note for testing purpose we have set it to 10 mint
         interval = 10 * 60; // note for testing purpose we have set it to 10 mint
@@ -260,8 +266,8 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
 
     function setsigner(address _signer) external onlyOwner {
         if (_signer == address(0)) revert ZeroAddress();
-        signer = _signer;
-        emit NewSigner(signer);
+        contractSigner = _signer;
+        emit NewSigner(contractSigner);
     }
 
     function setMinDepAmount(uint256 _amt) public onlyOwner {
@@ -387,7 +393,7 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
      * @param maturity The maturity date of the bond (lock time)
      * @param bondFee Self-set bond fee
      * @param token The address of the token (if token is zero address, then depositing ETH)
-     * @notice @Todo for testing purpose maturity is set to 5-90 days from 7-365
+     * @notice @Todo for testing purpose maturity is set to 7-365 days
      */
     function deposit(
         address user,
@@ -400,12 +406,12 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         address _owner = owner();
         if(msg.sender != _owner){               //When the deposit is made via deposit contract, needs to be reviewed
             if (principal < minDepositAmount) revert InvalidAmount();
-            if (maturity < 7) revert InvalidMaturity();
+            if (maturity < 7 || maturity > 365) revert InvalidMaturity();
             if (token != address(0) && !bondableTokens[token]) revert NotBondableToken();
             if (bondFee > 10000) revert InvalidBondFee();
             if(isWhitelisted){
                 address signAddress = _verify(userSign);
-                if(signAddress != signer || userSign.user != msg.sender) revert NotWhitelisted();
+                if(signAddress != contractSigner || userSign.user != msg.sender) revert NotWhitelisted();
             }
         }
         
@@ -446,7 +452,8 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         // mint bond nft                                                                      
         tokenId = bondNFT.mint(user);
         IEnderStakeEth(enderStakeEth).mint(user, principal, bondFee);
-        bondIdAtMaturity[(block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY].push(tokenId);
+        uint256 timeNow = (block.timestamp + ((maturity) * SECONDS_IN_DAY)) / SECONDS_IN_DAY;
+        bondIdAtMaturity[timeNow].push(tokenId);
         uint256 refractionPrincipal = calculateRefractionData(user, principal, maturity, tokenId, bondFee);          
         rewardSharePerUserIndex[tokenId] = rewardShareIndex;                                         
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;                                                                                      
@@ -457,6 +464,10 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
         totalRewardPrincipal += depositPrincipal;
         totalRefractionPrincipal += refractionPrincipal;
         totalBondPrincipalAmount += depositPrincipal;
+        bondIdAtMaturityDepositPrincipal[timeNow] += depositPrincipal;
+        bondIdAtMaturityRefractionPrincipal[timeNow] += refractionPrincipal;
+        bondIdAtMaturityAvailableBondFee[timeNow] += (principal * bondFee) / 10000;
+        bondIdAtMaturityPrincipal[timeNow] += principal;
         // save bond info
         bonds[tokenId] = Bond(
             false,
@@ -560,18 +571,22 @@ event ClaimRewards(address indexed account, uint256 reward,uint256 tokenId);
                 ///@dev loop will start from the first day of the deployment.
                 /// minimum deposit is for 7 days. So it will cover the 4 days gaps in below condition. 
                 if(bondIdAtMaturity[i].length > 0){
-                    for(uint256 j = 0; j < bondIdAtMaturity[i].length; j++){
-                        Bond memory bond = bonds[bondIdAtMaturity[i][j]];
-                        depositAmountRequired += bond.depositPrincipal;
-                        refractionAmountRequired += bond.refractionPrincipal;
-                        availableBondFee += (bond.principal * bond.bondFee) / 10000;
-                    }
+                    depositAmountRequired += bondIdAtMaturityDepositPrincipal[i];
+                    refractionAmountRequired += bondIdAtMaturityRefractionPrincipal[i];
+                    availableBondFee += bondIdAtMaturityAvailableBondFee[i];
+                    // for(uint256 j = 0; j < bondIdAtMaturity[i].length; j++){
+                    //     Bond memory bond = bonds[bondIdAtMaturity[i][j]];
+                    //     depositAmountRequired += bond.depositPrincipal;
+                    //     refractionAmountRequired += bond.refractionPrincipal;
+                    //     availableBondFee += (bond.principal * bond.bondFee) / 10000;
+                    // }
                 }
                 if(bondIdAtMaturity[i+4].length > 0){
-                    for(uint256 j = 0; j < bondIdAtMaturity[i+4].length; j++){
-                        Bond memory bond = bonds[bondIdAtMaturity[i+4][j]];
-                        amountRequired += bond.principal;
-                    }
+                    amountRequired += bondIdAtMaturityPrincipal[i+4];
+                    // for(uint256 j = 0; j < bondIdAtMaturity[i+4].length; j++){
+                    //     Bond memory bond = bonds[bondIdAtMaturity[i+4][j]];
+                    //     amountRequired += bond.principal;
+                    // }
                 }
 
             }

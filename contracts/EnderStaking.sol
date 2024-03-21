@@ -24,7 +24,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     uint256 public rebasingIndex;  
     uint256 public rebaseRefractionReward;
     uint256 public lastRebaseReward;
-    address public signer;
+    address public contractSigner;
     address public endToken;
     address public sEndToken;
     address public enderTreasury;
@@ -55,7 +55,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     function initialize(address _end, address _sEnd, address _stEth, address _signer) external initializer {
         __Ownable_init();
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
-        signer = _signer;
+        contractSigner = _signer;
         stakingEnable = true; // for testing purpose
         unstakeEnable = true;   // for testing purpose
         stakingContractPause = true; // for testing purpose
@@ -98,8 +98,8 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
 
     function setsigner(address _signer) external onlyOwner {
         if (_signer == address(0)) revert ZeroAddress();
-        signer = _signer;
-        emit newSigner(signer);
+        contractSigner = _signer;
+        emit newSigner(contractSigner);
     }
 
     function setAddress(address _addr, uint256 _type) public onlyOwner {
@@ -138,7 +138,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         if (amount == 0) revert InvalidAmount();
         if(isWhitelisted){
             address signAddress = _verify(userSign);
-            if(signAddress != signer || userSign.user != msg.sender) revert NotWhitelisted();
+            if(signAddress != contractSigner || userSign.user != msg.sender) revert NotWhitelisted();
         }
 
         if(ISEndToken(endToken).balanceOf(address(this)) == 0){

@@ -1,5 +1,11 @@
-const { expect } = require("chai");
-const { ethers, upgrades } = require("hardhat");
+import { expect } from "chai";
+import { Wallet } from "ethers";
+import { ethers, upgrades } from "hardhat";
+import { EndToken } from "../../typechain-types/contracts/ERC20/EndToken";
+import { MockEnderBond } from "../../typechain-types/contracts/mock/MockEnderBond";
+import { EnderTreasury } from "../../typechain-types/contracts/EnderTreasury";
+import { StETH } from "../../typechain-types/contracts/ERC20/mockStEth.sol/StETH";
+import { StinstaToken } from "../../typechain-types/contracts/strategy/instadapp/instadappLite.sol/StinstaToken";
 
 // const { EigenLayerStrategyManagerAddress, LidoAgentAddress } = require("../utils/common")
 const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
@@ -12,34 +18,34 @@ describe("EnderTreasury", function () {
     // const libraAddress = "0x04919f277cfFB234CE2660769404FbFcC3673d85";
     const eigenLayerAddress = "0x85df364E61C35aBd0384DBb33598b6cCd2d90588";
 
-    let owner, wallet1, signer1;
-    let endTokenAddress,
+    let owner: Wallet, wallet1: Wallet, signer1: Wallet;
+    let endTokenAddress: string,
         endETHAddress,
-        enderStakingAddress,
-        enderBondAddress,
-        mockEnderBondAddress,
-        enderTreasuryAddress,
-        enderELStrategyAddress,
+        enderStakingAddress: string,
+        enderBondAddress: string,
+        mockEnderBondAddress: string,
+        enderTreasuryAddress: string,
+        enderELStrategyAddress: string,
         enderLidoStrategyAddress,
-        instadappLiteAddress,
-        stEthAddress,
+        instadappLiteAddress: string,
+        stEthAddress: string,
         sEndTokenAddress,
-        libraAddress;
-    let endToken,
+        libraAddress: string;
+    let endToken: EndToken,
         endETHToken,
         enderStaking,
         enderBond,
-        mockEnderBond,
-        enderTreasury,
+        mockEnderBond: MockEnderBond,
+        enderTreasury: EnderTreasury,
         enderELStrategy,
         enderLidoStrategy,
-        instadappLitelidoStaking,
-        stEth,
+        instadappLitelidoStaking: StinstaToken,
+        stEth: StETH,
         sEnd,
         libra;
 
     beforeEach(async function () {
-        [owner, wallet1, signer1] = await ethers.getSigners();
+        [owner, wallet1, signer1] = (await ethers.getSigners()) as unknown as Wallet[];
 
         const StEth = await ethers.getContractFactory("StETH");
         const EnderStaking = await ethers.getContractFactory("EnderStaking");
@@ -47,7 +53,7 @@ describe("EnderTreasury", function () {
         const Lybra = await ethers.getContractFactory("mockLybra");
         const EndETHToken = await ethers.getContractFactory("EnderStakeEth");
 
-        stEth = await StEth.deploy();
+        stEth = (await StEth.deploy()) as unknown as StETH;
         stEthAddress = await stEth.getAddress();
 
         sEnd = await upgrades.deployProxy(SEnd, [], {
@@ -57,19 +63,19 @@ describe("EnderTreasury", function () {
 
         // Deploy EndToken
         const EndToken = await ethers.getContractFactory("EndToken");
-        endToken = await upgrades.deployProxy(EndToken, [], {
+        endToken = (await upgrades.deployProxy(EndToken, [], {
             initializer: "initialize",
-        });
+        })) as unknown as EndToken;
         await endToken.waitForDeployment();
         endTokenAddress = await endToken.getAddress();
 
         const InstadappLite = await ethers.getContractFactory("StinstaToken");
-        instadappLitelidoStaking = await InstadappLite.deploy(
+        instadappLitelidoStaking = (await InstadappLite.deploy(
             "InstaToken",
             "Inst",
             owner.address,
             stEthAddress,
-        );
+        )) as unknown as StinstaToken;
         instadappLiteAddress = await instadappLitelidoStaking.getAddress();
 
         enderStaking = await upgrades.deployProxy(
@@ -105,19 +111,19 @@ describe("EnderTreasury", function () {
 
         // Deploy MockEnderBond
         const MockEnderBond = await ethers.getContractFactory("MockEnderBond");
-        mockEnderBond = await upgrades.deployProxy(
+        mockEnderBond = (await upgrades.deployProxy(
             MockEnderBond,
             [endTokenAddress, endETHAddress, ethers.ZeroAddress, wallet1.address],
             {
                 initializer: "initialize",
             },
-        );
+        )) as unknown as MockEnderBond;
         await mockEnderBond.waitForDeployment();
         mockEnderBondAddress = await mockEnderBond.getAddress();
 
         // Deploy EnderTreasury
         const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
-        enderTreasury = await upgrades.deployProxy(
+        enderTreasury = (await upgrades.deployProxy(
             EnderTreasury,
             [
                 endTokenAddress,
@@ -132,7 +138,7 @@ describe("EnderTreasury", function () {
             {
                 initializer: "initializeTreasury",
             },
-        );
+        )) as unknown as EnderTreasury;
 
         enderTreasuryAddress = await enderTreasury.getAddress();
 
@@ -547,7 +553,7 @@ describe("EnderTreasury", function () {
 
             const withdrawAmt = await instadappLitelidoStaking.viewStinstaTokensValue(amount);
             await instadappLitelidoStaking.withdrawStinstaTokens(withdrawAmt);
-            filter = instadappLitelidoStaking.filters.WithdrawStinstaTokens;
+            const filter = instadappLitelidoStaking.filters.WithdrawStinstaTokens;
             const events = await instadappLitelidoStaking.queryFilter(filter, -1);
             const event1 = events[0];
             const args1 = event1.args;
