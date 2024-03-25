@@ -4,18 +4,21 @@ require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
 
+import "@nomicfoundation/hardhat-ethers";
+import "@openzeppelin/hardhat-upgrades";
+import "@nomicfoundation/hardhat-chai-matchers";
 // dotenv.config();
 
 module.exports = {
     // defaultNetwork: "matic",
     networks: {
         hardhat: {
-            allowUnlimitedContractSize: true
+            allowUnlimitedContractSize: true,
         },
-        mumbai: {
-            url: process.env.RPC,
-            accounts: [`0x${process.env.PVTKEY}`]
-        }
+        // mumbai: {
+        //     url: process.env.RPC,
+        //     accounts: [`0x${process.env.PVTKEY}`]
+        // }
         // ethereum: {
         //   // url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_PVT_KEY}`,
         //   url: `${process.env.RPC}`,
@@ -28,7 +31,7 @@ module.exports = {
         // },
     },
     etherscan: {
-      apiKey: process.env.API_KEY_POLYGON,
+        apiKey: process.env.API_KEY_POLYGON,
     },
     mocha: {
         timeout: 200000, // 200 seconds max for running tests
