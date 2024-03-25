@@ -467,7 +467,7 @@ describe("enderBond setting funtions and missing testing", function () {
             const depositPrincipalStEth = expandTo16Decimals(1);
             const sig1 = await signatureDigest(owner, enderBondAddress, owner);
             let maturity = 7;
-            let bondFee = 5;
+            let bondFee = 500;
 
             await enderBond.whitelist(false);
             await enderBond.setWithdrawPause(true);
@@ -808,8 +808,8 @@ describe("enderBond setting funtions and missing testing", function () {
         it("should be changed the bond parameters", async () => {
             const depositPrincipalStEth = expandTo16Decimals(1);
             const sig1 = await signatureDigest(owner, enderBondAddress, owner);
-            let maturity = 7;
-            let bondFee = 5;
+            let maturity = 11;
+            let bondFee = 500;
 
             await enderBond.whitelist(false);
             await enderBond.setWithdrawPause(true);
