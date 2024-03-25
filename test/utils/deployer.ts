@@ -1,4 +1,11 @@
-import { EnderBond, EndToken, MockLido, SEndToken, StETH } from "../../typechain-types";
+import {
+    EnderBond,
+    EnderStakeEth,
+    EndToken,
+    MockLido,
+    SEndToken,
+    StETH,
+} from "../../typechain-types";
 import { ethers, upgrades } from "hardhat";
 import { baseURI, MINTER_ROLE } from "./constants";
 export class Deployer {
@@ -26,6 +33,14 @@ export class Deployer {
         return sEndToken;
     }
 
+    async enderStakeEth(): Promise<EnderStakeEth> {
+        const enderStakeEthFactory = await ethers.getContractFactory("EnderStakeEth");
+        const enderStakeEth = (await upgrades.deployProxy(enderStakeEthFactory, [], {
+            initializer: "initialize",
+        })) as unknown as EnderStakeEth;
+        return enderStakeEth;
+    }
+
     async prepareEndBondTest({ owner, signer }: { owner: string; signer: string }) {
         if (!ethers.isAddress(signer)) {
             throw new Error("invalid address");
@@ -34,19 +49,23 @@ export class Deployer {
         const stEth = await this.stEth();
         const sEndToken = await this.sEndToken();
         const endToken = await this.endToken();
-        const endTokenAddress = await endToken.getAddress();
-        const sEndTokenAddress = await sEndToken.getAddress();
-        const stEthAddress = await stEth.getAddress();
+        const enderStakeEth = await this.enderStakeEth();
+        const endTokenAddr = await endToken.getAddress();
+        const sEndTokenAddr = await sEndToken.getAddress();
+        const stEthAddr = await stEth.getAddress();
+        const enderStakeEthAddr = await enderStakeEth.getAddress();
+        const lidoAddr = await lido.getAddress();
 
         const endBonderFactory = await ethers.getContractFactory("EnderBond");
         const enderBond = (await upgrades.deployProxy(
             endBonderFactory,
-            [await endToken.getAddress(), await lido.getAddress(), signer],
+            [endTokenAddr, enderStakeEthAddr, lidoAddr, signer],
             {
                 initializer: "initialize",
             },
         )) as unknown as EnderBond;
         const enderBondAddress = await enderBond.getAddress();
+        await enderStakeEth.grantRole(MINTER_ROLE, enderBondAddress);
 
         //set mockEnderBond address in endToken
         await endToken.setBond(await enderBond.getAddress());
@@ -55,7 +74,7 @@ export class Deployer {
         const enderStakingFactory = await ethers.getContractFactory("EnderStaking");
         const enderStaking = await upgrades.deployProxy(
             enderStakingFactory,
-            [endTokenAddress, sEndTokenAddress, stEthAddress, signer],
+            [endTokenAddr, sEndTokenAddr, stEthAddr, signer],
             {
                 initializer: "initialize",
             },
@@ -71,14 +90,14 @@ export class Deployer {
             "InstaToken",
             "Inst",
             owner,
-            stEthAddress,
+            stEthAddr,
         );
         const instadappLiteAddress = await instadappLitelidoStaking.getAddress();
 
         const enderTreasury = await upgrades.deployProxy(
             enderTreasuryFactory,
             [
-                endTokenAddress,
+                endTokenAddr,
                 enderStakingAddress,
                 enderBondAddress,
                 instadappLiteAddress,
@@ -92,6 +111,7 @@ export class Deployer {
             },
         );
         const enderTreasuryAddress = await enderTreasury.getAddress();
+        await enderStakeEth.setTreasury(enderTreasuryAddress);
 
         //deploy bond NFT contract
         const bondNftFactory = await ethers.getContractFactory("BondNFT");
@@ -106,12 +126,12 @@ export class Deployer {
 
         await enderStaking.setAddress(enderBondAddress, 1);
         await enderStaking.setAddress(enderTreasuryAddress, 2);
-        await enderStaking.setAddress(stEthAddress, 6);
+        await enderStaking.setAddress(stEthAddr, 6);
 
-        await enderBond.setBondableTokens([stEthAddress], true);
+        await enderBond.setBondableTokens([stEthAddr], true);
         await enderBond.setAddress(enderTreasuryAddress, 1);
         await enderBond.setAddress(bondNFTAddress, 3);
-        await enderBond.setAddress(sEndTokenAddress, 9);
+        await enderBond.setAddress(sEndTokenAddr, 9);
 
         await sEndToken.setStatus(2);
         await sEndToken.whitelist(enderBondAddress, true);
@@ -124,7 +144,7 @@ export class Deployer {
         await endToken.setExclude([enderStakingAddress], true);
 
         await enderBond.setAddress(enderStakingAddress, 8);
-        await enderBond.setAddress(stEthAddress, 6);
+        await enderBond.setAddress(stEthAddr, 6);
 
         await endToken.grantRole(MINTER_ROLE, enderStakingAddress);
         await endToken.grantRole(

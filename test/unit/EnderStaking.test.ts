@@ -1,34 +1,44 @@
-const { expect } = require("chai");
-const { ethers, upgrades } = require("hardhat");
+import { expect } from "chai";
+import { Wallet } from "ethers";
+import { ethers, upgrades } from "hardhat";
+import { EnderBond } from "../../typechain-types/contracts/EnderBond";
+import { EndToken } from "../../typechain-types/contracts/ERC20/EndToken";
+import { EnderStaking } from "../../typechain-types/contracts/EnderStaking";
+import { MockEnderStaking } from "../../typechain-types/contracts/mock/MockEnderStaking";
+import { SEndToken } from "../../typechain-types/contracts/ERC20/SEndToken";
 
 const baseURI = "https://endworld-backend-git-dev-metagaming.vercel.app/nft/metadata/";
 const MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
 
 describe("Ender Bond deposit and withdraw", async () => {
-    let owner,
-        signer,
-        signer1,
-        signer2,
-        stEthAddress,
-        enderBondAddress,
-        endTokenAddress,
-        sEndTokenAddress,
-        enderTreasuryAddress,
-        bondNFTAddress,
-        instadappLiteAddress,
-        enderStakingAddress,
-        mockEnderStakingAddress,
+    let owner: Wallet,
+        signer: Wallet,
+        signer1: Wallet,
+        signer2: Wallet,
+        stEthAddress: string,
+        enderBondAddress: string,
+        endTokenAddress: string,
+        endETHAddress: string,
+        sEndTokenAddress:string,
+        enderTreasuryAddress: string,
+        bondNFTAddress: string,
+        instadappLiteAddress: string,
+        enderStakingAddress: string,
+        mockEnderStakingAddress: string,
+        enderBondLiquidityDepositAddress: string,
         stEth,
-        enderBond,
+        enderBond: EnderBond,
         enderBondLiquidityDeposit,
-        endToken,
-        sEndToken,
+        endToken: EndToken,
+        endETHToken,
+        sEndToken: SEndToken,
         enderTreasury,
         bondNFT,
         instadappLitelidoStaking,
-        enderStaking,
-        mockEnderStaking,
-        signature1;
+        enderStaking: EnderStaking,
+        mockEnderStaking: MockEnderStaking,
+        userSign: EnderStaking.SignDataStruct,
+        signature1: string;
 
     before(async function () {
         const stEthFactory = await ethers.getContractFactory("StETH");
@@ -43,18 +53,19 @@ describe("Ender Bond deposit and withdraw", async () => {
         const sEndTokenFactory = await ethers.getContractFactory("SEndToken");
         const bondNftFactory = await ethers.getContractFactory("BondNFT");
         const mockEnderStakingFactory = await ethers.getContractFactory("MockEnderStaking");
+        const EndETHToken = await ethers.getContractFactory("EnderStakeEth");
 
         //Owner and signers addresses
-        [owner, signer, wallet, signer1, signer2] = await ethers.getSigners();
+        [owner, signer, signer1, signer2] = (await ethers.getSigners()) as unknown as Wallet[];
 
         //delpoy stEth
         stEth = await stEthFactory.deploy();
         stEthAddress = await stEth.getAddress();
 
         //deploy sEnd
-        sEndToken = await upgrades.deployProxy(sEndTokenFactory, [], {
+        sEndToken = (await upgrades.deployProxy(sEndTokenFactory, [], {
             initializer: "initialize",
-        });
+        })) as unknown as SEndToken;
         sEndTokenAddress = await sEndToken.connect(owner).getAddress();
 
         //deploy enderBondLiquidityDeposit
@@ -77,42 +88,48 @@ describe("Ender Bond deposit and withdraw", async () => {
         instadappLiteAddress = await instadappLitelidoStaking.getAddress();
 
         //deploy endToken
-        endToken = await upgrades.deployProxy(endTokenFactory, [], {
+        endToken = (await upgrades.deployProxy(endTokenFactory, [], {
             initializer: "initialize",
-        });
+        })) as unknown as EndToken;
         endTokenAddress = await endToken.getAddress();
 
+        // deploy endETH token
+        endETHToken = await upgrades.deployProxy(EndETHToken, [], {
+            initializer: "initialize",
+        });
+        endETHAddress = await endETHToken.getAddress();
+
         //deploy enderBond
-        enderBond = await upgrades.deployProxy(
+        enderBond = (await upgrades.deployProxy(
             enderBondFactory,
-            [endTokenAddress, ethers.ZeroAddress, signer.address],
+            [endTokenAddress, endETHAddress, ethers.ZeroAddress, signer.address],
             {
                 initializer: "initialize",
             },
-        );
+        )) as unknown as EnderBond;
         enderBondAddress = await enderBond.getAddress();
 
         //set enderBond address in endToken
         await endToken.setBond(enderBondAddress);
 
         //deploy ender Staking contract
-        enderStaking = await upgrades.deployProxy(
+        enderStaking = (await upgrades.deployProxy(
             enderStakingFactory,
             [endTokenAddress, sEndTokenAddress, stEthAddress, signer.address],
             {
                 initializer: "initialize",
             },
-        );
+        )) as unknown as EnderStaking;
         enderStakingAddress = await enderStaking.getAddress();
 
         // deploy mock ender staking contract
-        mockEnderStaking = await upgrades.deployProxy(
+        mockEnderStaking = (await upgrades.deployProxy(
             mockEnderStakingFactory,
             [endTokenAddress, sEndTokenAddress, stEthAddress, signer.address],
             {
                 initializer: "initialize",
             },
-        );
+        )) as unknown as MockEnderStaking;
 
         mockEnderStakingAddress = await mockEnderStaking.getAddress();
 
@@ -178,6 +195,9 @@ describe("Ender Bond deposit and withdraw", async () => {
 
         await enderBond.setBool(true);
 
+        await endETHToken.setTreasury(enderTreasuryAddress);
+        await endETHToken.grantRole(MINTER_ROLE, enderBondAddress);
+
         await enderTreasury.setAddress(instadappLitelidoStaking, 5);
         await enderTreasury.setStrategy([instadappLitelidoStaking], true);
         await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
@@ -227,8 +247,14 @@ describe("Ender Bond deposit and withdraw", async () => {
         });
 
         it("stake is reverted with InvalidAmount custom error", async () => {
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             await expect(
-                enderStaking.stake(0, [signer1.address, "0", signature1]),
+                enderStaking.stake(0, userSign),
             ).to.be.revertedWithCustomError(enderStaking, "InvalidAmount");
         });
 
@@ -248,9 +274,13 @@ describe("Ender Bond deposit and withdraw", async () => {
             expect(stakingContractPause).to.equal(true);
 
             const sig = await mockSignatureDigest();
-            const userSign = [signer1.address, "0", sig];
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: sig
+            };
             const userAddresss = await mockEnderStaking.verify(userSign);
-            const signerAddress = await mockEnderStaking.signer();
+            const signerAddress = await mockEnderStaking.contractSigner();
             expect(userAddresss).to.equal(signerAddress);
 
             //mint to signer1
@@ -285,9 +315,13 @@ describe("Ender Bond deposit and withdraw", async () => {
             expect(stakingContractPause).to.equal(true);
 
             const sig = await signatureDigest();
-            const userSign = [signer1.address, "0", sig];
+            userSign = {
+                user: signer1.address, 
+                key: "0", 
+                signature: sig
+            };
             const userAddresss = await mockEnderStaking.verify(userSign);
-            const signerAddress = await mockEnderStaking.signer();
+            const signerAddress = await mockEnderStaking.contractSigner();
             expect(userAddresss).to.be.not.equal(signerAddress);
 
             //mint to signer1
@@ -322,9 +356,13 @@ describe("Ender Bond deposit and withdraw", async () => {
             expect(stakingContractPause).to.equal(true);
 
             const sig = await mockSignatureDigest();
-            const userSign = [signer1.address, "0", sig];
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: sig
+            };
             const userAddresss = await mockEnderStaking.verify(userSign);
-            const signerAddress = await mockEnderStaking.signer();
+            const signerAddress = await mockEnderStaking.contractSigner();
             expect(userAddresss).to.equal(signerAddress);
 
             //mint to signer1
@@ -351,8 +389,14 @@ describe("Ender Bond deposit and withdraw", async () => {
             stakingEnable = await enderStaking.stakingEnable();
             expect(stakingEnable).to.equal(false);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             await expect(
-                enderStaking.stake(10, [signer1.address, "0", signature1]),
+                enderStaking.stake(10, userSign),
             ).to.be.revertedWithCustomError(enderStaking, "NotAllowed");
 
             await enderStaking.setStakingEnable(true);
@@ -368,8 +412,14 @@ describe("Ender Bond deposit and withdraw", async () => {
             stakingContractPause = await enderStaking.stakingContractPause();
             expect(stakingContractPause).to.equal(false);
 
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
+
             await expect(
-                enderStaking.stake(10, [signer1.address, "0", signature1]),
+                enderStaking.stake(10, userSign),
             ).to.be.revertedWithCustomError(enderStaking, "NotAllowed");
 
             await enderStaking.setStakingPause(true);
@@ -441,7 +491,11 @@ describe("Ender Bond deposit and withdraw", async () => {
         });
 
         it("_hash function testing", async () => {
-            const userSign = [signer1.address, "0", signature1];
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: signature1
+            };
 
             const hashValue = await mockEnderStaking.hash(userSign);
 
@@ -461,42 +515,16 @@ describe("Ender Bond deposit and withdraw", async () => {
 
         it("_verify function testing", async () => {
             const sig = await mockSignatureDigest();
-            const userSign = [signer1.address, "0", sig];
+            userSign = {
+                user: signer1.address,
+                key: "0",
+                signature: sig
+            };
             const userAddresss = await mockEnderStaking.verify(userSign);
-            const signerAddress = await mockEnderStaking.signer();
+            const signerAddress = await mockEnderStaking.contractSigner();
             expect(userAddresss).to.equal(signerAddress);
         });
     });
-
-    async function depositAndSetup(
-        signer,
-        depositAmount,
-        maturity,
-        bondFee,
-        [user, key, signature],
-    ) {
-        await enderBond
-            .connect(signer)
-            .deposit(signer, depositAmount, maturity, bondFee, stEthAddress, [
-                user,
-                key,
-                signature,
-            ]);
-        filter = enderBond.filters.Deposit;
-        const events = await enderBond.queryFilter(filter, -1);
-
-        const event1 = events[0];
-
-        const args1 = event1.args;
-        const tokenId = args1.tokenId;
-
-        return tokenId;
-    }
-
-    async function withdrawAndSetup(signer, tokenId) {
-        await endToken.grantRole(MINTER_ROLE, enderTreasuryAddress);
-        await enderBond.connect(signer).withdraw(tokenId);
-    }
 
     async function signatureDigest() {
         let sig = await signer.signTypedData(
@@ -554,12 +582,7 @@ describe("Ender Bond deposit and withdraw", async () => {
         return sig;
     }
 
-    async function increaseTime(days) {
-        await ethers.provider.send("evm_increaseTime", [days * 600]);
-        await ethers.provider.send("evm_mine");
-    }
-
-    function expandTo18Decimals(n) {
+    function expandTo18Decimals(n: number) {
         return ethers.parseUnits(n.toString(), 18);
     }
 });

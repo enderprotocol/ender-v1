@@ -16,7 +16,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
 
     address public stEth; // address of stEth
     address public lido; // address of lido
-    address public signer; // address of signer
+    address public contractSigner; // address of signer
     address public admin; // address of admin
     address public enderBond; // address of enderBond
     uint256 public index; // undex is used to track user info
@@ -80,7 +80,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         stEth = _stEth;
         lido = _lido;
-        signer = _signer;
+        contractSigner = _signer;
         admin = _admin;
         _transferOwnership(admin);
         bondableTokens[_stEth] = true;
@@ -100,8 +100,8 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
 
     function setsigner(address _signer) external onlyOwner {
         require(_signer != address(0), "Address can't be zero");
-        signer = _signer;
-        emit newSigner(signer);
+        contractSigner = _signer;
+        emit newSigner(contractSigner);
     }
 
     /**
@@ -174,7 +174,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
         // uint256 cannot be minus number
         if (bondFee > 10000) revert InvalidBondFee();
         address signAddress = _verify(userSign);
-        require(signAddress == signer && userSign.user == msg.sender, "user is not whitelisted");
+        require(signAddress == contractSigner && userSign.user == msg.sender, "user is not whitelisted");
         // token transfer
         if (token == address(0)) {
             if (msg.value != principal) revert InvalidAmount();

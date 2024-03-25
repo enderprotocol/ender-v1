@@ -10,6 +10,7 @@ const EnderLidoStrategy = "0x9F306B7119F24e78A286265905E80af7a318f3AD";
 const EnderOracle = "0x4CE5090196f000C6C486af65af8b55A98bBC728a";
 const depositContract = "0xCcb2374039fB1937A65a2233a130391A1643EbE5";
 const InstaDapp = "0x39bFa8Ee618B6a98034894BB4a56605a580FE898"; //
+const EndETH = "0x99Ed0314da82Fd1c702e9b3fDf0CDEcA15550509";
 
 async function main() {
     try {
@@ -44,33 +45,37 @@ async function main() {
         //     contract: "contracts/strategy/instadapp/instadappLite.sol:StinstaToken",
         // });
         await hre.run("verify:verify", {
-            address: EndToken,
-            contract: "contracts/ERC20/EndToken.sol:EndToken",
+            address: EndETH,
+            contract: "contracts/ERC20/EnderStakeEth.sol:EnderStakeEth",
         });
-        await hre.run("verify:verify", {
-            address: SEndToken,
-            contract: "contracts/ERC20/SEndToken.sol:SEndToken",
-        });
+        // await hre.run("verify:verify", {
+        //     address: EndToken,
+        //     contract: "contracts/ERC20/EndToken.sol:EndToken",
+        // });
+        // await hre.run("verify:verify", {
+        //     address: SEndToken,
+        //     contract: "contracts/ERC20/SEndToken.sol:SEndToken",
+        // });
 
-        await hre.run("verify:verify", {
-            address: EnderBond,
-            contract: "contracts/EnderBond.sol:EnderBond",
-        });
+        // await hre.run("verify:verify", {
+        //     address: EnderBond,
+        //     contract: "contracts/EnderBond.sol:EnderBond",
+        // });
 
-        await hre.run("verify:verify", {
-            address: BondNFT,
-            contract: "contracts/NFT/BondNFT.sol:BondNFT",
-        });
+        // await hre.run("verify:verify", {
+        //     address: BondNFT,
+        //     contract: "contracts/NFT/BondNFT.sol:BondNFT",
+        // });
 
-        await hre.run("verify:verify", {
-            address: EnderTreasury,
-            contract: "contracts/EnderTreasury.sol:EnderTreasury",
-        });
+        // await hre.run("verify:verify", {
+        //     address: EnderTreasury,
+        //     contract: "contracts/EnderTreasury.sol:EnderTreasury",
+        // });
 
-        await hre.run("verify:verify", {
-            address: EnderStaking,
-            contract: "contracts/EnderStaking.sol:EnderStaking",
-        });
+        // await hre.run("verify:verify", {
+        //     address: EnderStaking,
+        //     contract: "contracts/EnderStaking.sol:EnderStaking",
+        // });
         // await hre.run("verify:verify", {
         //     address: EnderOracle,
         //     contract: "contracts/oracle/EnderOracle.sol:EnderOracle",
