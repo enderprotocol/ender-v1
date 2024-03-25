@@ -41,6 +41,7 @@
     "compile": "hardhat compile",
     "clean": "hardhat clean",
     "test": "hardhat test test/unit/EnderBond.test.js",
+    "test:integration": "hardhat test test/integration/*.test.ts",
     "gas": "REPORT_GAS=true hardhat test",
     "coverage": "hardhat coverage",
     "coverage:unit": "hardhat coverage --testfiles test/unit/*.test.js",
