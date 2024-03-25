@@ -12,20 +12,20 @@ module.exports = {
         hardhat: {
             allowUnlimitedContractSize: true,
         },
-        // mumbai: {
-        //     url: process.env.RPC,
-        //     accounts: [`0x${process.env.PVTKEY}`]
-        // }
-        // ethereum: {
-        //   // url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_PVT_KEY}`,
-        //   url: `${process.env.RPC}`,
-        //   accounts: [`0x${process.env.PVTKEY}`],
-        // },
-        // goerli: {
-        //   // url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_PVT_KEY}`,
-        //   url: `${process.env.ETHRPC}`,
-        //   accounts: [`0x${process.env.PVTKEY}`],
-        // },
+        mumbai: {
+            url: process.env.RPC,
+            accounts: [`0x${process.env.PVTKEY}`],
+        },
+        ethereum: {
+            // url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_PVT_KEY}`,
+            url: `${process.env.RPC}`,
+            accounts: [`0x${process.env.PVTKEY}`],
+        },
+        goerli: {
+            // url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_PVT_KEY}`,
+            url: `${process.env.ETHRPC}`,
+            accounts: [`0x${process.env.PVTKEY}`],
+        },
     },
     etherscan: {
         apiKey: process.env.API_KEY_POLYGON,
