@@ -75,7 +75,7 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         excludeWallets[msg.sender] = true; //todo pass the admin address in parameter
         mintCount = 4;
         mintFee = 1600;
-        lastYear = block.timestamp/ 31536000;
+        lastYear = block.timestamp / 31536000;
         setFee(500);
         unchecked {
             lastTransfer = block.timestamp - (block.timestamp % 1 days);
@@ -132,43 +132,37 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         admin = _admin;
     }
 
-
-
-   function getMintedEnd() external{
+    function getMintedEnd() external {
         mintAndVest();
         uint256 time = block.timestamp;
         uint256 withdrawAmount = 0;
         uint256 secondsInYear = 31536000;
-        uint256 lastYearStart = lastYear ;
+        uint256 lastYearStart = lastYear;
 
         VestAmount storage lastYearVest = yearlyVestAmount[lastYear];
 
-        if (lastYear*secondsInYear< time ) {
-            uint256 theeeMonths = lastYearStart*secondsInYear + 90 days;
-            uint256 sixMonths = lastYearStart*secondsInYear + 180 days;
-            uint256 nineMonths = lastYearStart*secondsInYear + 270 days;
+        if (lastYear * secondsInYear < time) {
+            uint256 theeeMonths = lastYearStart * secondsInYear + 90 days;
+            uint256 sixMonths = lastYearStart * secondsInYear + 180 days;
+            uint256 nineMonths = lastYearStart * secondsInYear + 270 days;
 
-            if (lastYearVest.threeMonths && theeeMonths <= time)
-                {
+            if (lastYearVest.threeMonths && theeeMonths <= time) {
                 withdrawAmount += lastYearVest.totalAmount / 3;
                 lastYearVest.threeMonths = false;
-                }
-            if (lastYearVest.sixMonths && sixMonths <= time) 
-               {
+            }
+            if (lastYearVest.sixMonths && sixMonths <= time) {
                 withdrawAmount += lastYearVest.totalAmount / 3;
                 lastYearVest.sixMonths = false;
-               }
-            if (lastYearVest.nineMonths && nineMonths <= time) 
-              {
+            }
+            if (lastYearVest.nineMonths && nineMonths <= time) {
                 withdrawAmount += lastYearVest.totalAmount / 3;
                 lastYearVest.nineMonths = false;
-              }
+            }
         }
         if (withdrawAmount > 0) {
-            _transfer(address(this),admin,withdrawAmount);
+            _transfer(address(this), admin, withdrawAmount);
         }
     }
-
 
     /**
      * @notice Mints a specified amount of tokens to the treasury
@@ -181,18 +175,17 @@ contract EndToken is IEndToken, ERC20Upgradeable, AccessControlUpgradeable {
         _mint(to, amount);
     }
 
-
     function mintAndVest() internal {
         uint256 time = block.timestamp;
-        if(time>=lastYear*31536000 + 365 days){
-        uint256 mintAmount = (totalSupply() * mintFee) / 10000;
-        yearlyVestAmount[time / 31536000] = VestAmount(mintAmount, true, true, true);
-        mint(address(this), mintAmount);
-        if (mintFee != 100) {
-            mintFee -= 100;
-        }
-        lastYear = time / 31536000;
-        emit MintAndVest(block.timestamp, mintAmount);
+        if (time >= lastYear * 31536000 + 365 days) {
+            uint256 mintAmount = (totalSupply() * mintFee) / 10000;
+            yearlyVestAmount[time / 31536000] = VestAmount(mintAmount, true, true, true);
+            mint(address(this), mintAmount);
+            if (mintFee != 100) {
+                mintFee -= 100;
+            }
+            lastYear = time / 31536000;
+            emit MintAndVest(block.timestamp, mintAmount);
         }
     }
     function _transfer(address from, address to, uint256 amount) internal override {

@@ -21,7 +21,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     string private constant SIGNING_DOMAIN = "stakingContract";
     string private constant SIGNATURE_VERSION = "1";
     uint256 public bondRewardPercentage;
-    uint256 public rebasingIndex;  
+    uint256 public rebasingIndex;
     uint256 public rebaseRefractionReward;
     uint256 public lastRebaseReward;
     address public contractSigner;
@@ -31,8 +31,8 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     address public enderBond;
     address public stEth;
     bool public isWhitelisted;
-    bool public stakingEnable;  // status of staking-pause feature (enabled/disabled)
-    bool public unstakeEnable;  // status of unstake-pause feature (enabled/disabled)
+    bool public stakingEnable; // status of staking-pause feature (enabled/disabled)
+    bool public unstakeEnable; // status of unstake-pause feature (enabled/disabled)
     bool public stakingContractPause; // status of stakingContract-pause feature (enabled/disabled)
 
     struct signData {
@@ -48,16 +48,21 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
     event stakingContractPauseSet(bool indexed isEnable);
     event Stake(address indexed staker, uint256 amount);
     event unStake(address indexed withdrawer, uint256 amount);
-    event EpochStakingReward(address indexed asset, uint256 totalReward, uint256 rebaseRefractionReward, uint256 sendTokens);
+    event EpochStakingReward(
+        address indexed asset,
+        uint256 totalReward,
+        uint256 rebaseRefractionReward,
+        uint256 sendTokens
+    );
     event WhitelistChanged(bool indexed action);
     event newSigner(address _signer);
-  
+
     function initialize(address _end, address _sEnd, address _stEth, address _signer) external initializer {
         __Ownable_init();
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         contractSigner = _signer;
         stakingEnable = true; // for testing purpose
-        unstakeEnable = true;   // for testing purpose
+        unstakeEnable = true; // for testing purpose
         stakingContractPause = true; // for testing purpose
         isWhitelisted = false; // for testing purpose
         setAddress(_end, 3);
@@ -78,20 +83,20 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
 
     modifier stakingContractPaused() {
         if (stakingContractPause != true) revert NotAllowed();
-        _; 
+        _;
     }
 
-    function setStakingEnable(bool _enable) external onlyOwner{
+    function setStakingEnable(bool _enable) external onlyOwner {
         stakingEnable = _enable;
         emit stakingEnableSet(_enable);
     }
 
-    function setUnstakeEnable(bool _enable) external onlyOwner{
+    function setUnstakeEnable(bool _enable) external onlyOwner {
         unstakeEnable = _enable;
         emit unstakeEnableSet(_enable);
     }
 
-    function setStakingPause(bool _enable) external onlyOwner{
+    function setStakingPause(bool _enable) external onlyOwner {
         stakingContractPause = _enable;
         emit stakingContractPauseSet(_enable);
     }
@@ -111,9 +116,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         else if (_type == 4) sEndToken = _addr;
         else if (_type == 5) stEth = _addr;
 
-         emit AddressUpdated(_addr, _type);
-
-       
+        emit AddressUpdated(_addr, _type);
     }
 
     function setBondRewardPercentage(uint256 percent) external onlyOwner {
@@ -123,7 +126,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         emit PercentUpdated(bondRewardPercentage);
     }
 
-    function whitelist(bool _action) external onlyOwner{
+    function whitelist(bool _action) external onlyOwner {
         isWhitelisted = _action;
         emit WhitelistChanged(_action);
     }
@@ -132,21 +135,21 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
      * @notice Users do stake
      * @param amount  stake amount
      */
-    function stake(uint256 amount, signData memory userSign) external stakingEnabled stakingContractPaused{
+    function stake(uint256 amount, signData memory userSign) external stakingEnabled stakingContractPaused {
         if (amount == 0) revert InvalidAmount();
-        if(isWhitelisted){
+        if (isWhitelisted) {
             address signAddress = _verify(userSign);
-            if(signAddress != contractSigner || userSign.user != msg.sender) revert NotWhitelisted();
+            if (signAddress != contractSigner || userSign.user != msg.sender) revert NotWhitelisted();
         }
 
-        if(ISEndToken(endToken).balanceOf(address(this)) == 0){
+        if (ISEndToken(endToken).balanceOf(address(this)) == 0) {
             uint256 sEndAmount = calculateSEndTokens(amount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
             ISEndToken(endToken).safeTransferFrom(msg.sender, address(this), amount);
             calculateRebaseIndex();
         } else {
             // epochStakingReward(stEth);
-            ISEndToken(endToken).safeTransferFrom(msg.sender, address(this), amount);          
+            ISEndToken(endToken).safeTransferFrom(msg.sender, address(this), amount);
             uint256 sEndAmount = calculateSEndTokens(amount);
             ISEndToken(sEndToken).mint(msg.sender, sEndAmount);
         }
@@ -157,7 +160,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
      * @notice Users can unstake
      * @param amount  unstake amount
      */
-    function unstake(uint256 amount) external unstakeEnabled stakingContractPaused{
+    function unstake(uint256 amount) external unstakeEnabled stakingContractPaused {
         if (amount == 0) revert InvalidAmount();
         if (ISEndToken(sEndToken).balanceOf(msg.sender) < amount) revert InvalidAmount();
         // add reward
@@ -168,22 +171,21 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         ISEndToken(endToken).safeTransfer(msg.sender, reward);
         ISEndToken(sEndToken).burn(msg.sender, amount);
         emit unStake(msg.sender, amount);
-     
     }
 
     // Here in the asset we are adding stEth
-    function epochStakingReward(address _asset) public  {
-        if(_asset != stEth) revert NotAllowed();
+    function epochStakingReward(address _asset) public {
+        if (_asset != stEth) revert NotAllowed();
         uint256 totalReward = IEnderTreasury(enderTreasury).stakeRebasingReward(_asset);
         lastRebaseReward = totalReward;
 
-        if(totalReward > 0) {
+        if (totalReward > 0) {
             rebaseRefractionReward = (totalReward * bondRewardPercentage) / 100;
             uint256 sendTokens = calculateSEndTokens(rebaseRefractionReward);
             IEnderBond(enderBond).epochRewardShareIndexForSend(sendTokens);
             ISEndToken(sEndToken).mint(enderBond, sendTokens);
             ISEndToken(endToken).mint(address(this), totalReward);
-            emit EpochStakingReward(_asset, totalReward, rebaseRefractionReward, sendTokens);  
+            emit EpochStakingReward(_asset, totalReward, rebaseRefractionReward, sendTokens);
         }
         calculateRebaseIndex();
     }
@@ -192,9 +194,9 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         if (rebasingIndex == 0) {
             sEndTokens = _endAmount;
             return sEndTokens;
-        } else{
-            sEndTokens = (_endAmount * 1e18/ rebasingIndex); 
-            return sEndTokens; 
+        } else {
+            sEndTokens = ((_endAmount * 1e18) / rebasingIndex);
+            return sEndTokens;
         }
     }
 
@@ -204,7 +206,7 @@ contract EnderStaking is Initializable, EIP712Upgradeable, OwnableUpgradeable {
         if (endBalStaking == 0 || sEndTotalSupply == 0) {
             rebasingIndex = 1e18;
         } else {
-            rebasingIndex = endBalStaking * 1e18/ sEndTotalSupply;
+            rebasingIndex = (endBalStaking * 1e18) / sEndTotalSupply;
         }
     }
 

@@ -19,6 +19,6 @@ contract lidoStaking {
 
     function withdraw(uint256 _amount) public {
         (bool suc, ) = payable(msg.sender).call{value: _amount}("");
-        require(suc,"Eth tx failed");
+        require(suc, "Eth tx failed");
     }
 }

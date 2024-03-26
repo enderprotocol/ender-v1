@@ -1,10 +1,10 @@
 /**
  *Submitted for verification at mumbai.polygonscan.com on 2023-12-01
-*/
+ */
 
 /**
  *Submitted for verification at mumbai.polygonscan.com on 2023-11-30
-*/
+ */
 
 // SPDX-License-Identifier: MIT
 
@@ -23,7 +23,6 @@ pragma solidity ^0.8.18;
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-
 
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
@@ -132,15 +131,14 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
-contract mockWETH is Ownable,IERC20 {
+contract mockWETH is Ownable, IERC20 {
     mapping(address => uint256) public _balances;
     mapping(address => mapping(address => uint256)) public _allowances;
     uint256 private _totalSupply;
     string private _name;
     string private _symbol;
 
-    constructor(string memory name_, string memory symbol_,address owner) Ownable(owner){
+    constructor(string memory name_, string memory symbol_, address owner) Ownable(owner) {
         _name = name_;
         _symbol = symbol_;
     }
@@ -255,28 +253,28 @@ contract mockWETH is Ownable,IERC20 {
 contract MockStEth is mockWETH {
     uint256 public totalShare;
     uint256 public sIndex;
-    mapping (address => uint256) public totalShareOfUser;
-    mapping (address => uint256) public pendingReward;
+    mapping(address => uint256) public totalShareOfUser;
+    mapping(address => uint256) public pendingReward;
     IERC20 public mockWeth;
 
-    constructor(address _WETH,address owner) mockWETH("MockStEth", "MSTEth",owner) {
+    constructor(address _WETH, address owner) mockWETH("MockStEth", "MSTEth", owner) {
         mockWeth = IERC20(_WETH);
     }
 
-    function mintShare(uint256 share) public{
-        require(share>0,"Share must be greater than zero");
-        if((sIndex - totalShareOfUser[msg.sender]) > 0){
-            pendingReward[msg.sender] += (_balances[msg.sender] * (sIndex - totalShareOfUser[msg.sender]))/ 1e3;
+    function mintShare(uint256 share) public {
+        require(share > 0, "Share must be greater than zero");
+        if ((sIndex - totalShareOfUser[msg.sender]) > 0) {
+            pendingReward[msg.sender] += (_balances[msg.sender] * (sIndex - totalShareOfUser[msg.sender])) / 1e3;
         }
-        if(pendingReward[msg.sender] > 0){
+        if (pendingReward[msg.sender] > 0) {
             totalShareOfUser[msg.sender] = sIndex;
         }
         uint256 reward = mockWeth.balanceOf(address(this)) - totalShare;
-        if(reward > 0 ){
-            sIndex = (sIndex + ((reward*1e3)/totalShare));
+        if (reward > 0) {
+            sIndex = (sIndex + ((reward * 1e3) / totalShare));
             totalShare += reward;
         }
-        if(pendingReward[msg.sender] == 0){
+        if (pendingReward[msg.sender] == 0) {
             totalShareOfUser[msg.sender] = sIndex;
         }
 
@@ -285,25 +283,28 @@ contract MockStEth is mockWETH {
         _balances[msg.sender] += share;
     }
 
-    function totalSupply() public view override returns(uint256){
+    function totalSupply() public view override returns (uint256) {
         return totalShare;
     }
 
-    function _approve(address owner, address spender,uint256 amount) internal override {
-        _allowances[owner][spender] = _balances[owner] + (pendingReward[owner] + ((_balances[owner] * (sIndex - totalShareOfUser[owner]))/ 1e3));
+    function _approve(address owner, address spender, uint256 amount) internal override {
+        _allowances[owner][spender] =
+            _balances[owner] +
+            (pendingReward[owner] + ((_balances[owner] * (sIndex - totalShareOfUser[owner])) / 1e3));
         emit Approval(owner, spender, amount);
     }
 
-    function balanceOf(address account) public view override returns(uint256) {
-        require(account!=address(0),"Zero Address");
-        uint256 balance = _balances[account] + (pendingReward[account] + ((_balances[account] * (sIndex - totalShareOfUser[account]))/ 1e3));
-        
+    function balanceOf(address account) public view override returns (uint256) {
+        require(account != address(0), "Zero Address");
+        uint256 balance = _balances[account] +
+            (pendingReward[account] + ((_balances[account] * (sIndex - totalShareOfUser[account])) / 1e3));
+
         return balance;
     }
 
-    function _transfer(address sender,address recipient, uint256 amount) internal virtual override   {
+    function _transfer(address sender, address recipient, uint256 amount) internal virtual override {
         uint256 balance = balanceOf(sender);
-        require(balance >= amount,"Insufficient Share");
+        require(balance >= amount, "Insufficient Share");
         super._transfer(sender, recipient, amount);
     }
 }

@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import "@aragon/os/contracts/lib/math/SafeMath.sol";
 // import "./utils/Pausable.sol";
 
-
 /**
  * @title Interest-bearing ERC20-like token for Lido Liquid Stacking protocol.
  *
@@ -49,7 +48,7 @@ contract StETH is IERC20 {
     // using UnstructuredStorage for bytes32;
 
     // address constant internal INITIAL_TOKEN_HOLDER = 0x0000;
-    uint256 constant internal INFINITE_ALLOWANCE = ~uint256(0);
+    uint256 internal constant INFINITE_ALLOWANCE = ~uint256(0);
 
     /**
      * @dev StETH balances are dynamic and are calculated based on the accounts' shares
@@ -58,13 +57,13 @@ contract StETH is IERC20 {
      * each account's token balance which equals to:
      *
      *   shares[account] * _getTotalPooledEther() / _getTotalShares()
-    */
-    mapping (address => uint256) private shares;
+     */
+    mapping(address => uint256) private shares;
 
     /**
      * @dev Allowances are nominated in tokens, not token shares.
      */
-    mapping (address => mapping (address => uint256)) private allowances;
+    mapping(address => mapping(address => uint256)) private allowances;
 
     /**
      * @dev Storage position used for holding the total amount of shares in existence.
@@ -86,15 +85,11 @@ contract StETH is IERC20 {
     uint256 public TOTAL_SHARES_POSITION = 1;
     uint256 public TotalEthAmount = 1;
     /**
-      * @notice An executed shares transfer from `sender` to `recipient`.
-      *
-      * @dev emitted in pair with an ERC20-defined `Transfer` event.
-      */
-    event TransferShares(
-        address indexed from,
-        address indexed to,
-        uint256 sharesValue
-    );
+     * @notice An executed shares transfer from `sender` to `recipient`.
+     *
+     * @dev emitted in pair with an ERC20-defined `Transfer` event.
+     */
+    event TransferShares(address indexed from, address indexed to, uint256 sharesValue);
 
     /**
      * @notice An executed `burnShares` request
@@ -297,18 +292,14 @@ contract StETH is IERC20 {
      * @return the amount of shares that corresponds to `_ethAmount` protocol-controlled Ether.
      */
     function getSharesByPooledEth(uint256 _ethAmount) public view returns (uint256) {
-        return (_ethAmount
-            * (_getTotalShares()))
-            / (_getTotalPooledEther());
+        return (_ethAmount * (_getTotalShares())) / (_getTotalPooledEther());
     }
 
     /**
      * @return the amount of Ether that corresponds to `_sharesAmount` token shares.
      */
     function getPooledEthByShares(uint256 _sharesAmount) public view returns (uint256) {
-        return (_sharesAmount
-            * (_getTotalPooledEther()))
-            / (_getTotalShares());
+        return (_sharesAmount * (_getTotalPooledEther())) / (_getTotalShares());
     }
 
     /**
@@ -349,9 +340,7 @@ contract StETH is IERC20 {
      *
      * @dev The `_sharesAmount` argument is the amount of shares, not tokens.
      */
-    function transferSharesFrom(
-        address _sender, address _recipient, uint256 _sharesAmount
-    ) external returns (uint256) {
+    function transferSharesFrom(address _sender, address _recipient, uint256 _sharesAmount) external returns (uint256) {
         uint256 tokensAmount = getPooledEthByShares(_sharesAmount);
         _spendAllowance(_sender, msg.sender, tokensAmount);
         _transferShares(_sender, _recipient, _sharesAmount);
@@ -364,7 +353,7 @@ contract StETH is IERC20 {
      * @dev This is used for calculating tokens from shares and vice versa.
      * @dev This function is required to be implemented in a derived contract.
      */
-    function _getTotalPooledEther() internal view returns (uint256){
+    function _getTotalPooledEther() internal view returns (uint256) {
         return TotalEthAmount;
     }
 
@@ -539,11 +528,15 @@ contract StETH is IERC20 {
     }
 
     function getStorageUint256(bytes32 position) internal view returns (uint256 data) {
-        assembly { data := sload(position) }
+        assembly {
+            data := sload(position)
+        }
     }
 
     function setStorageUint256(bytes32 position, uint256 data) internal {
-        assembly { sstore(position, data) }
+        assembly {
+            sstore(position, data)
+        }
     }
 
     function submit() external payable returns (uint256) {
@@ -553,5 +546,4 @@ contract StETH is IERC20 {
     }
 
     receive() external payable {}
-
 }

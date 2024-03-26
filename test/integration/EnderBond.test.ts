@@ -13,7 +13,7 @@ import { Deployer } from "../utils/deployer";
 import { time, loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-describe.only("test enderBond contract", async () => {
+describe("test enderBond contract", async () => {
     let enderBond: EnderBond;
     let enderTokenFactory: EndToken__factory;
     let stEthTokenFactory: StETH__factory;
@@ -54,7 +54,12 @@ describe.only("test enderBond contract", async () => {
     it("Deposit 1:", async () => {
         console.log(user1.getAddress());
         const user1Addr = await user1.getAddress();
-        const signature = await signatureDigest(user1, await enderBond.getAddress(), user1);
+        const signature = await signatureDigest(
+            user1,
+            "bondContract",
+            await enderBond.getAddress(),
+            user1,
+        );
         const userSign = {
             user: user1Addr,
             key: "0",

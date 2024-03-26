@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 
-
-
 pragma solidity ^0.8.0;
 
 /**
@@ -83,7 +81,7 @@ contract EnderProxy {
      * @param newOwner The address to transfer ownership to.
      */
     function transferProxyOwnership(address newOwner) public onlyProxyOwner {
-        require(newOwner != address(0), 'OwnedUpgradeabilityProxy: INVALID');
+        require(newOwner != address(0), "OwnedUpgradeabilityProxy: INVALID");
         emit ProxyOwnershipTransferred(proxyOwner(), newOwner);
         setUpgradeabilityOwner(newOwner);
     }
@@ -103,9 +101,9 @@ contract EnderProxy {
      * @param data represents the msg.data to bet sent in the low level call. This parameter may include the function
      * signature of the implementation to be called with the needed payload
      */
-    function upgradeToAndCall(address newImplementation, bytes memory data) payable public onlyProxyOwner {
+    function upgradeToAndCall(address newImplementation, bytes memory data) public payable onlyProxyOwner {
         upgradeTo(newImplementation);
-        (bool success, ) = address(this).call{ value: msg.value }(data);
+        (bool success, ) = address(this).call{value: msg.value}(data);
         require(success, "OwnedUpgradeabilityProxy: INVALID");
     }
 
@@ -117,7 +115,7 @@ contract EnderProxy {
         _fallback();
     }
 
-    receive () external payable {
+    receive() external payable {
         _fallback();
     }
 
@@ -149,17 +147,17 @@ contract EnderProxy {
      */
     function _upgradeTo(address newImplementation) internal {
         address currentImplementation = implementation();
-        require(currentImplementation != newImplementation, 'OwnedUpgradeabilityProxy: INVALID');
+        require(currentImplementation != newImplementation, "OwnedUpgradeabilityProxy: INVALID");
         setImplementation(newImplementation);
         emit Upgraded(newImplementation);
     }
 
     function _fallback() internal {
         if (maintenance()) {
-            require(msg.sender == proxyOwner(), 'OwnedUpgradeabilityProxy: FORBIDDEN');
+            require(msg.sender == proxyOwner(), "OwnedUpgradeabilityProxy: FORBIDDEN");
         }
         address _impl = implementation();
-        require(_impl != address(0), 'OwnedUpgradeabilityProxy: INVALID');
+        require(_impl != address(0), "OwnedUpgradeabilityProxy: INVALID");
         assembly {
             let ptr := mload(0x40)
             calldatacopy(ptr, 0, calldatasize())
@@ -168,8 +166,12 @@ contract EnderProxy {
             returndatacopy(ptr, 0, size)
 
             switch result
-            case 0 { revert(ptr, size) }
-            default { return(ptr, size) }
+            case 0 {
+                revert(ptr, size)
+            }
+            default {
+                return(ptr, size)
+            }
         }
     }
 
@@ -177,7 +179,7 @@ contract EnderProxy {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyProxyOwner() {
-        require(msg.sender == proxyOwner(), 'OwnedUpgradeabilityProxy: FORBIDDEN');
+        require(msg.sender == proxyOwner(), "OwnedUpgradeabilityProxy: FORBIDDEN");
         _;
     }
 }

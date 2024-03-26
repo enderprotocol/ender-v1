@@ -1,15 +1,15 @@
 import { expect } from "chai";
-import { Wallet } from "ethers";
 import { ethers, upgrades } from "hardhat";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+
 import { EndToken } from "../../typechain-types/contracts/ERC20/EndToken";
 import { MockEnderBond } from "../../typechain-types/contracts/mock/MockEnderBond";
 import { EnderTreasury } from "../../typechain-types/contracts/EnderTreasury";
 import { StETH } from "../../typechain-types/contracts/ERC20/mockStEth.sol/StETH";
 import { StinstaToken } from "../../typechain-types/contracts/strategy/instadapp/instadappLite.sol/StinstaToken";
+import { Deployer } from "../utils/deployer";
 
 // const { EigenLayerStrategyManagerAddress, LidoAgentAddress } = require("../utils/common")
-const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
-const MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
 
 describe("EnderTreasury", function () {
     const EigenLayerStrategyManagerAddress = "0x858646372CC42E1A627fcE94aa7A7033e7CF075A";
@@ -18,7 +18,7 @@ describe("EnderTreasury", function () {
     // const libraAddress = "0x04919f277cfFB234CE2660769404FbFcC3673d85";
     const eigenLayerAddress = "0x85df364E61C35aBd0384DBb33598b6cCd2d90588";
 
-    let owner: Wallet, wallet1: Wallet, signer1: Wallet;
+    let owner: HardhatEthersSigner, wallet1: HardhatEthersSigner, signer1: HardhatEthersSigner;
     let endTokenAddress: string,
         endETHAddress,
         enderStakingAddress: string,
@@ -26,88 +26,50 @@ describe("EnderTreasury", function () {
         mockEnderBondAddress: string,
         enderTreasuryAddress: string,
         enderELStrategyAddress: string,
-        enderLidoStrategyAddress,
         instadappLiteAddress: string,
         stEthAddress: string,
         sEndTokenAddress,
         libraAddress: string;
     let endToken: EndToken,
-        endETHToken,
-        enderStaking,
         enderBond,
         mockEnderBond: MockEnderBond,
         enderTreasury: EnderTreasury,
         enderELStrategy,
-        enderLidoStrategy,
         instadappLitelidoStaking: StinstaToken,
         stEth: StETH,
         sEnd,
         libra;
+    const deployer = new Deployer();
 
     beforeEach(async function () {
-        [owner, wallet1, signer1] = (await ethers.getSigners()) as unknown as Wallet[];
-
-        const StEth = await ethers.getContractFactory("StETH");
-        const EnderStaking = await ethers.getContractFactory("EnderStaking");
-        const SEnd = await ethers.getContractFactory("SEndToken");
-        const Lybra = await ethers.getContractFactory("mockLybra");
-        const EndETHToken = await ethers.getContractFactory("EnderStakeEth");
-
-        stEth = (await StEth.deploy()) as unknown as StETH;
-        stEthAddress = await stEth.getAddress();
-
-        sEnd = await upgrades.deployProxy(SEnd, [], {
-            initializer: "initialize",
+        [owner, wallet1, signer1] = await ethers.getSigners();
+        const contracts = await deployer.prepareEndBondTest({
+            owner: owner.address,
+            signer: wallet1.address,
         });
-        sEndTokenAddress = await sEnd.connect(owner).getAddress();
 
-        // Deploy EndToken
-        const EndToken = await ethers.getContractFactory("EndToken");
-        endToken = (await upgrades.deployProxy(EndToken, [], {
-            initializer: "initialize",
-        })) as unknown as EndToken;
-        await endToken.waitForDeployment();
-        endTokenAddress = await endToken.getAddress();
+        stEth = contracts.stEth;
+        stEthAddress = contracts.stEthAddr;
 
-        const InstadappLite = await ethers.getContractFactory("StinstaToken");
-        instadappLitelidoStaking = (await InstadappLite.deploy(
-            "InstaToken",
-            "Inst",
-            owner.address,
-            stEthAddress,
-        )) as unknown as StinstaToken;
-        instadappLiteAddress = await instadappLitelidoStaking.getAddress();
+        sEnd = contracts.sEndToken;
+        sEndTokenAddress = contracts.sEndTokenAddr;
 
-        enderStaking = await upgrades.deployProxy(
-            EnderStaking,
-            [endTokenAddress, sEndTokenAddress, stEthAddress, wallet1.address],
-            {
-                initializer: "initialize",
-            },
-        );
+        endToken = contracts.endToken;
+        endTokenAddress = contracts.endTokenAddr;
 
-        enderStakingAddress = await enderStaking.getAddress();
+        instadappLitelidoStaking = contracts.instadappLitelidoStaking;
+        instadappLiteAddress = contracts.instadappLiteAddress;
 
+        enderStakingAddress = contracts.enderStakingAddress;
+
+        const Lybra = await ethers.getContractFactory("mockLybra");
         libra = await Lybra.deploy(stEthAddress);
         libraAddress = await libra.getAddress();
 
-        // deploy endETH token
-        endETHToken = await upgrades.deployProxy(EndETHToken, [], {
-            initializer: "initialize"
-        });
-        endETHAddress = await endETHToken.getAddress();
+        endETHAddress = contracts.enderStakeEthAddr;
 
-        // Deploy EnderBond
-        const EnderBond = await ethers.getContractFactory("EnderBond");
-        enderBond = await upgrades.deployProxy(
-            EnderBond,
-            [endTokenAddress, endETHAddress, ethers.ZeroAddress, wallet1.address],
-            {
-                initializer: "initialize",
-            },
-        );
-        await enderBond.waitForDeployment();
-        enderBondAddress = await enderBond.getAddress();
+        enderBond = contracts.enderBond;
+        enderBondAddress = contracts.enderBondAddress;
 
         // Deploy MockEnderBond
         const MockEnderBond = await ethers.getContractFactory("MockEnderBond");
@@ -118,34 +80,10 @@ describe("EnderTreasury", function () {
                 initializer: "initialize",
             },
         )) as unknown as MockEnderBond;
-        await mockEnderBond.waitForDeployment();
         mockEnderBondAddress = await mockEnderBond.getAddress();
 
-        // Deploy EnderTreasury
-        const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
-        enderTreasury = (await upgrades.deployProxy(
-            EnderTreasury,
-            [
-                endTokenAddress,
-                enderStakingAddress,
-                enderBondAddress, // type 2
-                instadappLiteAddress,
-                libraAddress,
-                eigenLayerAddress,
-                70,
-                30,
-            ],
-            {
-                initializer: "initializeTreasury",
-            },
-        )) as unknown as EnderTreasury;
-
-        enderTreasuryAddress = await enderTreasury.getAddress();
-
-        enderStaking.setAddress(enderBondAddress, 1);
-        enderStaking.setAddress(enderTreasuryAddress, 2);
-        enderBond.setAddress(enderTreasuryAddress, 1); // set treasury
-        enderBond.setAddress(enderStakingAddress, 8); // set staking
+        enderTreasury = contracts.enderTreasury;
+        enderTreasuryAddress = contracts.enderTreasuryAddress;
 
         mockEnderBond.setAddress(enderTreasuryAddress, 1); // set treasury
         mockEnderBond.setAddress(enderStakingAddress, 8); // set staking
@@ -159,12 +97,7 @@ describe("EnderTreasury", function () {
                 initializer: "initialize",
             },
         );
-        await enderELStrategy.waitForDeployment();
         enderELStrategyAddress = await enderELStrategy.getAddress();
-
-         await endETHToken.setTreasury(enderTreasuryAddress);
-         await endETHToken.grantRole(MINTER_ROLE, enderBondAddress);
-         await endETHToken.grantRole(MINTER_ROLE, mockEnderBondAddress);
     });
 
     describe("initialize", function () {
@@ -179,14 +112,14 @@ describe("EnderTreasury", function () {
                     libraAddress,
                     eigenLayerAddress,
                     70,
-                    30
-                )
+                    30,
+                ),
             ).to.be.revertedWith("Initializable: contract is already initialized");
         });
 
         it("Error deployment with wrong params", async function () {
             const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
-           
+
             await expect(
                 upgrades.deployProxy(
                     EnderTreasury,
@@ -203,8 +136,8 @@ describe("EnderTreasury", function () {
                     {
                         initializer: "initializeTreasury",
                     },
-                )
-            ).to.be.revertedWithCustomError(enderTreasury, "InvalidRatio") ;
+                ),
+            ).to.be.revertedWithCustomError(enderTreasury, "InvalidRatio");
         });
 
         it("Should set the right owner", async function () {
@@ -428,7 +361,7 @@ describe("EnderTreasury", function () {
     });
 
     describe("Should deposit and withdraw correctly", async function () {
-        beforeEach(async () =>{
+        beforeEach(async () => {
             await stEth.connect(owner).submit({
                 value: ethers.parseEther("200"),
             });
@@ -468,27 +401,32 @@ describe("EnderTreasury", function () {
                 enderTreasury.connect(owner).depositInStrategy(invalidAsset, strategy, amount),
             ).to.be.revertedWithCustomError(enderTreasury, "ZeroAddress");
 
-            await expect(
-                enderTreasury.setStrategy([ethers.ZeroAddress], true)
-            ).to.emit(enderTreasury, "StrategyUpdated").withArgs(ethers.ZeroAddress, true);
+            await expect(enderTreasury.setStrategy([ethers.ZeroAddress], true))
+                .to.emit(enderTreasury, "StrategyUpdated")
+                .withArgs(ethers.ZeroAddress, true);
 
             await expect(
-                enderTreasury.depositInStrategy(asset, ethers.ZeroAddress, amount)
+                enderTreasury.depositInStrategy(asset, ethers.ZeroAddress, amount),
             ).to.be.revertedWithCustomError(enderTreasury, "ZeroAddress");
 
-            await expect(
-                enderTreasury.setStrategy([ethers.ZeroAddress], false)
-            ).to.emit(enderTreasury, "StrategyUpdated").withArgs(ethers.ZeroAddress, false);
+            await expect(enderTreasury.setStrategy([ethers.ZeroAddress], false))
+                .to.emit(enderTreasury, "StrategyUpdated")
+                .withArgs(ethers.ZeroAddress, false);
         });
 
         it("Should deposit in strategy correctly", async function () {
             const asset = stEthAddress;
             const instaDappStrategy = instadappLiteAddress;
             const libraStrategy = libraAddress;
-            const amount = ethers.parseEther("2.0");            
+            const amount = ethers.parseEther("2.0");
 
-            const beforeInstaDappDepositValuations = await enderTreasury.instaDappDepositValuations();
+            const beforeInstaDappDepositValuations =
+                await enderTreasury.instaDappDepositValuations();
             const beforeTotalDepositInStrategy = await enderTreasury.totalDepositInStrategy();
+
+            await enderTreasury
+                .connect(owner)
+                .setStrategy([instaDappStrategy, libraStrategy], true);
 
             await enderTreasury.connect(owner).depositInStrategy(asset, instaDappStrategy, amount);
 
@@ -522,17 +460,17 @@ describe("EnderTreasury", function () {
                 enderTreasury.connect(owner).withdrawFromStrategy(invalidAsset, strategy, amount),
             ).to.be.revertedWithCustomError(enderTreasury, "ZeroAddress");
 
-            await expect(
-                enderTreasury.setStrategy([ethers.ZeroAddress], true)
-            ).to.emit(enderTreasury, "StrategyUpdated").withArgs(ethers.ZeroAddress, true);
+            await expect(enderTreasury.setStrategy([ethers.ZeroAddress], true))
+                .to.emit(enderTreasury, "StrategyUpdated")
+                .withArgs(ethers.ZeroAddress, true);
 
             await expect(
-                enderTreasury.withdrawFromStrategy(asset, ethers.ZeroAddress, amount)
+                enderTreasury.withdrawFromStrategy(asset, ethers.ZeroAddress, amount),
             ).to.be.revertedWithCustomError(enderTreasury, "ZeroAddress");
 
-            await expect(
-                enderTreasury.setStrategy([ethers.ZeroAddress], false)
-            ).to.emit(enderTreasury, "StrategyUpdated").withArgs(ethers.ZeroAddress, false);
+            await expect(enderTreasury.setStrategy([ethers.ZeroAddress], false))
+                .to.emit(enderTreasury, "StrategyUpdated")
+                .withArgs(ethers.ZeroAddress, false);
         });
 
         it("Should withdraw from strategy correctly", async function () {
@@ -540,13 +478,22 @@ describe("EnderTreasury", function () {
             const libraStrategy = libraAddress;
             const amount = ethers.parseEther("2.0");
 
+            await enderTreasury
+                .connect(owner)
+                .setStrategy([instaDappStrategy, libraStrategy], true);
+
             await stEth.connect(owner).transfer(instaDappStrategy, ethers.parseEther("10"));
             await stEth.connect(owner).transfer(libraStrategy, ethers.parseEther("10"));
 
-            await enderTreasury.connect(owner).depositInStrategy(stEthAddress, instaDappStrategy, amount);
-            await enderTreasury.connect(owner).depositInStrategy(stEthAddress, libraStrategy, amount);
+            await enderTreasury
+                .connect(owner)
+                .depositInStrategy(stEthAddress, instaDappStrategy, amount);
+            await enderTreasury
+                .connect(owner)
+                .depositInStrategy(stEthAddress, libraStrategy, amount);
 
-            const beforeInstaDappWithdrawlValuations = await enderTreasury.instaDappWithdrawlValuations();
+            const beforeInstaDappWithdrawlValuations =
+                await enderTreasury.instaDappWithdrawlValuations();
 
             await stEth.increaseAllowance(instadappLiteAddress, ethers.parseEther("100"));
             await instadappLitelidoStaking.deposit(amount);
@@ -562,15 +509,19 @@ describe("EnderTreasury", function () {
             await enderTreasury
                 .connect(owner)
                 .withdrawFromStrategy(stEthAddress, instaDappStrategy, amount);
-            
-            const instaDappWithdrawlValuations = await enderTreasury.instaDappWithdrawlValuations();            
-            expect(instaDappWithdrawlValuations).to.equal(beforeInstaDappWithdrawlValuations + returnAmt);
+
+            const instaDappWithdrawlValuations = await enderTreasury.instaDappWithdrawlValuations();
+            expect(instaDappWithdrawlValuations).to.equal(
+                beforeInstaDappWithdrawlValuations + returnAmt,
+            );
 
             const beforeTotalDepositInStrategy = await enderTreasury.totalDepositInStrategy();
-            await enderTreasury.connect(owner).withdrawFromStrategy(stEthAddress, libraStrategy, amount);
+            await enderTreasury
+                .connect(owner)
+                .withdrawFromStrategy(stEthAddress, libraStrategy, amount);
 
             const totalDepositInStrategy = await enderTreasury.totalDepositInStrategy();
-            expect(totalDepositInStrategy).to.equal(beforeTotalDepositInStrategy-amount);
+            expect(totalDepositInStrategy).to.equal(beforeTotalDepositInStrategy - amount);
         });
 
         it("Should withdraw from strategy with zero returnAmount", async function () {
@@ -580,16 +531,22 @@ describe("EnderTreasury", function () {
             await stEth.connect(owner).transfer(anotherStrategy, ethers.parseEther("10"));
             await enderTreasury.setStrategy([anotherStrategy], true);
 
-            await enderTreasury.connect(owner).depositInStrategy(stEthAddress, anotherStrategy, amount);
+            await enderTreasury
+                .connect(owner)
+                .depositInStrategy(stEthAddress, anotherStrategy, amount);
 
             const beforeTotalDepositInStrategy = await enderTreasury.totalDepositInStrategy();
-            const beforeTotalRewardsFromStrategy = await enderTreasury.totalRewardsFromStrategy(stEthAddress);
-            await enderTreasury.connect(owner).withdrawFromStrategy(stEthAddress, anotherStrategy, amount);
+            const beforeTotalRewardsFromStrategy =
+                await enderTreasury.totalRewardsFromStrategy(stEthAddress);
+            await enderTreasury
+                .connect(owner)
+                .withdrawFromStrategy(stEthAddress, anotherStrategy, amount);
 
             const totalDepositInStrategy = await enderTreasury.totalDepositInStrategy();
-            expect(totalDepositInStrategy).to.equal(beforeTotalDepositInStrategy-amount);
+            expect(totalDepositInStrategy).to.equal(beforeTotalDepositInStrategy - amount);
 
-            const totalRewardsFromStrategy = await enderTreasury.totalRewardsFromStrategy(stEthAddress);
+            const totalRewardsFromStrategy =
+                await enderTreasury.totalRewardsFromStrategy(stEthAddress);
             expect(totalRewardsFromStrategy).to.eq(beforeTotalRewardsFromStrategy);
 
             await enderTreasury.setStrategy([anotherStrategy], false);
@@ -623,7 +580,8 @@ describe("EnderTreasury", function () {
             const asset = stEthAddress;
             const instaDappStrategy = instadappLiteAddress;
 
-            const beforeInstaDappDepositValuations = await enderTreasury.instaDappDepositValuations();
+            const beforeInstaDappDepositValuations =
+                await enderTreasury.instaDappDepositValuations();
             await enderTreasury.connect(owner).depositInStrategy(asset, instaDappStrategy, amount);
 
             const instaDappDepositValuations = await enderTreasury.instaDappDepositValuations();
@@ -690,12 +648,12 @@ describe("EnderTreasury", function () {
                         tokenAmt: amount,
                     },
                     0,
-                )
+                ),
             ).to.be.revertedWithCustomError(enderTreasury, "TransferFailed");
 
             await owner.sendTransaction({
                 to: enderTreasuryAddress,
-                value: amount
+                value: amount,
             });
 
             await enderTreasury.connect(owner).withdraw(
@@ -716,9 +674,9 @@ describe("EnderTreasury", function () {
             await endToken.mint(enderBondAddress, amount);
             await enderTreasury.setAddress(owner.address, 2);
 
-            await expect(
-                enderTreasury.collect(owner.address, amount)
-            ).to.emit(enderTreasury, "Collect").withArgs(owner.address, amount);
+            await expect(enderTreasury.collect(owner.address, amount))
+                .to.emit(enderTreasury, "Collect")
+                .withArgs(owner.address, amount);
 
             await enderTreasury.setAddress(enderBondAddress, 2);
         });
@@ -748,32 +706,35 @@ describe("EnderTreasury", function () {
         });
     });
 
-    describe("setAddress / getAddress function test", function() {
+    describe("setAddress / getAddress function test", function () {
         it("setAddress is reverted with InvalidAddress custom error when address type is invalid", async () => {
-            await expect(enderTreasury.setAddress(signer1.address, 0))
-                .to.be.revertedWithCustomError(enderTreasury, "InvalidAddress");
-            
-            await expect(enderTreasury.setAddress(signer1.address, 7))
-                .to.be.revertedWithCustomError(enderTreasury, "InvalidAddress");
+            await expect(
+                enderTreasury.setAddress(signer1.address, 0),
+            ).to.be.revertedWithCustomError(enderTreasury, "InvalidAddress");
+
+            await expect(
+                enderTreasury.setAddress(signer1.address, 7),
+            ).to.be.revertedWithCustomError(enderTreasury, "InvalidAddress");
         });
 
         it("getAddress is reverted with InvalidType custom error when type is invalid", async () => {
-            await expect(enderTreasury.getAddressByType(7))
-                .to.be.revertedWithCustomError(enderTreasury, "InvalidType");
+            await expect(enderTreasury.getAddressByType(7)).to.be.revertedWithCustomError(
+                enderTreasury,
+                "InvalidType",
+            );
         });
     });
 
-    describe("mintEndToUser function test", function() {
+    describe("mintEndToUser function test", function () {
         it("Should mintEndToUser correctly", async function () {
             const amount = ethers.parseEther("1");
             const beforeBalance = await endToken.balanceOf(signer1.address);
 
             await enderTreasury.setAddress(owner.address, 2);
 
-            await expect(
-                enderTreasury.mintEndToUser(signer1.address, amount)
-            ).to.emit(enderTreasury, "MintEndToUser")
-            .withArgs(signer1.address, amount);
+            await expect(enderTreasury.mintEndToUser(signer1.address, amount))
+                .to.emit(enderTreasury, "MintEndToUser")
+                .withArgs(signer1.address, amount);
 
             const afterBalance = await endToken.balanceOf(signer1.address);
             expect(afterBalance).to.eq(beforeBalance + amount);
@@ -821,11 +782,9 @@ describe("EnderTreasury", function () {
                 },
             );
 
-            await expect(mockEnderTreasury.transferFunds(
-                ethers.ZeroAddress,
-                stEthAddress,
-                amount
-            )).to.be.revertedWithCustomError(mockEnderTreasury, "ZeroAddress");
+            await expect(
+                mockEnderTreasury.transferFunds(ethers.ZeroAddress, stEthAddress, amount),
+            ).to.be.revertedWithCustomError(mockEnderTreasury, "ZeroAddress");
         });
-    })
+    });
 });

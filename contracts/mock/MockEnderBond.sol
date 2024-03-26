@@ -49,7 +49,7 @@ contract MockEnderBond is EnderBond {
     function setDayRewardShareIndexForSend(uint256 idx, uint256 timestamp) public {
         dayRewardShareIndexForSend[idx] = timestamp;
     }
-    
+
     function getAvailableBondFee() external view returns (uint256) {
         return availableBondFee;
     }

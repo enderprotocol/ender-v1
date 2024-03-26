@@ -31,10 +31,10 @@ contract EnderStakeEth is IEnderStakeEth, ERC20Upgradeable, AccessControlUpgrade
         return 18;
     }
 
-    function mint(address to, uint256 amount, uint256 fee) public onlyRole(MINTER_ROLE) {       
-        uint256 feeAmount = amount * fee / 10000;
+    function mint(address to, uint256 amount, uint256 fee) public onlyRole(MINTER_ROLE) {
+        uint256 feeAmount = (amount * fee) / 10000;
         _mint(treasury, feeAmount);
-        _mint(to, amount-feeAmount);
+        _mint(to, amount - feeAmount);
     }
 
     function burn(address from, uint256 amount) public {

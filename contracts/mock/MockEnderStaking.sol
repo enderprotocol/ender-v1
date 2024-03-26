@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import { EnderStaking } from "../EnderStaking.sol";
+import {EnderStaking} from "../EnderStaking.sol";
 
 contract MockEnderStaking is EnderStaking {
     function hash(signData memory userSign) external view returns (bytes32) {
