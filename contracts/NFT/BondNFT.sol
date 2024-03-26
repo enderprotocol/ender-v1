@@ -68,7 +68,7 @@ contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         newTokenId = _tokenIdsCounter.current();
 
         _mint(to, newTokenId);
-         emit NFTMinted(to, newTokenId);
+        emit NFTMinted(to, newTokenId);
     }
 
     function _transfer(address from, address to, uint256 tokenId) internal override {
@@ -78,7 +78,7 @@ contract BondNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable {
         super._transfer(from, to, tokenId);
     }
 
-    function burn(uint256 _tokenId) external onlyBond  {
+    function burn(uint256 _tokenId) external onlyBond {
         _burn(_tokenId);
     }
 

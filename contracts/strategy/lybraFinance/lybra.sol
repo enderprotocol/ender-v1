@@ -18,7 +18,7 @@ contract lybra {
         stEth = _stEth;
     }
 
-    function depositAssetToMint(uint256 _amount,address _user) public {
+    function depositAssetToMint(uint256 _amount, address _user) public {
         IERC20(stEth).transferFrom(_user, address(this), _amount);
         userData[_user] = UserData(_amount, block.timestamp);
     }
@@ -28,7 +28,7 @@ contract lybra {
         uint256 reward = (apy * userStakeData.amount * (block.timestamp - userStakeData.depositTime)) /
             (365 days * 100 * 1000);
 
-        userData[msg.sender] = UserData(0,0);    
+        userData[msg.sender] = UserData(0, 0);
         IERC20(stEth).transfer(msg.sender, userStakeData.amount);
         IERC20(stEth).mint(msg.sender, reward);
     }

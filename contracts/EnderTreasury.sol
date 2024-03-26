@@ -218,7 +218,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             instaDappWithdrawlValuations = 0;
             instaDappDepositValuations = 0;
         } else {
-            (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);            
+            (uint stETHPool, uint ENDSupply) = ETHDenomination(_tokenAddress);
             depositReturn = (depositReturn * int256(stETHPool) * 1000) / int256(ENDSupply);
             rebaseReward = uint256((depositReturn + ((depositReturn * nominalYield) / 10000) - bondReturn));
             epochWithdrawl = 0;
@@ -308,8 +308,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
         }
         epochWithdrawl += param.tokenAmt;
         // ym: fundsInfo has no zero address token
-        if(param.stakingToken != address(0))
-            fundsInfo[param.stakingToken] -= param.tokenAmt;
+        if (param.stakingToken != address(0)) fundsInfo[param.stakingToken] -= param.tokenAmt;
 
         // bond token transfer
         _transferFunds(param.account, param.stakingToken, param.tokenAmt);
@@ -356,7 +355,6 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             stReturn -
             epochDeposit -
             balanceLastEpoch;
-        
     }
 
     /**
@@ -378,7 +376,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
     }
 
     function ETHDenomination(address _stEthAddress) public view returns (uint stETHPoolAmount, uint ENDSupply) {
-        uint stETHBalance = IERC20(_stEthAddress).balanceOf(address(this));        
+        uint stETHBalance = IERC20(_stEthAddress).balanceOf(address(this));
         address receiptToken = instadapp;
         uint256 receiptTokenAmount = IInstadappLite(receiptToken).balanceOf(address(this));
         uint stRewards;

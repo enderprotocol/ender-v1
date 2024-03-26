@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 /**
  *Submitted for verification at mumbai.polygonscan.com on 2023-12-04
-*/
+ */
 
 // File: @openzeppelin/contracts/interfaces/draft-IERC6093.sol
-
 
 // OpenZeppelin Contracts (last updated v5.0.0) (interfaces/draft-IERC6093.sol)
 pragma solidity ^0.8.18;
@@ -169,7 +168,6 @@ interface IERC1155Errors {
 
 // File: @openzeppelin/contracts/utils/Context.sol
 
-
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/Context.sol)
 
 // pragma solidity ^0.8.18;
@@ -196,11 +194,9 @@ abstract contract Context {
 
 // File: @openzeppelin/contracts/access/Ownable.sol
 
-
 // OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable.sol)
 
 // pragma solidity ^0.8.18;
-
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -298,7 +294,6 @@ abstract contract Ownable is Context {
 
 // File: @openzeppelin/contracts/token/ERC20/IERC20.sol
 
-
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/IERC20.sol)
 
 // pragma solidity ^0.8.18;
@@ -380,11 +375,9 @@ interface IERC20 {
 
 // File: @openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol
 
-
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/extensions/IERC20Metadata.sol)
 
 // pragma solidity ^0.8.18;
-
 
 /**
  * @dev Interface for the optional metadata functions from the ERC20 standard.
@@ -408,14 +401,9 @@ interface IERC20Metadata is IERC20 {
 
 // File: @openzeppelin/contracts/token/ERC20/ERC20.sol
 
-
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/ERC20.sol)
 
 // pragma solidity ^0.8.18;
-
-
-
-
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -726,12 +714,9 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata, IERC20Errors {
 
 // File: contracts/mockstrategy.sol
 
-
 // pragma solidity ^0.8.18;
 
 // Importing necessary ERC-20 interfaces
-
-
 
 contract StinstaToken is ERC20, Ownable {
     // Event emitted when Ether is deposited and Stinsta tokens are minted
@@ -740,17 +725,23 @@ contract StinstaToken is ERC20, Ownable {
     address public mstEth;
     mapping(address => uint256) public deposits;
     // Constructor function to set the name, symbol, and decimal of the token
-    constructor(string memory name_, string memory symbol_,address owner,address _mstEth)
-        ERC20(name_, symbol_) Ownable(owner)
-    {
-        mstEth= _mstEth;
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address owner,
+        address _mstEth
+    ) ERC20(name_, symbol_) Ownable(owner) {
+        mstEth = _mstEth;
     }
 
     // Function to deposit Ether and receive Stinsta tokens
-   function deposit(uint256 mstEthAmount) external {
+    function deposit(uint256 mstEthAmount) external {
         // Ensure that the deposited amount is greater than 0
         require(mstEthAmount > 0, "Deposit amount must be greater than 0");
-        require(deposits[msg.sender] + mstEthAmount <= IERC20(mstEth).balanceOf(msg.sender),"Insufficient mstEth balance");
+        require(
+            deposits[msg.sender] + mstEthAmount <= IERC20(mstEth).balanceOf(msg.sender),
+            "Insufficient mstEth balance"
+        );
 
         // Transfer the specified MST amount from the sender to the contract
         require(IERC20(mstEth).transferFrom(msg.sender, address(this), mstEthAmount), "Token transfer failed");
@@ -763,15 +754,14 @@ contract StinstaToken is ERC20, Ownable {
 
         // // Update the mapping to track the deposited and minted amounts
         // deposits[msg.sender] += mstEthAmount;
-
     }
 
-    function withdrawStinstaTokens(uint256 stinstaAmount) external returns(uint256 _amount) {
+    function withdrawStinstaTokens(uint256 stinstaAmount) external returns (uint256 _amount) {
         // Ensure that the withdrawal amount is not greater than the user's balance
         require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
 
         // Burn the specified amount of Stinsta tokens from the user's balance
-        _amount = (stinstaAmount * IERC20(mstEth).balanceOf(address(this)) / totalSupply());
+        _amount = ((stinstaAmount * IERC20(mstEth).balanceOf(address(this))) / totalSupply());
 
         // Transfer MST to the user
         _burn(msg.sender, stinstaAmount);
@@ -779,22 +769,19 @@ contract StinstaToken is ERC20, Ownable {
 
         emit WithdrawStinstaTokens(msg.sender, _amount);
     }
-    function viewStinstaTokens(uint256 stinstaAmount) public view returns (uint256){
+    function viewStinstaTokens(uint256 stinstaAmount) public view returns (uint256) {
         // Ensure that the withdrawal amount is not greater than the user's balance
         require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
         // Calculate the MST value using the provided formula
-        uint256 mstValue = (stinstaAmount * IERC20(mstEth).balanceOf(address(this)) / totalSupply());
+        uint256 mstValue = ((stinstaAmount * IERC20(mstEth).balanceOf(address(this))) / totalSupply());
 
         return mstValue;
-
     }
     function viewStinstaTokensValue(uint256 mstValue) public view returns (uint256) {
         // Ensure that the withdrawal amount is not greater than the user's balance
         require(mstValue <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
         // Calculate the MST value using the provided formula
-        uint256 stinsta = (mstValue * totalSupply() / IERC20(mstEth).balanceOf(address(this)));
+        uint256 stinsta = ((mstValue * totalSupply()) / IERC20(mstEth).balanceOf(address(this)));
         return stinsta;
-
     }
-
 }

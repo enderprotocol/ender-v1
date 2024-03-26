@@ -1,192 +1,84 @@
 import { expect } from "chai";
 import { Wallet } from "ethers";
 import { ethers, upgrades } from "hardhat";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+
 import { EndToken } from "../../typechain-types/contracts/ERC20/EndToken";
 import { EnderStakeEth } from "../../typechain-types/contracts/ERC20/EnderStakeEth";
 import { EnderBond } from "../../typechain-types/contracts/EnderBond";
 import { EnderTreasury } from "../../typechain-types/contracts/EnderTreasury";
 import { StETH } from "../../typechain-types/contracts/ERC20/mockStEth.sol/StETH";
-
-const signature = "0xA2fFDf332d92715e88a958A705948ADF75d07d01";
-const baseURI = "https://endworld-backend-git-dev-metagaming.vercel.app/nft/metadata/";
-const MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
-const ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
-
-function expandTo18Decimals(n: number) {
-    return ethers.parseUnits(n.toString(), 18);
-}
+import {
+    depositAndSetup,
+    expandToDecimals,
+    increaseTime,
+    signatureDigest,
+    sleep,
+} from "../utils/utils";
+import { Deployer } from "../utils/deployer";
 
 describe("EnderBond Deposit and Withdraw", function () {
-    let owner: Wallet,
-        signer: Wallet,
-        signer1: Wallet,
-        signer2: Wallet,
-        signer3: Wallet,
-        signer4: Wallet;
+    let owner: HardhatEthersSigner,
+        signer: HardhatEthersSigner,
+        signer1: HardhatEthersSigner,
+        signer2: HardhatEthersSigner,
+        signer3: HardhatEthersSigner,
+        signer4: HardhatEthersSigner;
 
     let endTokenAddress,
-        endETHAddress,
         enderBondAddress: string,
         enderTreasuryAddress: string,
-        enderStakingAddress: string,
         stEthAddress: string,
-        bondNFTAddress: string,
-        mockWETHAddress,
         instadappLiteAddress: string;
 
     let endToken: EndToken,
-        endETHToken: EnderStakeEth,
         enderBond: EnderBond,
         enderTreasury: EnderTreasury,
-        enderELStrategy,
         enderStaking,
         sEnd,
         sEndTokenAddress,
-        instadappLitelidoStaking,
-        WETH,
         stEth: StETH,
-        bondNFT,
         oracle,
         oracleAddress;
-    let stEthBlanceOfTreasury: bigint,
-        userSign: EnderBond.SignDataStruct,
-        sig1: string;
+    let stEthBlanceOfTreasury: bigint, userSign: EnderBond.SignDataStruct, sig1: string;
+
+    const deployer = new Deployer();
 
     before(async function () {
-        const wETH = await ethers.getContractFactory("mockWETH");
-        const StEth = await ethers.getContractFactory("StETH");
-        const InstadappLite = await ethers.getContractFactory("StinstaToken");
-        const EndToken = await ethers.getContractFactory("EndToken");
-        const EnderBond = await ethers.getContractFactory("EnderBond");
-        const EnderTreasury = await ethers.getContractFactory("EnderTreasury");
-        const EnderStaking = await ethers.getContractFactory("EnderStaking");
-        const SEnd = await ethers.getContractFactory("SEndToken");
-        const Oracle = await ethers.getContractFactory("EnderOracle");
-        const EndETHToken = await ethers.getContractFactory("EnderStakeEth");
-
-        [owner, signer, signer1, signer2, signer3, signer4] = (await ethers.getSigners()) as unknown as Wallet[];
-
-        stEth = (await StEth.deploy()) as unknown as StETH;
-        stEthAddress = await stEth.getAddress();
-
-        // sEnd = await SEnd.connect(owner).deploy();
-        sEnd = await upgrades.deployProxy(SEnd, [], {
-            initializer: "initialize",
+        [owner, signer, signer1, signer2, signer3, signer4] = await ethers.getSigners();
+        const contracts = await deployer.prepareEndBondTest({
+            owner: owner.address,
+            signer: signer.address,
         });
-        sEndTokenAddress = await sEnd.connect(owner).getAddress();
 
-        instadappLitelidoStaking = await InstadappLite.deploy(
-            "InstaToken",
-            "Inst",
-            owner.address,
-            stEthAddress,
-        );
-        instadappLiteAddress = await instadappLitelidoStaking.getAddress();
-        endToken = (await upgrades.deployProxy(EndToken, [], {
-            initializer: "initialize",
-        })) as unknown as EndToken;
-        endTokenAddress = await endToken.getAddress();
+        stEth = contracts.stEth;
+        stEthAddress = contracts.stEthAddr;
 
+        sEnd = contracts.sEndToken;
+        sEndTokenAddress = contracts.sEndTokenAddr;
+
+        instadappLiteAddress = contracts.instadappLiteAddress;
+
+        endToken = contracts.endToken;
+        endTokenAddress = contracts.endTokenAddr;
+
+        const Oracle = await ethers.getContractFactory("EnderOracle");
         oracle = await upgrades.deployProxy(Oracle, [], {
             initializer: "initialize",
         });
-
         oracleAddress = await oracle.getAddress();
 
-        // deploy endETH token
-        endETHToken = (await upgrades.deployProxy(EndETHToken, [], {
-            initializer: "initialize"
-        })) as unknown as EnderStakeEth;
-        endETHAddress = await endETHToken.getAddress();
+        enderBond = contracts.enderBond;
+        enderBondAddress = contracts.enderBondAddress;
 
-        enderBond = (await upgrades.deployProxy(
-            EnderBond,
-            [endTokenAddress, endETHAddress, ethers.ZeroAddress, signer.address],
-            {
-                initializer: "initialize",
-            },
-        )) as unknown as EnderBond;
+        enderStaking = contracts.enderStaking;
 
-        enderBondAddress = await enderBond.getAddress();
+        enderTreasury = contracts.enderTreasury;
+        enderTreasuryAddress = contracts.enderTreasuryAddress;
 
-        await endToken.setBond(enderBondAddress);
-
-        console.log("Before Staking Deploy Proxy");
-        enderStaking = await upgrades.deployProxy(
-            EnderStaking,
-            [endTokenAddress, sEndTokenAddress, stEthAddress, signer.address],
-            {
-                initializer: "initialize",
-            },
-        );
-
-        enderStakingAddress = await enderStaking.getAddress();
-
-        enderTreasury = (await upgrades.deployProxy(
-            EnderTreasury,
-            [
-                endTokenAddress,
-                enderStakingAddress,
-                enderBondAddress,
-                instadappLiteAddress,
-                ethers.ZeroAddress,
-                ethers.ZeroAddress,
-                70,
-                30,
-            ],
-            {
-                initializer: "initializeTreasury",
-            },
-        )) as unknown as EnderTreasury;
-
-        enderTreasuryAddress = await enderTreasury.getAddress();
-
-        const BondNFT = await ethers.getContractFactory("BondNFT");
-        bondNFT = await upgrades.deployProxy(BondNFT, [enderBondAddress, baseURI], {
-            initializer: "initialize",
-        });
-        await bondNFT.waitForDeployment();
-        bondNFTAddress = await bondNFT.getAddress();
-        // await sEnd.connect(owner).grantRole("0x0000000000000000000000000000000000000000000000000000000000000000", "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266");
-        await sEnd.setAddress(enderStakingAddress, 1);
-        await enderStaking.setAddress(enderBondAddress, 1);
-        await enderStaking.setAddress(enderTreasuryAddress, 2);
-
-        await enderStaking.setAddress(stEthAddress, 6);
-        await enderBond.setBondableTokens([stEthAddress], true);
-        await enderBond.setAddress(enderTreasuryAddress, 1);
-        await enderBond.setAddress(bondNFTAddress, 3);
-        await enderBond.setAddress(sEndTokenAddress, 9);
-        await sEnd.setStatus(2);
-        await sEnd.whitelist(enderBondAddress, true);
-        await endToken.grantRole(MINTER_ROLE, owner.address);
-        await endToken.setFee(20);
-
-        await endToken.setExclude([enderBondAddress], true);
-        await endToken.setExclude([enderTreasuryAddress], true);
-        await endToken.setExclude([enderStakingAddress], true);
-
-        await enderBond.setAddress(enderStakingAddress, 8);
-        await enderBond.setAddress(stEthAddress, 6);
-
-        await endToken.grantRole(MINTER_ROLE, enderStakingAddress);
-        await endToken.grantRole(
-            "0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953",
-            enderBondAddress,
-        );
-        await endToken.grantRole(
-            "0xe13c49f41ace7b3f26b0cf23ab168b4c48591998827e86cfa78a62930e4d6953",
-            owner.address,
-        );
-
-        await enderBond.setBool(true);
         await enderBond.whitelist(false);
-        // await endToken.grantRole()
 
-        await endETHToken.setTreasury(enderTreasuryAddress);
-        await endETHToken.grantRole(MINTER_ROLE, enderBondAddress);
-
-        sig1 = await signatureDigest();
+        sig1 = await signatureDigest(signer, "bondContract", enderBondAddress, signer1);
     });
 
     describe("deposit and withdraw", async () => {
@@ -194,10 +86,10 @@ describe("EnderBond Deposit and Withdraw", function () {
             console.log("Inside my First Test Case ");
             const maturity = 90;
             const bondFee = 500;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
 
-            const endTransfer = expandTo18Decimals(1);
+            const endTransfer = expandToDecimals(1, 18);
             await endToken.setFee(20);
 
             //mint to signer1
@@ -225,18 +117,20 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "1234",
-                signature: sig1
+                signature: sig1,
             };
 
             await ethers.provider.send("evm_increaseTime", [600]); // 86400 seconds = 1 day
             await ethers.provider.send("evm_mine");
 
             const tokenId = await depositAndSetup(
+                enderBond,
+                stEthAddress,
                 signer1,
                 depositPrincipalStEth,
                 maturity,
                 bondFee,
-                userSign
+                userSign,
             );
         });
 
@@ -244,10 +138,10 @@ describe("EnderBond Deposit and Withdraw", function () {
             console.log("Inside my First Test Case ");
             const maturity = 90;
             const bondFee = 9999;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
 
-            const endTransfer = expandTo18Decimals(1);
+            const endTransfer = expandToDecimals(1, 18);
             await endToken.setFee(20);
 
             expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
@@ -266,18 +160,20 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "1234",
-                signature: sig1
+                signature: sig1,
             };
 
             await ethers.provider.send("evm_increaseTime", [600]); // 86400 seconds = 1 day
             await ethers.provider.send("evm_mine");
 
             const tokenId = await depositAndSetup(
+                enderBond,
+                stEthAddress,
                 signer1,
                 depositPrincipalStEth,
                 maturity,
                 bondFee,
-                userSign
+                userSign,
             );
         });
 
@@ -285,10 +181,10 @@ describe("EnderBond Deposit and Withdraw", function () {
             console.log("Inside my First Test Case ");
             const maturity = 90;
             const bondFee = 0;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
 
-            const endTransfer = expandTo18Decimals(1);
+            const endTransfer = expandToDecimals(1, 18);
             await endToken.setFee(20);
 
             expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
@@ -307,13 +203,15 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "1234",
-                signature: sig1
+                signature: sig1,
             };
 
             await ethers.provider.send("evm_increaseTime", [600]); // 86400 seconds = 1 day
             await ethers.provider.send("evm_mine");
 
             const tokenId = await depositAndSetup(
+                enderBond,
+                stEthAddress,
                 signer1,
                 depositPrincipalStEth,
                 maturity,
@@ -325,10 +223,10 @@ describe("EnderBond Deposit and Withdraw", function () {
         it("scenario 4", async () => {
             const maturity = 7;
             const bondFee = 0;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
 
-            const endTransfer = expandTo18Decimals(1);
+            const endTransfer = expandToDecimals(1, 18);
             await endToken.setFee(20);
             expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
 
@@ -346,13 +244,15 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "1234",
-                signature: sig1
+                signature: sig1,
             };
 
             await ethers.provider.send("evm_increaseTime", [600]); // 86400 seconds = 1 day
             await ethers.provider.send("evm_mine");
 
             const tokenId = await depositAndSetup(
+                enderBond,
+                stEthAddress,
                 signer1,
                 depositPrincipalStEth,
                 maturity,
@@ -365,10 +265,10 @@ describe("EnderBond Deposit and Withdraw", function () {
             console.log("Inside my First Test Case ");
             const maturity = 90;
             const bondFee = 500;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
 
-            const endTransfer = expandTo18Decimals(1);
+            const endTransfer = expandToDecimals(1, 18);
             // await endToken.setFee(20);
 
             expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
@@ -385,13 +285,15 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "1234",
-                signature: sig1
+                signature: sig1,
             };
 
             await ethers.provider.send("evm_increaseTime", [600]); // 86400 seconds = 1 day
             await ethers.provider.send("evm_mine");
 
             const tokenId = await depositAndSetup(
+                enderBond,
+                stEthAddress,
                 signer1,
                 depositPrincipalStEth,
                 maturity,
@@ -417,10 +319,10 @@ describe("EnderBond Deposit and Withdraw", function () {
             console.log("Inside my First Test Case ");
             const maturity = 90;
             const bondFee = 500;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
 
-            const endTransfer = expandTo18Decimals(1);
+            const endTransfer = expandToDecimals(1, 18);
             // await endToken.setFee(20);
 
             expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
@@ -437,7 +339,7 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "1234",
-                signature: sig1
+                signature: sig1,
             };
 
             await ethers.provider.send("evm_increaseTime", [600]); // 86400 seconds = 1 day
@@ -445,6 +347,8 @@ describe("EnderBond Deposit and Withdraw", function () {
 
             for (let i = 0; i < 100; i++) {
                 const tokenId = await depositAndSetup(
+                    enderBond,
+                    stEthAddress,
                     signer1,
                     depositPrincipalStEth,
                     maturity,
@@ -464,10 +368,10 @@ describe("EnderBond Deposit and Withdraw", function () {
             console.log("Inside my First Test Case ");
             const maturity = 90;
             const bondFee = 500;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(5);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(5, 18);
 
-            const endTransfer = expandTo18Decimals(1);
+            const endTransfer = expandToDecimals(1, 18);
             // await endToken.setFee(20);
 
             expect(await endToken.balanceOf(enderBondAddress)).to.be.equal(0);
@@ -484,7 +388,7 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "1234",
-                signature: sig1
+                signature: sig1,
             };
             // mint to signer1
             await endToken.connect(owner).mint(signer1.address, depositAmountEnd);
@@ -493,6 +397,8 @@ describe("EnderBond Deposit and Withdraw", function () {
             await ethers.provider.send("evm_mine");
 
             const tokenId = await depositAndSetup(
+                enderBond,
+                stEthAddress,
                 signer1,
                 depositPrincipalStEth,
                 maturity,
@@ -523,8 +429,8 @@ describe("EnderBond Deposit and Withdraw", function () {
         it("Deposit Revert InvalidAmount()", async () => {
             let maturity = 90;
             let bondFee = 1;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
             // const depositPrincipalStEth = 10000000000
             await endToken.setFee(20);
 
@@ -541,28 +447,21 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "0",
-                signature: sig1
+                signature: sig1,
             };
 
             await expect(
                 enderBond
                     .connect(signer1)
-                    .deposit(
-                        signer1.address,
-                        10000,
-                        maturity,
-                        bondFee,
-                        stEthAddress, 
-                        userSign
-                    ),
+                    .deposit(signer1.address, 10000, maturity, bondFee, stEthAddress, userSign),
             ).to.be.revertedWithCustomError(enderBond, "InvalidAmount");
         });
 
         it("Deposit Revert NotBondableToken() ", async () => {
             let maturity = 90;
             let bondFee = 1;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
             await endToken.setFee(20);
 
             expect(await enderBond.rewardShareIndex()).to.be.equal(0);
@@ -578,7 +477,7 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "0",
-                signature: sig1
+                signature: sig1,
             };
 
             await expect(
@@ -590,7 +489,7 @@ describe("EnderBond Deposit and Withdraw", function () {
                         maturity,
                         bondFee,
                         endToken,
-                        userSign
+                        userSign,
                     ),
             ).to.be.revertedWithCustomError(enderBond, "NotBondableToken");
         });
@@ -598,8 +497,8 @@ describe("EnderBond Deposit and Withdraw", function () {
         it("Deposit Revert InvalidAmount by Sending Ether", async () => {
             let maturity = 90;
             let bondFee = 1;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
             await endToken.setFee(20);
 
             expect(await enderBond.rewardShareIndex()).to.be.equal(0);
@@ -616,7 +515,7 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "0",
-                signature: sig1
+                signature: sig1,
             };
 
             await expect(
@@ -637,8 +536,8 @@ describe("EnderBond Deposit and Withdraw", function () {
         it("Deposit Revert for InvalidBondFees()", async () => {
             let maturity = 90;
             let bondFee = 1000000;
-            const depositAmountEnd = expandTo18Decimals(5);
-            const depositPrincipalStEth = expandTo18Decimals(1);
+            const depositAmountEnd = expandToDecimals(5, 18);
+            const depositPrincipalStEth = expandToDecimals(1, 18);
             await endToken.setFee(20);
 
             expect(await enderBond.rewardShareIndex()).to.be.equal(0);
@@ -655,7 +554,7 @@ describe("EnderBond Deposit and Withdraw", function () {
             userSign = {
                 user: signer1.address,
                 key: "0",
-                signature: sig1
+                signature: sig1,
             };
 
             await expect(
@@ -667,129 +566,9 @@ describe("EnderBond Deposit and Withdraw", function () {
                         maturity,
                         bondFee,
                         stEth,
-                        userSign
+                        userSign,
                     ),
             ).to.be.revertedWithCustomError(enderBond, "InvalidBondFee");
         });
     });
-
-    async function depositAndSetup(
-        signer: Wallet,
-        depositAmount: bigint,
-        maturity: number,
-        bondFee: number,
-        signData: EnderBond.SignDataStruct,
-    ) {
-        await enderBond
-            .connect(signer)
-            .deposit(
-                signer,
-                depositAmount,
-                maturity,
-                bondFee,
-                stEthAddress, signData
-            );
-        const filter = enderBond.filters.Deposit;
-        const events = await enderBond.queryFilter(filter, -1);
-
-        const event1 = events[0];
-
-        const args1 = event1.args;
-        const tokenId = args1.tokenId;
-
-        return tokenId;
-    }
-
-    async function signatureDigest() {
-        let sig = await signer.signTypedData(
-            {
-                name: "bondContract",
-                version: "1",
-                chainId: 31337,
-                verifyingContract: enderBondAddress,
-            },
-            {
-                userSign: [
-                    {
-                        name: "user",
-                        type: "address",
-                    },
-                    {
-                        name: "key",
-                        type: "string",
-                    },
-                ],
-            },
-            {
-                user: signer1.address,
-                key: "0",
-            },
-        );
-        return sig;
-    }
-
-    async function signatureDigest1() {
-        let sig = await signer.signTypedData(
-            {
-                name: "bondContract",
-                version: "1",
-                chainId: 31337,
-                verifyingContract: enderBondAddress,
-            },
-            {
-                userSign: [
-                    {
-                        name: "user",
-                        type: "address",
-                    },
-                    {
-                        name: "key",
-                        type: "string",
-                    },
-                ],
-            },
-            {
-                user: signer2.address,
-                key: "0",
-            },
-        );
-        return sig;
-    }
-
-    async function signatureDigest2() {
-        let sig = await signer.signTypedData(
-            {
-                name: "stakingContract",
-                version: "1",
-                chainId: 31337,
-                verifyingContract: enderStakingAddress,
-            },
-            {
-                userSign: [
-                    {
-                        name: "user",
-                        type: "address",
-                    },
-                    {
-                        name: "key",
-                        type: "string",
-                    },
-                ],
-            },
-            {
-                user: signer3.address,
-                key: "0",
-            },
-        );
-        return sig;
-    }
-
-    async function increaseTime(seconds: number) {
-        await ethers.provider.send("evm_increaseTime", [seconds]);
-        await ethers.provider.send("evm_mine");
-    }
 });
-
-function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}

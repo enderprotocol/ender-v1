@@ -18,6 +18,5 @@ interface IEnderBond {
 
     function setAvailableBondFee(uint amount) external;
 
-    function availableBondFee() external view returns(uint256);
-
+    function availableBondFee() external view returns (uint256);
 }

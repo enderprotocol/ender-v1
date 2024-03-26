@@ -44,7 +44,7 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
         string key;
         bytes signature;
     }
-    
+
     error InvalidAmount();
     error InvalidMaturity();
     error InvalidBondFee();
@@ -148,8 +148,9 @@ contract EnderBondLiquidityDeposit is Initializable, EIP712Upgradeable, OwnableU
         if (_addr == address(0)) revert ZeroAddress();
 
         if (_type == 1) stEth = _addr;
-        else if (_type == 2) lido = _addr;
-        // not used
+        else if (_type == 2)
+            lido = _addr;
+            // not used
         else if (_type == 3) enderBond = _addr;
     }
 

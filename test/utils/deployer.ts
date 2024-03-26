@@ -1,10 +1,15 @@
 import {
+    BondNFT,
     EnderBond,
+    EnderBondLiquidityDeposit,
     EnderStakeEth,
+    EnderStaking,
+    EnderTreasury,
     EndToken,
     MockLido,
     SEndToken,
     StETH,
+    StinstaToken,
 } from "../../typechain-types";
 import { ethers, upgrades } from "hardhat";
 import { baseURI, MINTER_ROLE } from "./constants";
@@ -56,6 +61,19 @@ export class Deployer {
         const enderStakeEthAddr = await enderStakeEth.getAddress();
         const lidoAddr = await lido.getAddress();
 
+        //deploy enderBondLiquidityDeposit
+        const enderBondLiquidityBondFactory = await ethers.getContractFactory(
+            "EnderBondLiquidityDeposit",
+        );
+        const enderBondLiquidityDeposit = (await upgrades.deployProxy(
+            enderBondLiquidityBondFactory,
+            [stEthAddr, stEthAddr, owner, owner],
+            {
+                initializer: "initialize",
+            },
+        )) as unknown as EnderBondLiquidityDeposit;
+        const enderBondLiquidityDepositAddress = await enderBondLiquidityDeposit.getAddress();
+
         const endBonderFactory = await ethers.getContractFactory("EnderBond");
         const enderBond = (await upgrades.deployProxy(
             endBonderFactory,
@@ -67,18 +85,18 @@ export class Deployer {
         const enderBondAddress = await enderBond.getAddress();
         await enderStakeEth.grantRole(MINTER_ROLE, enderBondAddress);
 
-        //set mockEnderBond address in endToken
-        await endToken.setBond(await enderBond.getAddress());
+        //set enderBond address in endToken
+        await endToken.setBond(enderBondAddress);
 
         //deploy ender Staking contract
         const enderStakingFactory = await ethers.getContractFactory("EnderStaking");
-        const enderStaking = await upgrades.deployProxy(
+        const enderStaking = (await upgrades.deployProxy(
             enderStakingFactory,
             [endTokenAddr, sEndTokenAddr, stEthAddr, signer],
             {
                 initializer: "initialize",
             },
-        );
+        )) as unknown as EnderStaking;
         const enderStakingAddress = await enderStaking.getAddress();
 
         //deploy ender Treasury contract
@@ -86,15 +104,15 @@ export class Deployer {
 
         //deploy insta app Lido Staking
         const instadappLiteFactory = await ethers.getContractFactory("StinstaToken");
-        const instadappLitelidoStaking = await instadappLiteFactory.deploy(
+        const instadappLitelidoStaking = (await instadappLiteFactory.deploy(
             "InstaToken",
             "Inst",
             owner,
             stEthAddr,
-        );
+        )) as unknown as StinstaToken;
         const instadappLiteAddress = await instadappLitelidoStaking.getAddress();
 
-        const enderTreasury = await upgrades.deployProxy(
+        const enderTreasury = (await upgrades.deployProxy(
             enderTreasuryFactory,
             [
                 endTokenAddr,
@@ -109,15 +127,15 @@ export class Deployer {
             {
                 initializer: "initializeTreasury",
             },
-        );
+        )) as unknown as EnderTreasury;
         const enderTreasuryAddress = await enderTreasury.getAddress();
         await enderStakeEth.setTreasury(enderTreasuryAddress);
 
         //deploy bond NFT contract
         const bondNftFactory = await ethers.getContractFactory("BondNFT");
-        const bondNFT = await upgrades.deployProxy(bondNftFactory, [enderBondAddress, baseURI], {
+        const bondNFT = (await upgrades.deployProxy(bondNftFactory, [enderBondAddress, baseURI], {
             initializer: "initialize",
-        });
+        })) as unknown as BondNFT;
         await bondNFT.waitForDeployment();
         const bondNFTAddress = await bondNFT.getAddress();
 
@@ -157,6 +175,33 @@ export class Deployer {
         );
 
         await enderBond.setBool(true);
-        return { lido, stEth, endToken, enderBond };
+
+        await enderTreasury.setAddress(instadappLitelidoStaking, 5);
+        await enderTreasury.setStrategy([instadappLitelidoStaking], true);
+        await enderTreasury.setPriorityStrategy(instadappLitelidoStaking);
+
+        return {
+            lido,
+            stEth,
+            stEthAddr,
+            endToken,
+            endTokenAddr,
+            enderStakeEth,
+            enderStakeEthAddr,
+            enderBondLiquidityDeposit,
+            enderBondLiquidityDepositAddress,
+            instadappLitelidoStaking,
+            instadappLiteAddress,
+            sEndToken,
+            sEndTokenAddr,
+            enderBond,
+            enderBondAddress,
+            enderStaking,
+            enderStakingAddress,
+            enderTreasury,
+            enderTreasuryAddress,
+            bondNFT,
+            bondNFTAddress,
+        };
     }
 }

@@ -28,7 +28,7 @@ contract eigenLayerStaking {
         uint256 reward = (apy * userStakeData.amount * (block.timestamp - userStakeData.depositTime)) /
             (365 days * 100 * 1000);
 
-        userData[msg.sender] = UserData(0,0);    
+        userData[msg.sender] = UserData(0, 0);
         IERC20(stEth).transfer(msg.sender, userStakeData.amount);
         IERC20(stEth).mint(msg.sender, reward);
     }
