@@ -718,19 +718,33 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata, IERC20Errors {
 
 // Importing necessary ERC-20 interfaces
 
-
-
 contract StinstaToken is ERC20, Ownable {
     // Event emitted when Ether is deposited and Stinsta tokens are minted
-    event Deposit(address indexed depositor, uint256 amount);
-    event WithdrawStinstaTokens(address indexed to, uint256 amount);
-    address public mstEth;
-    mapping(address => uint256) public deposits;
-    mapping(address => uint256) public currentRewards; 
-    mapping (address => uint256) public lastupdates;
-    uint256 netYield = 700;
-    uint constant SECOND_IN_DAY = 600;
+    event Deposit(
+        address indexed sender,
+        address indexed owner,
+        uint256 assets,
+        uint256 shares
+    );
+    event Withdraw(
+        address indexed sender,
+        address indexed receiver,
+        address indexed owner,
+        uint256 assets,
+        uint256 shares
+    );
 
+    address public mstEth;
+    mapping(address => DepositReward) public deposits;
+
+    uint256 netYield = 700;
+    uint256 SECONDS_IN_DAY = 600;
+
+    struct DepositReward {
+        uint256 lastRewardTimestamp;
+        uint256 totalDepositAmount;
+        uint256 rewardAmount;
+    }
     // Constructor function to set the name, symbol, and decimal of the token
     constructor(
         string memory name_,
@@ -742,57 +756,86 @@ contract StinstaToken is ERC20, Ownable {
     }
 
     // Function to deposit Ether and receive Stinsta tokens
-    function deposit(uint256 mstEthAmount) external {
+    function deposit(
+        uint256 assets_,
+        address receiver_
+    ) external returns (uint256 shares_) {
         // Ensure that the deposited amount is greater than 0
-        require(mstEthAmount > 0, "Deposit amount must be greater than 0");
+        require(assets_ > 0, "Deposit amount must be greater than 0");
         require(
-            deposits[msg.sender] + mstEthAmount <= IERC20(mstEth).balanceOf(msg.sender),
+            assets_ <= IERC20(mstEth).balanceOf(receiver_),
             "Insufficient mstEth balance"
         );
 
         // Transfer the specified MST amount from the sender to the contract
-        require(IERC20(mstEth).transferFrom(msg.sender, address(this), mstEthAmount), "Token transfer failed");
+        require(IERC20(mstEth).transferFrom(receiver_, address(this), assets_), "Token transfer failed");
 
         // Calculate the equivalent amount of Stinsta tokens to mint
-        uint256 stinstaAmount = mstEthAmount;
+        if (totalSupply() == 0 || IERC20(mstEth).balanceOf(address(this)) == 0) {
+            shares_ = assets_;
+        } else {
+            shares_ = ((assets_ * totalSupply()) / IERC20(mstEth).balanceOf(address(this)));
+        }
+
+        calcRewardAmount(receiver_);
+        deposits[receiver_].totalDepositAmount += assets_;
 
         // Mint an equal amount of Stinsta tokens to the depositor
-        _mint(msg.sender, stinstaAmount);
+        _mint(receiver_, shares_);
 
-        // // Update the mapping to track the deposited and minted amounts
-        // deposits[msg.sender] += mstEthAmount;
-
-        // calculate current rewards
-        uint depositPeriod = block.timestamp / SECOND_IN_DAY - lastupdates[msg.sender] / SECOND_IN_DAY;
-        currentRewards[msg.sender] += deposits[msg.sender] * netYield * depositPeriod  / SECOND_IN_DAY / 10000;
+        emit Deposit(address(this), receiver_, assets_, shares_);
     }
 
-    function withdrawStinstaTokens(uint256 stinstaAmount) external returns (uint256 _amount) {
+    function setNetYield(uint _netYield) external {
+        netYield = _netYield;
+    }
+
+    function withdraw(
+        uint256 assets_,
+        address receiver_,
+        address owner_
+    ) external returns (uint256 shares_){
         // Ensure that the withdrawal amount is not greater than the user's balance
-        require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
+        require(assets_ <= IERC20(mstEth).balanceOf(address(this)), "Insufficient stETH token balance");
+
+        calcRewardAmount(owner_);
+        require(assets_ <= deposits[owner_].totalDepositAmount + deposits[owner_].rewardAmount, "Insufficient stETH token balance");
 
         // Burn the specified amount of Stinsta tokens from the user's balance
-        _amount = ((stinstaAmount * IERC20(mstEth).balanceOf(address(this))) / totalSupply());
+        shares_ = ((assets_ * totalSupply()) / IERC20(mstEth).balanceOf(address(this)));
 
+        require(shares_ <= balanceOf(owner_), "Insufficient Stinsta token balance");
         // Transfer MST to the user
-        _burn(msg.sender, stinstaAmount);
-        IERC20(mstEth).transfer(msg.sender, _amount);
+        _burn(owner_, shares_);
+        IERC20(mstEth).transfer(receiver_, assets_);
+        if (deposits[owner_].rewardAmount < assets_) {
+            deposits[owner_].totalDepositAmount -= (assets_ - deposits[owner_].rewardAmount);
+            deposits[owner_].rewardAmount = 0;            
+        } else {
+            deposits[owner_].rewardAmount -= assets_;
+        }
 
-        emit WithdrawStinstaTokens(msg.sender, _amount);
+        emit Withdraw(address(this), receiver_, owner_, assets_, shares_);
     }
-    function viewStinstaTokens(uint256 stinstaAmount) public view returns (uint256) {
-        // Ensure that the withdrawal amount is not greater than the user's balance
-        require(stinstaAmount <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
-        // Calculate the MST value using the provided formula
-        uint256 mstValue = ((stinstaAmount * IERC20(mstEth).balanceOf(address(this))) / totalSupply());
 
-        return mstValue;
+    function calcRewardAmount(address owner_) public {
+        uint256 currentTime = block.timestamp;
+        uint256 rewardDays = currentTime / SECONDS_IN_DAY - deposits[owner_].lastRewardTimestamp / SECONDS_IN_DAY;
+        deposits[owner_].rewardAmount += deposits[owner_].totalDepositAmount * netYield / (365 * 10000) * rewardDays;
+        deposits[owner_].lastRewardTimestamp = currentTime;
     }
-    function viewStinstaTokensValue(uint256 mstValue) public view returns (uint256) {
+
+    function convertToAssets(uint256 shares) external view returns (uint256 assets){
         // Ensure that the withdrawal amount is not greater than the user's balance
-        require(mstValue <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
+        require(shares <= balanceOf(msg.sender), "Insufficient Stinsta token balance");
         // Calculate the MST value using the provided formula
-        uint256 stinsta = ((mstValue * totalSupply()) / IERC20(mstEth).balanceOf(address(this)));
-        return stinsta;
+        assets = ((shares * IERC20(mstEth).balanceOf(address(this))) / totalSupply());
+    }
+
+    function convertToShares(uint256 assets) external view returns (uint256 shares) {
+        // Ensure that the withdrawal amount is not greater than the user's balance
+        require(assets <= IERC20(mstEth).balanceOf(msg.sender), "Insufficient stEth token balance");
+        // Calculate the MST value using the provided formula
+        shares = ((assets * totalSupply()) / IERC20(mstEth).balanceOf(address(this)));
     }
 }

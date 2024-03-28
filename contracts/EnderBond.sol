@@ -140,6 +140,20 @@ contract EnderBond is
     bool public bondFeeEnabled; // status of bond-fee feature (enabled/disabled)
     bool public bondPause; // status of bond-contract pause/unpause
 
+    // struct Bond {
+    //     bool withdrawn; // The withdrawn status of the bond
+    //     uint256 principal; // The principal amount of the bond
+    //     uint256 startTime; // Timestamp of the bond
+    //     uint256 maturity; // The maturity date of the bond
+    //     address token; // The token used for the bond
+    //     uint256 bondFee; // bond fee self-set
+    //     uint256 depositPrincipal;
+    //     uint256 refractionPrincipal;
+    //     uint256 refractionSIndex;
+    //     uint256 stakingSendIndex;
+    //     uint256 YieldIndex;
+    // }
+
     struct Bond {
         bool withdrawn; // The withdrawn status of the bond
         uint256 principal; // The principal amount of the bond
@@ -148,6 +162,8 @@ contract EnderBond is
         address token; // The token used for the bond
         uint256 bondFee; // bond fee self-set
         uint256 depositPrincipal;
+        uint256 totalBondReward;
+        uint256 pastRewardDays;
         uint256 refractionPrincipal;
         uint256 refractionSIndex;
         uint256 stakingSendIndex;
@@ -456,7 +472,8 @@ contract EnderBond is
         rewardSharePerUserIndexSend[tokenId] = rewardShareIndexSend;
         userBondYieldShareIndex[tokenId] = bondYieldShareIndex;
 
-        uint256 depositPrincipal = (getInterest(maturity) * (10000 + (bondFee)) * principal) / (365 * 100000000);
+        uint256 depositPrincipal = (getInterest(maturity) * (10000 + (bondFee)) * principal) / (365 * 10000000000);
+        uint256 bondRewardAmount = depositPrincipal * maturity * 1000;
         totalDeposit += principal;
         totalRewardPrincipal += depositPrincipal;
         totalRefractionPrincipal += refractionPrincipal;
@@ -474,6 +491,8 @@ contract EnderBond is
             token,
             bondFee,
             depositPrincipal,
+            bondRewardAmount,
+            0,
             refractionPrincipal,
             0,
             0,
@@ -542,9 +561,20 @@ contract EnderBond is
         Bond memory bond = bonds[_tokenId];
         if (bondNFT.ownerOf(_tokenId) != msg.sender) revert NotBondUser();
         IEndToken(endToken).distributeRefractionFees();
-        uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
+        // uint256 reward = calculateBondRewardAmount(_tokenId, bond.YieldIndex);
+        uint256 reward = 0;
+        uint256 idx = (block.timestamp - bond.startTime) / SECONDS_IN_DAY;
+        if (idx >= bond.maturity) {
+            bonds[_tokenId].pastRewardDays = bond.maturity;
+            reward = bond.totalBondReward;
+            bonds[_tokenId].totalBondReward = 0;
+        } else {
+            reward = bond.depositPrincipal * 1000 * (idx - bond.pastRewardDays);
+            bonds[_tokenId].pastRewardDays = idx;
+            bonds[_tokenId].totalBondReward -= reward;
+        }
         endTreasury.mintEndToUser(msg.sender, reward);
-        userBondYieldShareIndex[_tokenId] = bondYieldShareIndex;
+
         if (rewardShareIndex != rewardSharePerUserIndex[_tokenId]) {
             uint256 refractionReward = calculateRefractionRewards(_tokenId, bond.refractionSIndex);
             IERC20(endToken).safeTransfer(msg.sender, refractionReward);
@@ -704,11 +734,14 @@ contract EnderBond is
         while (low <= high) {
             mid = (low + high) / 2;
             if (mid == 0 || mid == arr.length - 1) {
-                return arr[mid];
+                if (arr.length == 1) return arr[0];
+                if (arr.length == 2) {
+                    return compareClosestValue(arr[mid], arr[mid+1], _totalMaturity);
+                }
             } else if (arr[mid] == _totalMaturity || (arr[mid + 1] > _totalMaturity && arr[mid] < _totalMaturity)) {
-                return arr[mid];
+                return compareClosestValue(arr[mid], arr[mid+1], _totalMaturity);
             } else if ((arr[mid - 1] < _totalMaturity && arr[mid] > _totalMaturity)) {
-                return arr[mid - 1];
+                return compareClosestValue(arr[mid-1], arr[mid], _totalMaturity);
             } else if (arr[mid] < _totalMaturity) {
                 low = mid + 1;
             } else {
@@ -717,12 +750,21 @@ contract EnderBond is
         }
     }
 
+    function compareClosestValue(uint256 a, uint256 b, uint256 ref) public pure returns (uint256 optVal) {
+        if (ref - a < b - ref) {
+            optVal = a;
+        } else {
+            optVal = b;
+        }
+    }
+
     /**
      * @dev Gets and sets the ETH price and updates the bond yield share.
      */
     function epochBondYieldShareIndex() public {
         if (totalBondPrincipalAmount - depositAmountRequired != 0) {
-            uint256 timeNow = block.timestamp / SECONDS_IN_DAY;
+            uint256 currentTime = block.timestamp;
+            uint256 timeNow = currentTime / SECONDS_IN_DAY;
             uint256 finalRewardPrincipal = (totalBondPrincipalAmount - depositAmountRequired);
             uint256 _endMint = (finalRewardPrincipal * 1000);
             endMint += _endMint;
@@ -732,17 +774,16 @@ contract EnderBond is
             if (lastSecOfYeildUpdation / SECONDS_IN_DAY == timeNow) {
                 if (dayToYeildShareUpdation[timeNow].length == 0)
                     dayToYeildShareUpdation[timeNow].push(lastSecOfYeildUpdation);
-                dayToYeildShareUpdation[timeNow].push(block.timestamp);
             } else {
                 uint day = lastSecOfYeildUpdation / SECONDS_IN_DAY;
                 for (uint i = day + 1; i <= timeNow; i++) {
                     dayToYeildShareUpdation[i].push(lastSecOfYeildUpdation);
                 }
             }
-
-            lastSecOfYeildUpdation = block.timestamp;
+            dayToYeildShareUpdation[timeNow].push(currentTime);
+            lastSecOfYeildUpdation = currentTime;
             dayBondYieldShareIndex[timeNow] = bondYieldShareIndex;
-            secondsBondYieldShareIndex[block.timestamp] = bondYieldShareIndex;
+            secondsBondYieldShareIndex[currentTime] = bondYieldShareIndex;
             emit BondYieldShareIndexUpdated(bondYieldShareIndex);
         }
     }

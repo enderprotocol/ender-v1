@@ -14,6 +14,7 @@ import "./interfaces/IEndToken.sol";
 import "./interfaces/IInstadappLite.sol";
 import "./interfaces/ILybraFinance.sol";
 import "./interfaces/IEnderBond.sol";
+import "hardhat/console.sol";
 
 error NotAllowed();
 error TransferFailed();
@@ -248,6 +249,7 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
             IERC20(_asset).approve(_strategy, _depositAmt);
             IInstadappLite(instadapp).deposit(_depositAmt); // note for testing we changed the function sig.
             instaDappDepositValuations += _depositAmt;
+            console.log("deposit:",_depositAmt);
         } else if (_strategy == lybraFinance) {
             IERC20(_asset).approve(lybraFinance, _depositAmt);
             ILybraFinance(lybraFinance).depositAssetToMint(_depositAmt, 0);
@@ -365,10 +367,11 @@ contract EnderTreasury is Initializable, OwnableUpgradeable, EnderELStrategy {
 
     function calculateDepositReturn(address _stEthAddress) public view returns (uint256 depositReturn) {
         uint256 totalReturn = calculateTotalReturn(_stEthAddress);
+        console.log("totalReturn:", totalReturn);
         if (totalReturn == 0) {
             depositReturn = 0;
         } else {
-            //here we have to multiply 100000and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
+            //here we have to multiply 100000 and dividing so that the balanceLastEpoch < fundsInfo[_stEthAddress].depositFunds
             depositReturn =
                 (totalReturn * fundsInfo[_stEthAddress]) /
                 (fundsInfo[_stEthAddress] + IERC20(_stEthAddress).balanceOf(address(this)));
